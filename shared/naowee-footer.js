@@ -69,8 +69,16 @@ const MODULE_NAME = 'Organismos';
             divisor pegado (border-collapse:separate + radius en thead; filas con
             border-bottom, patrón table-card canónico); se quita el (ROL) redundante
             del responsable en la vista propia (se muestra como sufijo solo en el
-            oversight global de Mindeporte). */
-const MODULE_VERSION = 'v0.4.2';
+            oversight global de Mindeporte).
+   v0.5.0 — T5 Bandeja de aprobaciones (bandeja.html deja de ser stub): máquina de
+            estados por rol (Comité/Mindeporte→federaciones con DOBLE validación,
+            Federación→ligas, Liga→clubes). Aprobar / rechazar / solicitar corrección
+            con MOTIVO obligatorio; regla dura "el superior debe estar Activo" (ORG-06);
+            trazabilidad (timeline de auditoría) por organismo; oversight solo-lectura;
+            Club → empty-state (afiliaciones = T7). Nuevos: shared/bandeja.js + helpers
+            updateOrganismo/setEstado/auditLog (data) + puedeTransicionar/resolverFederacion
+            (estados). Componentes canónicos (.cg-table, .reg-modal, badges quiet). */
+const MODULE_VERSION = 'v0.5.0';
 
 (function () {
   function mount() {
