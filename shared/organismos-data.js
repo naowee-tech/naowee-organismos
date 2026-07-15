@@ -21,22 +21,12 @@
    originales NO viven en este repo.
    ═══════════════════════════════════════════════════════════════ */
 
-export const ORG_ESTADOS = ['Preinscrito', 'En revisión', 'Activo', 'Rechazado', 'Suspendido', 'Inactivo', 'Cancelado'];
-
-/* Mapa semántico ÚNICO estado → variante de badge del DS (handoff §8.3).
-   Usar SIEMPRE .naowee-badge --quiet --small con esta variante. */
-export function estadoBadgeVariant(estado) {
-  switch (estado) {
-    case 'Activo': return 'positive';
-    case 'En revisión': return 'informative';
-    case 'Preinscrito': return 'neutral';
-    case 'Suspendido':
-    case 'Inactivo': return 'caution';
-    case 'Rechazado':
-    case 'Cancelado': return 'negative';
-    default: return 'neutral';
-  }
-}
+/* Vocabulario de estados + mapa semántico de badge: fuente única en
+   estados.js (T2). Se re-exportan aquí para no romper imports existentes
+   (`import { estadoBadgeVariant, ORG_ESTADOS } from './organismos-data.js'`). */
+import { ESTADOS, estadoBadgeVariant } from './estados.js';
+export { estadoBadgeVariant };
+export const ORG_ESTADOS = ESTADOS;
 
 /* ─── 1) Comités / cabezas de sector (nodos raíz, Activos, parentId null) ─── */
 const COMITES = [
@@ -241,4 +231,80 @@ export function seedStats() {
     byEstado[o.estado] = (byEstado[o.estado] || 0) + 1;
   });
   return { organismos: SEED_ORGANISMOS.length, byTipo, byEstado, deportistas: SEED_DEPORTISTAS.length };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Helpers de jerarquía (T2) — lectura INMUTABLE (siempre copias).
+   Construidos sobre allOrganismos()/allDeportistas() para respetar
+   seed + nuevos + overrides.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Índice parentId → hijos, calculado una vez por llamada (los datos son
+   pequeños; evita O(n²) al recorrer subárboles). */
+function indexByParent(orgs) {
+  const idx = {};
+  orgs.forEach((o) => { (idx[o.parentId] = idx[o.parentId] || []).push(o); });
+  return idx;
+}
+
+/* Todos los descendientes (organismos) de `id`, en profundidad. NO incluye
+   el propio nodo. `id === null` devuelve el árbol completo (todos los
+   organismos, útil para la raíz de Mindeporte a partir de los comités). */
+export function subtreeOf(id) {
+  const orgs = allOrganismos();
+  const idx = indexByParent(orgs);
+  const out = [];
+  const stack = [...(idx[id] || [])];
+  while (stack.length) {
+    const node = stack.pop();
+    out.push({ ...node });
+    const kids = idx[node.id];
+    if (kids) for (const k of kids) stack.push(k);
+  }
+  return out;
+}
+
+/* Cadena ascendente de `id` hasta la raíz: [padre, abuelo, …]. Vacío si no
+   tiene padre o el id no existe. Copias inmutables. */
+export function ancestorsOf(id) {
+  const orgs = allOrganismos();
+  const byId = {};
+  orgs.forEach((o) => { byId[o.id] = o; });
+  const chain = [];
+  let cur = byId[id];
+  const guard = new Set();
+  while (cur && cur.parentId != null && byId[cur.parentId] && !guard.has(cur.parentId)) {
+    guard.add(cur.parentId);
+    cur = byId[cur.parentId];
+    chain.push({ ...cur });
+  }
+  return chain;
+}
+
+/* Deportistas cuyo club pertenece al subárbol de `orgId` (o al propio
+   `orgId` si es un club). Herencia liga/federación/comité (§2 handoff:
+   el deportista queda vinculado a toda la cadena de su club). */
+export function deportistasOf(orgId) {
+  const clubIds = new Set();
+  const self = getOrganismo(orgId);
+  if (self && self.tipo === 'club') clubIds.add(self.id);
+  subtreeOf(orgId).forEach((o) => { if (o.tipo === 'club') clubIds.add(o.id); });
+  return allDeportistas()
+    .filter((d) => d.clubId && clubIds.has(d.clubId))
+    .map((d) => ({ ...d }));
+}
+
+/* Contadores heredados del subárbol de `orgId`:
+   { federaciones, ligas, clubes, deportistas }. `orgId === null` → totales
+   de todo el SND (para la raíz de Mindeporte). */
+export function countDescendants(orgId) {
+  const sub = subtreeOf(orgId);
+  const c = { federaciones: 0, ligas: 0, clubes: 0, deportistas: 0 };
+  sub.forEach((o) => {
+    if (o.tipo === 'federacion') c.federaciones++;
+    else if (o.tipo === 'liga') c.ligas++;
+    else if (o.tipo === 'club') c.clubes++;
+  });
+  c.deportistas = deportistasOf(orgId).length;
+  return c;
 }
