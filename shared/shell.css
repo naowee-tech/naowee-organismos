@@ -1,0 +1,501 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAOWEE ORGANISMOS — Shell (sidebar + header + layout)
+   Port 1:1 aprobado de Eventos/demo/shared/shell.css (que a su vez
+   deriva de naowee-test-sidebar-shell). Drawer off-canvas mobile
+   (<1024px, DESIGN-PATTERNS §2.1), menú por rol de la jerarquía SND.
+   Tokens en tokens.css. No re-derivar.
+   ═══════════════════════════════════════════════════════════════ */
+
+body {
+  font-size: 14px;
+}
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: none; }
+
+/* ═══ SHELL ═══ */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* ═══ SIDEBAR ═══ */
+.sidebar {
+  position: relative;
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  transition: width var(--duration-slow) var(--easing-smoothout),
+              min-width var(--duration-slow) var(--easing-smoothout);
+  z-index: 60;
+}
+
+.sidebar-logo {
+  height: var(--header-h); display: flex; align-items: center; gap: 14px;
+  padding: 0 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.sidebar-logo .sb-logo-img:first-of-type { margin-left: auto; }
+.sidebar-logo .sb-logo-img:last-of-type { margin-right: auto; }
+
+.burger-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast), transform var(--duration-normal);
+}
+.burger-btn:hover { background: rgba(0, 0, 0, .06); }
+.burger-btn:active { transform: scale(.9); }
+.burger-btn svg { transition: transform var(--duration-slow) var(--easing-smoothout); }
+.sidebar.collapsed .burger-btn svg { transform: rotate(180deg); }
+
+.sb-logo-img { height: 46px; width: auto; display: block; flex-shrink: 0; }
+.logo-sep { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+
+/* ═══ SIDEBAR NAV ═══ */
+.sidebar-nav {
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  padding: 20px 0 10px; display: flex; flex-direction: column; gap: 6px;
+  scrollbar-width: thin; scrollbar-color: var(--border-dark) transparent;
+}
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+.nav-section {
+  flex-shrink: 0;
+  font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+  color: var(--section-label-color); padding: 0 28px; line-height: 16px; margin: 10px 0 6px;
+}
+.nav-section:first-child { margin-top: 0; }
+
+.nav-row {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 12px; height: 44px;
+  padding: 0 20px 0 0; border-radius: var(--radius-sm); cursor: pointer;
+  margin: 0 10px;
+  transition: background var(--duration-fast),
+              margin var(--duration-slow) var(--easing-smoothout);
+  position: relative;
+}
+.nav-row:hover { background: var(--bg-soft); }
+.nav-row .icon {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  margin-left: 28px; color: var(--text-secondary);
+  transition: margin-left var(--duration-normal) var(--easing-smoothout), color var(--duration-normal) ease;
+}
+.nav-row .lbl {
+  flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; max-width: 200px; opacity: 1;
+  transition: opacity var(--duration-normal) ease .18s,
+              max-width var(--duration-slow) var(--easing-smoothout) .04s;
+}
+.nav-row .nav-badge {
+  flex-shrink: 0; font-size: 10px; font-weight: 800; letter-spacing: .3px;
+  padding: 2px 7px; border-radius: var(--radius-full);
+  background: var(--bg-soft); color: var(--text-secondary);
+}
+
+/* ═══ Indicador activo: barra naranja con View Transitions ═══ */
+.active-bar {
+  position: absolute; left: -6px; top: 8px; width: 4px; height: 28px;
+  background: var(--accent); border-radius: 25px; transform-origin: center;
+  animation: activeBarIn .42s var(--easing-bounce-soft) both;
+  view-transition-name: shell-active-bar;
+}
+@keyframes activeBarIn {
+  0%   { opacity: 0; transform: translateX(-8px) scaleY(.2); }
+  55%  { opacity: 1; }
+  100% { opacity: 1; transform: translateX(0) scaleY(1); }
+}
+.nav-row.active, .nav-row.active:hover { background: transparent; }
+.nav-row.active .lbl { color: var(--accent); }
+.nav-row.active .icon { color: var(--accent); }
+
+/* ═══ Ítem hijo (anidado) — p.ej. Calendario bajo Eventos ═══
+   Indenta el icono y dibuja una guía en árbol (vertical + codo) que parte
+   del icono del padre hacia el hijo. Solo en sidebar expandido. */
+.sidebar:not(.collapsed) .nav-row--child .icon { margin-left: 52px; }
+.sidebar:not(.collapsed) .nav-row--child .lbl { font-size: 13.5px; }
+/* Conector en árbol — una sola curva fina y sutil (border-left + border-bottom
+   + radio) que desciende del padre y entra al icono del hijo. Sin codos rectos. */
+.sidebar:not(.collapsed) .nav-row--child::before {
+  content: ''; position: absolute; left: 34px; top: -8px;
+  width: 17px; height: calc(50% + 8px);
+  border-left: 1.5px solid var(--border-dark);
+  border-bottom: 1.5px solid var(--border-dark);
+  border-bottom-left-radius: 11px;
+  pointer-events: none;
+  transition: border-color var(--duration-normal) ease;
+}
+/* Activo del subnivel: el conector se mantiene neutro (sin línea/barra naranja);
+   el estado activo se comunica SOLO por el texto y el ícono en accent. */
+
+.sidebar-bottom {
+  flex-shrink: 0; padding: 8px 0; border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* ═══ Tooltip sidebar colapsado (position:fixed vía JS) ═══ */
+.nav-tooltip {
+  position: fixed; background: var(--text-primary); color: #fff;
+  padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  white-space: nowrap; pointer-events: none; z-index: 200;
+  box-shadow: 0 4px 14px rgba(40, 40, 52, .18);
+  opacity: 0; transform: translateY(-50%) translateX(-4px);
+  transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.nav-tooltip.is-visible { opacity: 1; transform: translateY(-50%) translateX(0); }
+.nav-tooltip::before {
+  content: ''; position: absolute; right: 100%; top: 50%;
+  transform: translateY(-50%); border: 5px solid transparent;
+  border-right-color: var(--text-primary);
+}
+
+/* ═══ Collapsed: fade + hover/active como cuadrado del icono ═══ */
+.sidebar.collapsed { width: var(--sidebar-w-collapsed); min-width: var(--sidebar-w-collapsed); overflow: hidden; }
+.sidebar.collapsed .sb-logo-img,
+.sidebar.collapsed .logo-sep,
+.sidebar.collapsed .nav-section,
+.sidebar.collapsed .nav-badge { display: none; }
+.sidebar.collapsed .nav-row .lbl {
+  max-width: 0; opacity: 0; pointer-events: none; margin: 0;
+  transition: opacity var(--duration-fast) ease,
+              max-width var(--duration-normal) var(--easing-smoothout) .04s;
+}
+.sidebar.collapsed .sidebar-logo { justify-content: center; padding: 0; }
+.sidebar.collapsed .nav-row { justify-content: center; padding: 0; gap: 0; background: transparent; }
+.sidebar.collapsed .nav-row:hover,
+.sidebar.collapsed .nav-row.active:hover { background: transparent; }
+.sidebar.collapsed .nav-row .icon { margin-left: 0; }
+.sidebar.collapsed .nav-row::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 40px; height: 40px; border-radius: 8px;
+  transform: translate(-50%, -50%); background: transparent; pointer-events: none;
+  transition: background var(--duration-normal) var(--easing-smoothout); z-index: 0;
+}
+.sidebar.collapsed .nav-row:hover::before { background: var(--bg-soft); }
+.sidebar.collapsed .nav-row.active::before { background: var(--accent-bg); }
+.sidebar.collapsed .nav-row.active:hover::before { background: var(--accent-bg-warm); }
+.sidebar.collapsed .nav-row .icon { position: relative; z-index: 1; }
+.sidebar.collapsed .active-bar { display: none; }
+
+/* ═══ MAIN ═══ */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ═══ TOP HEADER ═══ */
+.top-header {
+  height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px; padding: 0 24px; flex-shrink: 0;
+  position: relative; z-index: 20;
+}
+/* La barra superior solo lleva branding/burger a la izquierda y el chip
+   de identidad a la derecha (sin título de página: ese vive en el H1 del
+   contenido). El chip se ancla a la derecha en todos los viewports. */
+
+/* Hamburguesa de header — solo visible en mobile (drawer) */
+.header-burger {
+  display: none; background: none; border: 1px solid var(--border);
+  border-radius: var(--radius-md); cursor: pointer;
+  width: 40px; height: 40px; align-items: center; justify-content: center;
+  color: var(--text-primary); flex-shrink: 0;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+.header-burger:hover { background: var(--bg-soft); border-color: var(--border-dark); }
+.header-burger:active { transform: scale(.95); }
+
+/* ═══ Profile switcher (user-chip) ═══ */
+.profile-switcher { position: relative; margin-left: auto; }
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-full);
+  padding: 8px 16px 8px 8px; cursor: pointer; background: #fff; max-width: 240px;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+.user-chip:hover { border-color: var(--border-dark); }
+.ava { position: relative; flex-shrink: 0; }
+.ava-ring {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.ava-dot {
+  position: absolute; bottom: -1px; right: -1px; width: 12px; height: 12px;
+  background: var(--green); border: 2px solid #fff; border-radius: 50%;
+}
+.user-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.user-name {
+  font-size: 13px; font-weight: 700; color: var(--text-primary);
+  max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-role {
+  font-size: 11px; color: var(--text-secondary);
+  max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-chip__chevron {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 6px; background: transparent;
+  border: none; cursor: pointer; color: var(--text-secondary); flex-shrink: 0; margin-left: 2px;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+.user-chip__chevron:hover { background: #FFEDC7; color: var(--accent); }
+.user-chip__chevron svg { width: 14px; height: 14px; transition: transform var(--duration-normal) ease; }
+.profile-switcher.open .user-chip__chevron svg { transform: rotate(180deg); }
+
+.profile-dd {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 100;
+  width: 280px; background: #fff;
+  border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(40, 40, 52, .12);
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
+  transition: opacity var(--duration-normal), transform var(--duration-normal); padding: 6px;
+}
+.profile-switcher.open .profile-dd { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.profile-dd__header { display: flex; align-items: flex-start; gap: 12px; padding: 12px 12px 10px; }
+.profile-dd__user { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.profile-dd__user strong {
+  font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.25;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.profile-dd__user small {
+  font-size: 11.5px; color: var(--text-secondary); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px;
+}
+.profile-dd__current-role {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: .2px; margin-top: 2px;
+}
+.profile-dd__check-ico { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; }
+.profile-dd__check-ico svg { width: 12px; height: 12px; }
+.profile-dd__sep { height: 1px; background: var(--border); margin: 4px -6px; }
+.profile-dd__label {
+  font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--section-label-color); padding: 6px 12px 4px;
+}
+.profile-dd__item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  transition: background var(--duration-fast), color var(--duration-fast); border-radius: 8px;
+}
+.profile-dd__item:hover { background: var(--bg-soft); }
+.profile-dd__item--role { padding: 8px 12px; }
+.profile-dd__item--role .ava-ring { flex-shrink: 0; }
+.profile-dd__item .role-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.profile-dd__item .role-meta span { font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+.profile-dd__item .role-meta small {
+  font-size: 11px; color: var(--text-secondary); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.profile-dd__icon {
+  width: 18px; height: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: var(--text-secondary);
+}
+.profile-dd__icon svg { width: 18px; height: 18px; }
+.profile-dd__item--danger { color: #d11f1f; }
+.profile-dd__item--danger:hover { background: var(--red-bg); color: #a80f0f; }
+.profile-dd__item--danger .profile-dd__icon { color: #d11f1f; }
+
+/* Identity-only dropdown (patrón IVC #3): el chip del header muestra
+   SOLO identidad — nombre + documento (CC) + rol. Sin acciones ni
+   cambio de perfil (eso vive en el pill demo inferior). */
+.profile-dd--identity-only { width: 264px; }
+.profile-dd__doc {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+  letter-spacing: .2px; margin: 1px 0 2px; font-feature-settings: 'tnum';
+}
+.profile-dd__doc svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--text-muted); }
+
+/* ═══ PAGE ═══ */
+.page { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 28px 32px 80px; }
+.page-inner { max-width: 1180px; margin: 0 auto; }
+
+/* ═══ Drawer backdrop (mobile) ═══ */
+.shell-backdrop {
+  position: fixed; inset: 0; background: rgba(40, 40, 52, .42);
+  opacity: 0; pointer-events: none; z-index: 55;
+  transition: opacity var(--duration-normal) ease;
+}
+body.has-mobile-drawer-open .shell-backdrop { opacity: 1; pointer-events: auto; }
+
+/* ═══════════════════════════════════════════════════════════════
+   DEMO ROLE SWITCHER — pill flotante INFERIOR centrada (sandbox)
+   Port canónico de naowee-ivc/prototype/shared (demo-role-switcher).
+   Posición: bottom-center. El panel abre hacia ARRIBA.
+   ═══════════════════════════════════════════════════════════════ */
+.demo-role-switcher {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 60;
+}
+.demo-role-switcher__toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px 8px 8px; background: #fff;
+  border: 1px solid var(--border); border-radius: var(--radius-full);
+  box-shadow: 0 4px 14px rgba(40, 40, 52, .12);
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-primary);
+  cursor: pointer;
+  transition: transform var(--duration-normal) var(--easing-smoothout),
+              box-shadow var(--duration-normal) var(--easing-smoothout);
+}
+.demo-role-switcher__toggle:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(40, 40, 52, .16); }
+.demo-role-switcher__toggle:active { transform: translateY(0) scale(.98); }
+.demo-role-switcher__badge {
+  font-size: 9.5px; font-weight: 800; letter-spacing: .6px;
+  background: var(--naranja); color: #fff;
+  padding: 3px 7px; border-radius: var(--radius-full);
+}
+.demo-role-switcher__avatar {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+}
+.demo-role-switcher__chev {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); margin-left: 2px;
+  transition: transform var(--duration-normal) var(--easing-smoothout);
+}
+.demo-role-switcher__chev svg { width: 14px; height: 14px; }
+.demo-role-switcher.is-open .demo-role-switcher__chev { transform: rotate(180deg); }
+
+.demo-role-switcher__panel {
+  position: absolute; bottom: calc(100% + 10px); left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  width: min(92vw, 320px); max-height: 70vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: 0 18px 48px rgba(40, 40, 52, .18);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--duration-normal) ease,
+              transform var(--duration-normal) var(--easing-smoothout);
+}
+.demo-role-switcher.is-open .demo-role-switcher__panel {
+  opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0);
+}
+.demo-role-switcher__panel-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--section-label-color); padding: 12px 14px 6px; flex-shrink: 0;
+}
+.demo-role-switcher__list {
+  overflow-y: auto; padding: 0 6px 4px;
+  scrollbar-width: thin; scrollbar-color: var(--border-dark) transparent;
+}
+.demo-role-switcher__list::-webkit-scrollbar { width: 6px; }
+.demo-role-switcher__list::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+.demo-role-switcher__group-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+  color: var(--text-muted); padding: 10px 8px 4px;
+}
+.demo-role-switcher__group-label:first-child { padding-top: 4px; }
+.demo-role-switcher__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--radius-md); cursor: pointer;
+  text-decoration: none; color: var(--text-primary);
+  transition: background var(--duration-fast);
+}
+.demo-role-switcher__item:hover { background: var(--bg-soft); text-decoration: none; }
+.demo-role-switcher__item.is-active { background: var(--accent-bg); }
+.demo-role-switcher__item.is-active:hover { background: var(--accent-bg-warm); }
+.demo-role-switcher__item.is-disabled { opacity: .5; cursor: not-allowed; }
+.demo-role-switcher__item-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+}
+.demo-role-switcher__item-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.demo-role-switcher__item-name { font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+.demo-role-switcher__item-role {
+  font-size: 11px; color: var(--text-secondary); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.demo-role-switcher__item-stage {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+  color: var(--text-muted); background: var(--bg-soft);
+  padding: 3px 7px; border-radius: var(--radius-full); flex-shrink: 0;
+}
+.demo-role-switcher__check {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; color: var(--accent); flex-shrink: 0;
+}
+.demo-role-switcher__check svg { width: 16px; height: 16px; }
+.demo-role-switcher__mode-section {
+  padding: 12px 14px 6px; border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.demo-role-switcher__mode-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--section-label-color); margin-bottom: 7px;
+}
+.demo-role-switcher__mode-switch {
+  display: flex; background: var(--bg-soft); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 3px; gap: 2px;
+}
+.demo-role-switcher__mode-btn {
+  flex: 1; border: none; background: transparent; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 600; color: var(--text-secondary);
+  padding: 7px 8px; border-radius: var(--radius-sm); white-space: nowrap;
+  transition: background var(--duration-fast), color var(--duration-fast), box-shadow var(--duration-fast);
+}
+.demo-role-switcher__mode-btn:hover { color: var(--text-primary); }
+.demo-role-switcher__mode-btn[aria-pressed="true"] { background: #fff; color: var(--accent); box-shadow: var(--shadow-sm); }
+.demo-role-switcher__panel-footer {
+  padding: 8px 14px 12px; display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0;
+}
+.demo-role-switcher__action {
+  display: inline-flex; align-items: center; gap: 6px; flex: 1; justify-content: center;
+  border: 1px solid var(--border-dark); background: #fff; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 700; color: var(--text-secondary);
+  padding: 8px 10px; border-radius: var(--radius-md);
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+}
+.demo-role-switcher__action:hover { background: var(--bg-soft); color: var(--text-primary); border-color: var(--border-dark); }
+.demo-role-switcher__action svg { width: 14px; height: 14px; flex-shrink: 0; }
+.demo-role-switcher__action--quiet { border-style: dashed; }
+.demo-role-switcher__action--quiet:hover { color: var(--accent); border-color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-role-switcher__toggle,
+  .demo-role-switcher__panel,
+  .demo-role-switcher__chev { transition: none; }
+  .demo-role-switcher__toggle:hover { transform: translateX(0); }
+}
+
+/* ═══ RESPONSIVE — drawer off-canvas (DESIGN-PATTERNS §2.1) ═══ */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    transform: translateX(-100%);
+    transition: transform var(--duration-slow) var(--easing-smoothout);
+    box-shadow: var(--shadow-md);
+  }
+  /* En drawer SIEMPRE labels completos (vencer estado .collapsed) */
+  .sidebar, .sidebar.collapsed { width: var(--sidebar-w); min-width: var(--sidebar-w); }
+  .sidebar.collapsed .sb-logo-img,
+  .sidebar.collapsed .logo-sep,
+  .sidebar.collapsed .nav-section,
+  .sidebar.collapsed .nav-badge { display: revert; }
+  .sidebar.collapsed .nav-row .lbl { max-width: 200px; opacity: 1; pointer-events: auto; }
+  .sidebar.collapsed .nav-row { justify-content: flex-start; padding: 0 20px 0 0; gap: 12px; }
+  .sidebar.collapsed .nav-row .icon { margin-left: 28px; }
+  .sidebar.collapsed .active-bar { display: block; }
+  /* Oculta el burger interno del logo en drawer (se controla por el de header) */
+  .sidebar .burger-btn { display: none; }
+
+  body.has-mobile-drawer-open .sidebar { transform: translateX(0); }
+
+  .header-burger { display: flex; }
+  .page { padding: 20px 16px 80px; }
+  .page-inner { max-width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .top-header { padding: 0 14px; gap: 10px; }
+  .user-info { display: none; }
+  .user-chip { padding: 6px; max-width: none; }
+  .user-chip__chevron { margin-left: 0; }
+}
+
+/* ═══ Reduced motion ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

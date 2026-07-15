@@ -1,0 +1,94 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAOWEE ORGANISMOS — Footer flotante canónico (mount + scroll-hide)
+   Port 1:1 de Eventos/demo/shared/naowee-footer.js.
+   Formato canónico (paridad naowee-ivc / Project v2.0.3):
+     [logo naowee] | Todos los derechos reservados © 2026 | Organismos v0.1.0
+   La versión va en ROJO/accent. Scroll-hide: el host de scroll real es
+   .page (creado por el shell) y el evento scroll NO bubblea — por eso
+   escuchamos en capture sobre document. Patrón DESIGN-PATTERNS §3.8.
+   ═══════════════════════════════════════════════════════════════ */
+
+const MODULE_NAME = 'Organismos';
+/* Versión del módulo mostrada en la pill del footer. Es una CONSTANTE: hay que
+   subirla aquí en cada release (no se deriva sola). Sincronizar con los
+   cache-busters ?v=X.Y.Z de todas las páginas.
+   ── Changelog ──
+   v0.1.0 — scaffolding: shell (sidebar + header + footer pill), 6 roles de la
+            jerarquía SND + demo switcher agrupado, seed de datos (3 comités +
+            57 federaciones COC reales + ficticias Paralímpico/Sordolímpico +
+            ligas/clubes/deportistas de la cadena demo) y 6 páginas stub con
+            empty state canónico. */
+const MODULE_VERSION = 'v0.1.0';
+
+(function () {
+  function mount() {
+    if (document.querySelector('.naowee-footer')) return;
+    const year = new Date().getFullYear();
+    const el = document.createElement('div');
+    el.className = 'naowee-footer';
+    el.setAttribute('role', 'contentinfo');
+    el.setAttribute('aria-label', 'Pie de página Naowee');
+    el.innerHTML = `
+      <img src="shared/logos/naowee.svg" alt="Naowee" class="naowee-footer__logo" onerror="this.style.display='none'"/>
+      <div class="naowee-footer__sep"></div>
+      <span class="naowee-footer__text">Todos los derechos reservados <strong>&copy; ${year}</strong></span>
+      <div class="naowee-footer__sep"></div>
+      <span class="naowee-footer__version" aria-label="Versión del módulo: ${MODULE_NAME} ${MODULE_VERSION}">
+        ${MODULE_NAME} <strong>${MODULE_VERSION}</strong>
+      </span>`;
+    document.body.appendChild(el);
+    setupScrollHide(el);
+  }
+
+  function setupScrollHide(footer) {
+    let lastY = null;
+    /* Capture phase sobre document: el scroll de .page no bubblea. */
+    document.addEventListener('scroll', (e) => {
+      const target = e.target;
+      const y = (target && typeof target.scrollTop === 'number')
+        ? target.scrollTop
+        : (window.scrollY || window.pageYOffset || 0);
+      if (lastY === null) { lastY = y; return; }
+      const dy = y - lastY;
+      if (Math.abs(dy) < 60 && y > 0) { return; } // threshold 60px (scroll down>60 oculta)
+      if (dy > 0 && y > 60) footer.classList.add('is-hidden');
+      else footer.classList.remove('is-hidden');
+      lastY = y;
+    }, true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
+  }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   Snackbar canónico (DS .naowee-snackbar): pill navy con BADGE de icono
+   semántico — verde=éxito, rojo=error, azul=info, ámbar=aviso. Global
+   reusado por todas las pantallas. Estilos en naowee-footer.css (#evToast).
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  var ICONS = {
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="1.15" fill="currentColor" stroke="none"/></svg>',
+    caution: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r="1.15" fill="currentColor" stroke="none"/></svg>'
+  };
+  var timer = null;
+  window.naoweeToast = function (msg, type) {
+    type = ICONS[type] ? type : 'success';
+    var el = document.getElementById('evToast');
+    if (!el) { el = document.createElement('div'); el.id = 'evToast'; document.body.appendChild(el); }
+    el.className = 'evtoast evtoast--' + type;
+    el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    var text = (msg == null ? '' : String(msg)).replace(/^\s*[✓✔]\s*/, '');
+    el.innerHTML = '<span class="evtoast__badge">' + ICONS[type] + '</span><span class="evtoast__text"></span>';
+    el.querySelector('.evtoast__text').textContent = text;
+    void el.offsetWidth;                 /* reinicia la animación si ya estaba visible */
+    el.classList.add('is-visible');
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(function () { el.classList.remove('is-visible'); }, 3200);
+  };
+})();
