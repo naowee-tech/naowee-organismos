@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cargue masivo — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=0.1.0">
+<link rel="stylesheet" href="shared/shell.css?v=0.1.0">
+<link rel="stylesheet" href="shared/components.css?v=0.1.0">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=0.1.0">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-head__title">Cargue masivo</h1>
+          <p class="page-head__sub">Pre-registro de los organismos de nivel inferior por plantilla: cada nivel carga masivamente a los que dependen de él.</p>
+        </div>
+        <div class="stub-card">
+          <div class="naowee-empty-state">
+            <span class="naowee-empty-state__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </span>
+            <span class="naowee-badge naowee-badge--neutral naowee-badge--quiet naowee-badge--small">Próximamente</span>
+            <p class="naowee-empty-state__title">Disponible en la próxima versión</p>
+            <p class="naowee-empty-state__description">El cargue masivo con la plantilla .xlsx real (22 columnas), la validación por fila con reporte de errores, la carga parcial y el historial de cargues se habilitan en la siguiente versión de la demo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getRoleFromQuery, ROLES, mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher } from './shared/sidebar.js';
+  import { seedDemoData } from './shared/organismos-data.js';
+  seedDemoData();
+  const roleCode = getRoleFromQuery();
+  const role = ROLES[roleCode];
+  mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: 'cargue' });
+  mountHeader({ headerEl: document.getElementById('topHeader'), role });
+  mountBackdrop();
+  mountDemoSwitcher({ roleCode });
+</script>
+<script src="shared/naowee-footer.js?v=0.1.0"></script>
+
+</body>
+</html>

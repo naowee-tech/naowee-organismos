@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfil del organismo — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=0.1.0">
+<link rel="stylesheet" href="shared/shell.css?v=0.1.0">
+<link rel="stylesheet" href="shared/components.css?v=0.1.0">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=0.1.0">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-head__title">Perfil del organismo</h1>
+          <p class="page-head__sub">Detalle de un organismo deportivo: información, representante legal, documentos, jerarquía e historial de estados.</p>
+        </div>
+        <div class="stub-card">
+          <div class="naowee-empty-state">
+            <span class="naowee-empty-state__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4h6v4"/><path d="M9 9h.01M12 9h.01M15 9h.01M9 13h.01M12 13h.01M15 13h.01"/></svg>
+            </span>
+            <span class="naowee-badge naowee-badge--neutral naowee-badge--quiet naowee-badge--small">Próximamente</span>
+            <p class="naowee-empty-state__title">Disponible en la próxima versión</p>
+            <p class="naowee-empty-state__description">El perfil del organismo —tabs de Información, Representante legal, Documentos, Jerarquía e Historial, con breadcrumb ascendente y timeline de estados (ORG-07)— se habilita en la siguiente versión de la demo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getRoleFromQuery, ROLES, mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher } from './shared/sidebar.js';
+  import { seedDemoData } from './shared/organismos-data.js';
+  seedDemoData();
+  const roleCode = getRoleFromQuery();
+  const role = ROLES[roleCode];
+  /* Página de detalle: se llega desde la jerarquía o la bandeja; no es un
+     ítem del menú → ningún elemento del sidebar queda activo. */
+  mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: null });
+  mountHeader({ headerEl: document.getElementById('topHeader'), role });
+  mountBackdrop();
+  mountDemoSwitcher({ roleCode });
+</script>
+<script src="shared/naowee-footer.js?v=0.1.0"></script>
+
+</body>
+</html>
