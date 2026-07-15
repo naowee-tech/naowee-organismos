@@ -1,0 +1,157 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAOWEE ORGANISMOS — Perfil del organismo (T6 · organismo-detalle.html)
+   Ficha 360° solo-lectura: header + breadcrumb ascendente + .naowee-tabs
+   (Información / Rep. legal / Documentos / Jerarquía / Historial).
+
+   Componentes canónicos:
+     - .naowee-tabs / .naowee-tab / .naowee-tab--selected → PORT FIEL de
+       shared/forms.css (v0.5.4, que a su vez porta el DS §Tabs).
+     - .naowee-breadcrumb → PORT del DS design-system.css (v1.9.0, css:3986-4058),
+       con los valores resueltos a los tokens locales de tokens.css.
+     - .naowee-badge / .naowee-message / .naowee-card / .naowee-empty-state /
+       .naowee-btn viven en components.css.
+   El resto es layout page-scoped `.od-*` (patrón override — no clases paralelas
+   a componentes del DS). Timeline / kv / doc rows portados de las clases .bj-*
+   de la bandeja (forms.css) al namespace .od-* para no acoplar el perfil a la
+   bandeja ni cargar forms.css completo.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Tabs canónicos (PORT FIEL — shared/forms.css:409-427) ─── */
+.naowee-tabs { display: flex; width: 100%; border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.naowee-tabs::-webkit-scrollbar { display: none; }
+.naowee-tab {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  height: 48px; padding: 0 16px; flex-shrink: 0; white-space: nowrap; cursor: pointer;
+  background: transparent; border: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  position: relative; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 18px;
+  color: var(--text-primary); text-align: center; font-feature-settings: 'case' 1;
+  transition: background var(--duration-normal), color var(--duration-normal);
+}
+.naowee-tab:hover { background: var(--naowee-color-feedback-fill-caution-quiet); }
+.naowee-tab:not(.naowee-tab--selected):hover { color: var(--text-secondary); }
+.naowee-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: transparent;
+  transition: background var(--duration-normal);
+}
+.naowee-tab--selected { color: var(--accent); }
+.naowee-tab--selected::after { background: var(--accent); }
+.naowee-tab svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ─── Breadcrumb ascendente (PORT del DS §Breadcrumb, tokens locales) ─── */
+.naowee-breadcrumb { display: flex; align-items: center; gap: 4px; font-size: 14px; line-height: 18px; font-feature-settings: 'case' 1; flex-wrap: wrap; }
+.naowee-breadcrumb__item { color: var(--text-primary); text-decoration: none; font-weight: 500; cursor: pointer; transition: color var(--duration-normal); white-space: nowrap; }
+.naowee-breadcrumb__item:hover { color: var(--accent); text-decoration: underline; }
+/* Crumb estático (ancestro fuera de la jurisdicción del rol) — contexto, sin link */
+.naowee-breadcrumb__static { color: var(--text-secondary); font-weight: 500; white-space: nowrap; cursor: default; }
+.naowee-breadcrumb__sep { color: var(--text-secondary); flex-shrink: 0; user-select: none; display: flex; align-items: center; }
+.naowee-breadcrumb__sep svg { width: 16px; height: 16px; }
+.naowee-breadcrumb__current { color: var(--accent); font-weight: 600; cursor: default; white-space: nowrap; }
+
+/* ─── Cabecera de la ficha ─── */
+.od-back { margin-bottom: 14px; }
+.od-back .naowee-btn svg { width: 15px; height: 15px; margin-right: 2px; }
+
+.od-crumbs { margin: 12px 0 16px; }
+
+.od-hero {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 22px 24px; margin-bottom: 20px;
+  border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface);
+}
+.od-hero__emoji {
+  width: 56px; height: 56px; flex-shrink: 0; border-radius: var(--radius-lg);
+  background: var(--bg-soft); display: flex; align-items: center; justify-content: center;
+  font-size: 28px; line-height: 1;
+}
+.od-hero__main { min-width: 0; flex: 1; }
+.od-hero__title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.od-hero__name { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.2; letter-spacing: -.01em; }
+.od-hero__meta { font-size: 13px; color: var(--text-secondary); margin: 8px 0 0; line-height: 1.5; }
+.od-hero__meta b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.od-hero__meta .od-dot { margin: 0 7px; color: var(--text-muted); }
+.od-hero__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.od-ro {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); background: var(--bg-soft); border-radius: var(--radius-full);
+  padding: 5px 11px; white-space: nowrap;
+}
+.od-ro svg { width: 13px; height: 13px; }
+.od-hero__actions .naowee-btn svg { width: 15px; height: 15px; margin-right: 4px; }
+
+/* ─── Panel de tabs ─── */
+.od-tabs-card { padding: 0; overflow: hidden; }
+.od-panel { padding: 22px 24px; }
+.od-panel:focus { outline: none; }
+
+/* Título de bloque dentro de un panel */
+.od-block-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); margin: 0 0 12px; }
+.od-block + .od-block { margin-top: 22px; }
+
+/* ─── Pares etiqueta/valor (PORT de .bj-kv) ─── */
+.od-kv { margin: 0; display: grid; grid-template-columns: 168px 1fr; gap: 11px 18px; }
+.od-kv__row { display: contents; }
+.od-kv__row dt { font-size: 13px; color: var(--text-secondary); margin: 0; }
+.od-kv__row dd { font-size: 14px; color: var(--text-primary); margin: 0; word-break: break-word; font-variant-numeric: tabular-nums; }
+
+/* ─── Documentos (PORT de .bj-doc) ─── */
+.od-doc { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 8px; }
+.od-doc:last-child { margin-bottom: 0; }
+.od-doc__ico { width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--radius-sm); background: var(--bg-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.od-doc__ico svg { width: 18px; height: 18px; }
+.od-doc__name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.od-doc__file { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; font-variant-numeric: tabular-nums; }
+.od-doc__tag { margin-left: auto; flex-shrink: 0; }
+
+/* ─── Jerarquía (hijos / deportistas) ─── */
+.od-counts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.od-count { display: inline-flex; align-items: baseline; gap: 5px; background: var(--bg-soft); border-radius: var(--radius-full); padding: 6px 13px; font-size: 12.5px; color: var(--text-secondary); }
+.od-count b { font-size: 14px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+.od-parent { font-size: 13px; color: var(--text-secondary); margin: 0 0 16px; }
+.od-parent a { font-weight: 600; }
+
+.od-child {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 8px;
+  text-decoration: none; color: inherit; transition: border-color var(--duration-normal), background var(--duration-normal);
+}
+a.od-child:hover { border-color: var(--field-border-hover); background: var(--bg-soft); text-decoration: none; }
+.od-child:last-child { margin-bottom: 0; }
+.od-child__emoji { width: 38px; height: 38px; flex-shrink: 0; border-radius: var(--radius-md); background: var(--bg-soft); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+.od-child__main { min-width: 0; flex: 1; }
+.od-child__name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.od-child__sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.od-child__sub b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.od-child__badge { flex-shrink: 0; }
+.od-child__arrow { flex-shrink: 0; color: var(--text-muted); display: flex; }
+.od-child__arrow svg { width: 18px; height: 18px; }
+
+/* ─── Timeline / historial (PORT de .bj-timeline) ─── */
+.od-tl-row { display: flex; gap: 12px; padding: 0 0 14px; position: relative; }
+.od-tl-row:not(:last-child)::before { content: ''; position: absolute; left: 4px; top: 15px; bottom: 0; width: 1.5px; background: var(--border); }
+.od-tl-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
+.od-tl-row:not(:first-child) .od-tl-dot { background: var(--text-muted); }
+.od-tl-head { font-size: 13.5px; color: var(--text-primary); }
+.od-tl-head strong { font-weight: 700; }
+.od-tl-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* Empty state embebido en un panel (sin borde de card propia) */
+.od-panel .naowee-empty-state { padding: 40px 20px; }
+
+/* Animación de entrada del panel (solo opacity/transform) */
+.od-panel { animation: odFade var(--duration-normal) var(--easing-smoothout) both; }
+@keyframes odFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .od-panel { animation: none; } }
+
+/* ─── Responsive ─── */
+@media (max-width: 760px) {
+  .od-hero { flex-direction: column; gap: 14px; padding: 18px 16px; }
+  .od-hero__actions { flex-direction: row; align-items: center; align-self: stretch; flex-wrap: wrap; }
+  .od-hero__name { font-size: 19px; }
+  .od-panel { padding: 18px 16px; }
+  .od-kv { grid-template-columns: 1fr; gap: 3px 0; }
+  .od-kv__row { display: block; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .od-kv__row:last-child { border-bottom: none; }
+  .od-kv__row dt { margin-bottom: 2px; }
+}
