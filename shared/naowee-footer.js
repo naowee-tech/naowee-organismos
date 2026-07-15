@@ -37,8 +37,14 @@ const MODULE_NAME = 'Organismos';
             enviar crea un organismo 'Preinscrito' vía addOrganismo() que ya
             aparece en la jerarquía; pantalla de éxito con confetti + recibo +
             CTA "Ver en la jerarquía". Nuevos shared/ forms.css + registro.js;
-            data: helpers addOrganismo/nextOrgId/activosDeTipo/comitePorSector. */
-const MODULE_VERSION = 'v0.3.0';
+            data: helpers addOrganismo/nextOrgId/activosDeTipo/comitePorSector.
+   v0.3.1 — Fix (review T3 de Fable): (1) dropdowns del wizard rotos en móvil
+            ≤760px — el bottom-sheet position:fixed quedaba atrapado por el
+            transform residual de .reg-pane (animation regPaneIn con fill-mode:both);
+            regPaneIn pasa a opacity-only. (2) El Comité (ORG-01) se crea 'Activo'
+            (nodo raíz sin aprobación superior) en vez de 'Preinscrito';
+            renderSuccess() deja de hardcodear "Preinscrito" y usa org.estado. */
+const MODULE_VERSION = 'v0.3.1';
 
 (function () {
   function mount() {

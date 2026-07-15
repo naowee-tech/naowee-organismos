@@ -218,7 +218,10 @@
 .reg-stepper-mobile { display: none; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
 .reg-stepper-mobile strong { color: var(--accent); }
 .reg-pane { padding: 28px; animation: regPaneIn .35s var(--easing-smoothout) both; }
-@keyframes regPaneIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* opacity-only a propósito: un transform (aunque sea translateY(0)) con fill-mode:both deja
+   al pane como bloque contenedor del position:fixed → atrapaba el bottom-sheet de los dropdowns
+   en móvil (≤760px). NO reintroducir transform aquí. */
+@keyframes regPaneIn { from { opacity: 0; } to { opacity: 1; } }
 .reg-pane__title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -.2px; }
 .reg-pane__sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 22px; line-height: 1.5; max-width: 620px; }
 .reg-form { display: flex; flex-direction: column; gap: 18px; max-width: 560px; }

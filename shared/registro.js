@@ -879,7 +879,7 @@ function submit() {
   const org = {
     tipo: STATE.tipo, nombre: d.nombre.trim(), nit: d.nit.trim(),
     sector, deporte: STATE.tipo === 'comite' ? '—' : (d.deporte || '—'),
-    parentId, estado: 'Preinscrito',
+    parentId, estado: STATE.tipo === 'comite' ? 'Activo' : 'Preinscrito',
     repLegal: { ...d.repLegal }, ubicacion: { ...d.ubicacion }, contacto: { ...d.contacto },
     documentos: { ...d.documentos }, aceptaPoliticas: d.aceptaPoliticas
   };
@@ -890,7 +890,7 @@ function submit() {
   created = addOrganismo(org);
   clearStore(DRAFT_KEY);
   STATE.step = 6;
-  window.naoweeToast && window.naoweeToast('Registro enviado — organismo Preinscrito', 'success');
+  window.naoweeToast && window.naoweeToast('Registro enviado — organismo ' + org.estado, 'success');
   render();
 }
 
@@ -909,10 +909,10 @@ function renderSuccess() {
         <div class="reg-success__hero">
           <div class="reg-success__check">${I.check}</div>
           <h2 class="reg-success__title">¡Registro enviado con éxito!</h2>
-          <p class="reg-success__lead">${esc(TIPO_SINGULAR[org.tipo])} <strong>${esc(org.nombre)}</strong> quedó en estado <strong>Preinscrito</strong>. ${org.tipo === 'comite' ? 'Como cabeza de sector queda activo sin aprobación superior una vez completado.' : 'Su nivel superior la revisará desde la Bandeja de aprobaciones.'}</p>
+          <p class="reg-success__lead">${esc(TIPO_SINGULAR[org.tipo])} <strong>${esc(org.nombre)}</strong> quedó en estado <strong>${esc(org.estado)}</strong>. ${org.tipo === 'comite' ? 'Como cabeza de sector queda Activo de inmediato, sin aprobación superior.' : 'Su nivel superior la revisará desde la Bandeja de aprobaciones.'}</p>
           <div class="naowee-message naowee-message--informative" style="max-width:460px;margin:0 auto;text-align:left">
             <span class="naowee-message__icon">${I.bang}</span>
-            <div class="naowee-message__body"><p class="naowee-message__text">Este registro ya aparece en la jerarquía del SND bajo su superior. La aprobación (Preinscrito → En revisión → Activo) se ejercita en la Bandeja.</p></div>
+            <div class="naowee-message__body"><p class="naowee-message__text">${org.tipo === 'comite' ? 'Como cabeza de sector del SND, este comité queda Activo de inmediato, sin aprobación superior. Ya aparece en la jerarquía como nodo raíz.' : 'Este registro ya aparece en la jerarquía del SND bajo su superior. La aprobación (Preinscrito → En revisión → Activo) se ejercita en la Bandeja.'}</p></div>
           </div>
           <div class="reg-receipt">
             <div class="reg-receipt__head">
@@ -921,7 +921,7 @@ function renderSuccess() {
             </div>
             <div class="reg-receipt__rows">
               ${receiptRow(I.id, 'Radicado', org.id)}
-              ${receiptRow(I.tag, 'Estado', 'Preinscrito')}
+              ${receiptRow(I.tag, 'Estado', org.estado)}
               ${org.deporte && org.deporte !== '—' ? receiptRow(I.layers, 'Deporte', org.deporte) : ''}
               ${sup ? receiptRow(I.tree, 'Superior', sup.nombre) : ''}
               ${receiptRow(I.pin, 'Fecha de registro', org.fechaRegistro)}
