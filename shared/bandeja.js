@@ -9,7 +9,8 @@
 import { getRoleFromQuery, ROLES, getDemoMode } from './sidebar.js';
 import {
   allOrganismos, getOrganismo, subtreeOf, addOrganismo,
-  updateOrganismo, setEstado, auditLog, allAudit
+  updateOrganismo, setEstado, auditLog, allAudit,
+  solicitudesDeClub, resolverAfiliacion, getDeportista, ancestorsOf, seedAfiliacionesDemo
 } from './organismos-data.js';
 import { can, scopeFor } from './permissions.js';
 import { estadoBadgeVariant, resolverFederacion, puedeTransicionar } from './estados.js';
@@ -99,6 +100,7 @@ const puedeAccionar = target && can(roleCode, 'A', target.recurso);
 
 /* ═══════════════ Render ═══════════════ */
 function render() {
+  if (roleCode === 'CLUB') return renderAfiliaciones();
   if (!target) return renderNoBandeja();
   const all = bandejaOrgs();
   const rows = filtered(all);
@@ -145,10 +147,168 @@ function render() {
 
 function renderNoBandeja() {
   root.innerHTML = `<div class="naowee-card">${emptyState(
-    roleCode === 'CLUB' ? 'Bandeja de afiliaciones (próximamente)' : 'Sin bandeja',
-    roleCode === 'CLUB'
-      ? 'Las solicitudes de afiliación de deportistas a tu club se aprobarán aquí en la siguiente entrega (T7).'
-      : 'Tu rol no gestiona aprobaciones de organismos.')}</div>`;
+    'Sin bandeja',
+    'Tu rol no gestiona aprobaciones de organismos.')}</div>`;
+}
+
+/* ═══════════════ Bandeja del CLUB — solicitudes de afiliación (T7) ═══════════════
+   El club es el ÚNICO aprobador de la afiliación de un deportista (ORG-05). Al
+   aprobar, el deportista queda vinculado y hereda la liga + federación del club. */
+let afilFiltro = 'Pendientes';
+const AFIL_ESTADO = { Pendientes: 'Enviada', Aprobadas: 'Aprobada', Rechazadas: 'Rechazada' };
+const AFIL_SOL_VARIANT = { Enviada: 'caution', Aprobada: 'positive', Rechazada: 'negative', Retirada: 'neutral' };
+const MOTIVOS_AFIL = [
+  'El deportista no corresponde a la oferta deportiva del club',
+  'Datos del deportista inconsistentes',
+  'Sin cupo disponible por el momento',
+  'Documentación del deportista pendiente',
+  'Otro (ver comentario)'
+];
+const puedeAfil = can(roleCode, 'A', 'solicitudes');
+
+function solBadge(estado) {
+  return `<span class="naowee-badge naowee-badge--${AFIL_SOL_VARIANT[estado] || 'neutral'} naowee-badge--quiet naowee-badge--small">${esc(estado)}</span>`;
+}
+
+function renderAfiliaciones() {
+  const club = scopeId ? getOrganismo(scopeId) : null;
+  const rows = solicitudesDeClub(scopeId).map((s) => ({ ...s, dep: getDeportista(s.deportistaId) })).filter((r) => r.dep);
+  const pend = rows.filter((r) => r.estado === 'Enviada').length;
+
+  let view = rows;
+  if (afilFiltro !== 'Todas') { const est = AFIL_ESTADO[afilFiltro]; if (est) view = rows.filter((r) => r.estado === est); }
+  if (query) { const q = norm(query); view = view.filter((r) => norm(r.dep.nombre).includes(q) || norm(r.dep.numDoc).includes(q) || norm(r.dep.deporte).includes(q)); }
+  view.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+
+  root.innerHTML = `
+    ${msg('informative', I.info, puedeAfil
+      ? `Solicitudes de afiliación a <strong>${esc(club ? club.nombre : 'tu club')}</strong>. Al <strong>aprobar</strong>, el deportista queda vinculado y hereda automáticamente tu liga y federación (ORG-05). El club es el único aprobador.`
+      : `Vista de <strong>oversight</strong> (solo lectura) de solicitudes de afiliación.`)}
+
+    <div class="naowee-card bj-panel">
+      <div class="bj-panel__bar">
+        <div class="naowee-searchbox bj-search">
+          <div class="naowee-searchbox__input-wrap">
+            <span class="naowee-searchbox__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input class="naowee-searchbox__input" id="bjSearch" placeholder="Buscar por nombre, documento o deporte…" value="${esc(query)}">
+          </div>
+        </div>
+        <span class="bj-count">${view.length} de ${rows.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
+      </div>
+      <div class="naowee-tabs bj-tabs" id="bjFilters">
+        ${['Pendientes', 'Aprobadas', 'Rechazadas', 'Todas'].map((f) => `<button type="button" class="naowee-tab ${afilFiltro === f ? 'naowee-tab--selected' : ''}" data-af="${f}">${f}</button>`).join('')}
+      </div>
+      ${view.length ? `
+        <div class="cg-table-wrap">
+          <table class="cg-table bj-table">
+            <thead><tr><th>Deportista</th><th>Deporte</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+            <tbody>
+              ${view.map((r) => `
+                <tr>
+                  <td><div class="bj-org"><span class="bj-org__emoji">🏃</span><div><div class="bj-org__name">${esc(r.dep.nombre)}</div><div class="bj-org__sub">${esc(r.dep.tipoDoc)} ${esc(r.dep.numDoc)}</div></div></div></td>
+                  <td><div class="bj-org__name" style="font-weight:500">${esc(r.dep.deporte)}</div><div class="bj-org__sub">${esc(r.dep.modalidad || '')}</div></td>
+                  <td>${solBadge(r.estado)}</td>
+                  <td class="cg-table__nit">${esc(r.fecha || '—')}</td>
+                  <td class="bj-row-action"><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openafil="${esc(r.id)}">${puedeAfil && r.estado === 'Enviada' ? 'Revisar' : 'Ver'}</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : emptyState('Sin solicitudes', afilFiltro === 'Pendientes' ? 'No hay solicitudes de afiliación pendientes de tu confirmación por ahora.' : 'No hay solicitudes que coincidan con el filtro.')}
+    </div>`;
+  wire();
+}
+
+function afilById(sid) { return solicitudesDeClub(scopeId).find((s) => s.id === sid) || null; }
+
+function openAfilDetail(sid) {
+  const sol = afilById(sid);
+  if (!sol) return;
+  const dep = getDeportista(sol.deportistaId);
+  if (!dep) return;
+  const accionable = puedeAfil && sol.estado === 'Enviada';
+
+  const ov = openModal(`
+    <div class="reg-modal bj-modal" role="dialog" aria-modal="true">
+      <div class="reg-modal__head">
+        <h3 class="reg-modal__title">🏃 ${esc(dep.nombre)}</h3>
+        <button type="button" class="reg-modal__close" id="afClose" aria-label="Cerrar">${I.x}</button>
+      </div>
+      <div class="reg-modal__body bj-detail">
+        <div class="bj-detail__badges">${solBadge(sol.estado)}</div>
+        <dl class="bj-kv">
+          ${kv('Documento', `${dep.tipoDoc || ''} ${dep.numDoc || ''}`)}
+          ${kv('Deporte', dep.deporte)}
+          ${kv('Modalidad', dep.modalidad || '—')}
+          ${kv('Correo', dep.correo || '—')}
+          ${kv('Solicitud', sol.fecha || '—')}
+        </dl>
+        ${sol.estado === 'Rechazada' && sol.motivo ? msg('negative', I.alert, `<strong>Motivo del rechazo:</strong> ${esc(sol.motivo)}`) : ''}
+        ${sol.estado === 'Aprobada' ? msg('positive', I.check, `El deportista quedó <strong>vinculado</strong> a tu club y heredó tu liga y federación.`) : ''}
+        ${accionable ? `<p class="bj-detail__note">Al aprobar, <strong>${esc(dep.nombre)}</strong> quedará vinculado a <strong>${esc((getOrganismo(sol.clubId) || {}).nombre || 'tu club')}</strong> y heredará automáticamente la liga y la federación (ORG-05).</p>` : ''}
+      </div>
+      <div class="reg-modal__foot bj-actions">
+        ${accionable ? `
+          <div class="bj-actions__main">
+            <button type="button" class="naowee-btn bj-btn-danger" id="afRej">Rechazar</button>
+            <button type="button" class="naowee-btn bj-btn-success" id="afApr">Aprobar afiliación</button>
+          </div>`
+          : `<button type="button" class="naowee-btn naowee-btn--mute" id="afCancel">Cerrar</button>`}
+      </div>
+    </div>`);
+  const close = () => closeModal(ov);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  ov.querySelector('#afClose').addEventListener('click', close);
+  ov.querySelector('#afCancel')?.addEventListener('click', close);
+  if (accionable) {
+    ov.querySelector('#afApr').addEventListener('click', () => { doApproveAfil(sid); close(); });
+    ov.querySelector('#afRej').addEventListener('click', () => openAfilMotivo(sid, ov));
+  }
+}
+
+function doApproveAfil(sid) {
+  const sol = afilById(sid);
+  const dep = sol ? getDeportista(sol.deportistaId) : null;
+  resolverAfiliacion(sid, 'aprobada', { responsable: role.userName || roleCode });
+  toast(`Afiliación aprobada${dep ? ' — ' + dep.nombre + ' quedó vinculado' : ''}`, 'success');
+  render();
+}
+
+function openAfilMotivo(sid, detailOv) {
+  closeModal(detailOv);                      // no apilar: cierra el detalle (con su animación)
+  const sol = afilById(sid);
+  const dep = sol ? getDeportista(sol.deportistaId) : null;
+  let selMotivo = '';
+  const ov = openModal(`
+    <div class="reg-modal bj-modal bj-modal--sm bj-modal--overflow" role="dialog" aria-modal="true">
+      <div class="reg-modal__head"><h3 class="reg-modal__title">Rechazar afiliación · ${esc(dep ? dep.nombre : '')}</h3><button type="button" class="reg-modal__close" id="amClose" aria-label="Cerrar">${I.x}</button></div>
+      <div class="reg-modal__body">
+        <div class="bj-field">
+          <label class="bj-label">Motivo <span class="bj-req">*</span></label>
+          <div class="naowee-dropdown" id="amDd">
+            <button type="button" class="naowee-dropdown__trigger" aria-haspopup="listbox"><span class="naowee-dropdown__value is-placeholder">Selecciona un motivo…</span><span class="naowee-dropdown__chevron">${I.chevron}</span></button>
+            <div class="naowee-dropdown__menu" role="listbox">${MOTIVOS_AFIL.map((m) => `<div class="naowee-dropdown__opt" role="option" data-value="${esc(m)}">${esc(m)}</div>`).join('')}</div>
+          </div>
+          <p class="bj-err" id="amErr" style="display:none">Selecciona un motivo para continuar.</p>
+        </div>
+        <div class="bj-field">
+          <label class="bj-label">Comentario</label>
+          <div class="naowee-textfield__input-wrap bj-ta-wrap"><textarea id="amTxt" rows="3" placeholder="Detalle para el deportista…"></textarea></div>
+        </div>
+      </div>
+      <div class="reg-modal__foot bj-modal__foot"><button type="button" class="naowee-btn naowee-btn--mute" id="amCancel">Cancelar</button><button type="button" class="naowee-btn bj-btn-danger" id="amOk">Confirmar rechazo</button></div>
+    </div>`);
+  mountDd(ov, (val) => { selMotivo = val; ov.querySelector('#amErr').style.display = 'none'; });
+  const backToDetail = () => closeModal(ov, () => openAfilDetail(sid));
+  ov.addEventListener('click', (e) => { if (e.target === ov) backToDetail(); });
+  ov.querySelector('#amClose').addEventListener('click', backToDetail);
+  ov.querySelector('#amCancel').addEventListener('click', backToDetail);
+  ov.querySelector('#amOk').addEventListener('click', () => {
+    if (!selMotivo) { ov.querySelector('#amErr').style.display = 'block'; ov.querySelector('#amDd').classList.add('naowee-dropdown--error'); return; }
+    const txt = ov.querySelector('#amTxt').value.trim();
+    resolverAfiliacion(sid, 'rechazada', { motivo: txt ? `${selMotivo} — ${txt}` : selMotivo, responsable: role.userName || roleCode });
+    toast('Afiliación rechazada', 'success');
+    closeModal(ov); render();
+  });
 }
 
 function badge(estado) {
@@ -346,10 +506,15 @@ function wire() {
   const s = document.getElementById('bjSearch');
   if (s) s.addEventListener('input', (e) => { query = e.target.value; const p = s.selectionStart; render(); const n = document.getElementById('bjSearch'); if (n) { n.focus(); try { n.setSelectionRange(p, p); } catch (_) {} } });
   const f = document.getElementById('bjFilters');
-  if (f) f.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { estadoFiltro = b.dataset.f; render(); }));
+  if (f) {
+    f.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { estadoFiltro = b.dataset.f; render(); }));
+    f.querySelectorAll('[data-af]').forEach((b) => b.addEventListener('click', () => { afilFiltro = b.dataset.af; render(); }));
+  }
   root.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openDetail(b.dataset.open)));
+  root.querySelectorAll('[data-openafil]').forEach((b) => b.addEventListener('click', () => openAfilDetail(b.dataset.openafil)));
 }
 function toast(text, variant) { window.naoweeToast && window.naoweeToast(text, variant === 'negative' ? 'error' : 'success'); }
 
 seedBandejaDemo();
+seedAfiliacionesDemo(getDemoMode());
 render();

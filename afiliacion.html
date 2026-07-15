@@ -9,10 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="shared/tokens.css?v=0.6.0">
-<link rel="stylesheet" href="shared/shell.css?v=0.6.0">
-<link rel="stylesheet" href="shared/components.css?v=0.6.0">
-<link rel="stylesheet" href="shared/naowee-footer.css?v=0.6.0">
+<link rel="stylesheet" href="shared/tokens.css?v=0.7.0">
+<link rel="stylesheet" href="shared/shell.css?v=0.7.0">
+<link rel="stylesheet" href="shared/components.css?v=0.7.0">
+<link rel="stylesheet" href="shared/forms.css?v=0.7.0">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=0.7.0">
 </head>
 <body>
 
@@ -24,18 +25,9 @@
       <div class="page-inner">
         <div class="page-head">
           <h1 class="page-head__title">Mi afiliación</h1>
-          <p class="page-head__sub">Afiliación del deportista a un club. Al aprobarla el club, se heredan automáticamente la liga y la federación correspondientes.</p>
+          <p class="page-head__sub">Solicita tu afiliación a un club deportivo. Al aprobarla el club, heredas automáticamente la liga y la federación correspondientes (ORG-05).</p>
         </div>
-        <div class="stub-card">
-          <div class="naowee-empty-state">
-            <span class="naowee-empty-state__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            </span>
-            <span class="naowee-badge naowee-badge--neutral naowee-badge--quiet naowee-badge--small">Próximamente</span>
-            <p class="naowee-empty-state__title">Disponible en la próxima versión</p>
-            <p class="naowee-empty-state__description">El formulario de afiliación —datos precargados no editables, buscador de clubes en estado Activo y herencia automática de liga y federación (ORG-05)— junto con la bandeja del club, se habilita en la siguiente versión de la demo.</p>
-          </div>
-        </div>
+        <div id="afilRoot"></div>
       </div>
     </div>
   </div>
@@ -51,8 +43,10 @@
   mountHeader({ headerEl: document.getElementById('topHeader'), role });
   mountBackdrop();
   mountDemoSwitcher({ roleCode });
+  /* El módulo se auto-arranca al importar (render por estado del deportista). */
+  import('./shared/afiliacion.js?v=0.7.0');
 </script>
-<script src="shared/naowee-footer.js?v=0.6.0"></script>
+<script src="shared/naowee-footer.js?v=0.7.0"></script>
 
 </body>
 </html>

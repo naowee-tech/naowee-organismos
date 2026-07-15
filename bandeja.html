@@ -9,11 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="shared/tokens.css?v=0.6.0">
-<link rel="stylesheet" href="shared/shell.css?v=0.6.0">
-<link rel="stylesheet" href="shared/components.css?v=0.6.0">
-<link rel="stylesheet" href="shared/forms.css?v=0.6.0">
-<link rel="stylesheet" href="shared/naowee-footer.css?v=0.6.0">
+<link rel="stylesheet" href="shared/tokens.css?v=0.7.0">
+<link rel="stylesheet" href="shared/shell.css?v=0.7.0">
+<link rel="stylesheet" href="shared/components.css?v=0.7.0">
+<link rel="stylesheet" href="shared/forms.css?v=0.7.0">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=0.7.0">
 </head>
 <body>
 
@@ -25,7 +25,7 @@
       <div class="page-inner">
         <div class="page-head">
           <h1 class="page-head__title" id="pageTitle">Bandeja de aprobaciones</h1>
-          <p class="page-head__sub">Revisión de los organismos que dependen de ti: aprobar, rechazar o solicitar corrección con motivo obligatorio. Federaciones con doble validación (Ministerio + Comité).</p>
+          <p class="page-head__sub" id="pageSub">Revisión de los organismos que dependen de ti: aprobar, rechazar o solicitar corrección con motivo obligatorio. Federaciones con doble validación (Ministerio + Comité).</p>
         </div>
         <div id="bandejaRoot"></div>
       </div>
@@ -43,14 +43,19 @@
   getMenuForRole(roleCode).forEach((s) => s.items.forEach((it) => {
     if (it.id === 'bandeja') document.getElementById('pageTitle').textContent = it.label;
   }));
+  /* Subtítulo por rol: el CLUB gestiona afiliaciones de deportistas (no organismos). */
+  if (roleCode === 'CLUB') {
+    document.getElementById('pageSub').textContent =
+      'Solicitudes de afiliación de deportistas a tu club: aprobar o rechazar (motivo obligatorio). Al aprobar, el deportista hereda tu liga y federación.';
+  }
   mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: 'bandeja' });
   mountHeader({ headerEl: document.getElementById('topHeader'), role });
   mountBackdrop();
   mountDemoSwitcher({ roleCode });
   /* El módulo se auto-arranca al importar (render por rol). */
-  import('./shared/bandeja.js?v=0.6.0');
+  import('./shared/bandeja.js?v=0.7.0');
 </script>
-<script src="shared/naowee-footer.js?v=0.6.0"></script>
+<script src="shared/naowee-footer.js?v=0.7.0"></script>
 
 </body>
 </html>
