@@ -195,6 +195,7 @@ export function seedDemoData() {
   if (readStore('deportistas-nuevos') == null) writeStore('deportistas-nuevos', []);
   if (readStore('solicitudes') == null) writeStore('solicitudes', []);
   if (readStore('cargues') == null) writeStore('cargues', []);
+  if (readStore('audit') == null) writeStore('audit', []);
   try { localStorage.setItem(SEED_FLAG, SEED_VERSION); } catch (_) {}
   return { seeded: true, version: SEED_VERSION };
 }
@@ -389,4 +390,50 @@ export function recordCargue(entry) {
 }
 export function allCargues() {
   return (readStore('cargues', []) || []).map((c) => ({ ...c }));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Bandeja de aprobaciones (T5) — actualización de estado + auditoría.
+   No muta el seed: los organismos del seed se editan vía `organismos-overrides`,
+   los creados en la demo directamente en `organismos-nuevos`.
+   ═══════════════════════════════════════════════════════════════ */
+export function updateOrganismo(id, patch) {
+  const nuevos = readStore('organismos-nuevos', []) || [];
+  const i = nuevos.findIndex((o) => o.id === id);
+  if (i >= 0) {
+    nuevos[i] = { ...nuevos[i], ...patch };
+    writeStore('organismos-nuevos', nuevos);
+  } else {
+    const overrides = readStore('organismos-overrides', {}) || {};
+    overrides[id] = { ...(overrides[id] || {}), ...patch };
+    writeStore('organismos-overrides', overrides);
+  }
+  return getOrganismo(id);
+}
+
+/* Cambia el estado de un organismo y registra la transición en la auditoría.
+   `meta`: { responsable, rol, accion, motivo, fecha, patch } (patch = campos extra). */
+export function setEstado(id, estado, meta = {}) {
+  const prev = getOrganismo(id);
+  const updated = updateOrganismo(id, { estado, ...(meta.patch || {}) });
+  auditLog({
+    orgId: id, fecha: meta.fecha || new Date().toISOString().slice(0, 10),
+    responsable: meta.responsable || '', rol: meta.rol || '',
+    accion: meta.accion || 'Cambio de estado',
+    de: prev ? prev.estado : '', a: estado, motivo: meta.motivo || ''
+  });
+  return updated;
+}
+
+/* Log de auditoría (acciones sobre organismos). Más reciente primero. */
+export function auditLog(entry) {
+  const list = readStore('audit', []) || [];
+  const record = { id: 'AU-' + String(list.length + 1).padStart(4, '0'), ...entry };
+  list.unshift(record);
+  writeStore('audit', list);
+  return { ...record };
+}
+export function allAudit(orgId) {
+  const list = (readStore('audit', []) || []).map((a) => ({ ...a }));
+  return orgId ? list.filter((a) => a.orgId === orgId) : list;
 }

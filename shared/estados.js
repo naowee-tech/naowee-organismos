@@ -63,3 +63,29 @@ export const TRANSICIONES = [
 
 /* Estados de la solicitud de afiliación deportista→club (§3.3) — para T7. */
 export const ESTADOS_SOLICITUD = ['Enviada', 'Aprobada', 'Rechazada', 'Retirada'];
+
+/* ─── Lógica de transición (T5 · Bandeja) ───
+   Doble validación de federación (§11.3, paralela e independiente): dos flags
+   { mindeporte, comite } ∈ {pendiente, aprobado, rechazado}. Deriva el estado. */
+export function resolverFederacion(validacion) {
+  const v = validacion || {};
+  if (v.mindeporte === 'rechazado' || v.comite === 'rechazado') return 'Rechazado';
+  if (v.mindeporte === 'aprobado' && v.comite === 'aprobado') return 'Activo';
+  return 'En revisión';
+}
+
+/* ¿La transición `org.estado → aEstado` es válida y `role` está facultado?
+   Combina TRANSICIONES + la regla dura ORG-06 ("el superior debe estar Activo"
+   para aprobar/rechazar). La autorización rol↔recurso se valida aparte con
+   `can(role,'A',recurso)` en la UI. `superior` = organismo padre. */
+export function puedeTransicionar(role, org, aEstado, superior) {
+  const t = TRANSICIONES.find((x) => x.a === aEstado && (x.de === org.estado || x.de === '*'));
+  if (!t) return false;
+  if (t.quien === 'MINDEPORTE') return role === 'MINDEPORTE';
+  if (t.quien === 'superior') {
+    // ORG-06: no se habilita/rechaza si el superior no está Activo.
+    if (superior && superior.estado !== 'Activo') return false;
+    return true;
+  }
+  return false;   // quien: 'organismo' → lo ejecuta el propio organismo, no la bandeja
+}
