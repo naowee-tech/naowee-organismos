@@ -77,8 +77,10 @@ const MODULE_NAME = 'Organismos';
             trazabilidad (timeline de auditoría) por organismo; oversight solo-lectura;
             Club → empty-state (afiliaciones = T7). Nuevos: shared/bandeja.js + helpers
             updateOrganismo/setEstado/auditLog (data) + puedeTransicionar/resolverFederacion
-            (estados). Componentes canónicos (.cg-table, .reg-modal, badges quiet). */
-const MODULE_VERSION = 'v0.5.0';
+            (estados). Componentes canónicos (.cg-table, .reg-modal, badges quiet).
+   v0.5.1 — Fix: el responsable de la auditoría (bandeja) y del cargue usa
+            role.userName (nombre real) en vez de role.name (inexistente → caía al code). */
+const MODULE_VERSION = 'v0.5.1';
 
 (function () {
   function mount() {

@@ -225,7 +225,7 @@ function kv(k, val) { return `<div class="bj-kv__row"><dt>${esc(k)}</dt><dd>${es
 /* ── Aprobar ── */
 function doApprove(id) {
   const o = getOrganismo(id);
-  const meta = { rol: roleCode, responsable: role.name || roleCode, fecha: today() };
+  const meta = { rol: roleCode, responsable: role.userName || roleCode, fecha: today() };
   if (o.tipo === 'federacion') {
     const half = halfOf[roleCode];
     const v = { mindeporte: 'pendiente', comite: 'pendiente', ...(o.validacion || {}), [half]: 'aprobado' };
@@ -272,7 +272,7 @@ function openMotivo(id, tipoAccion, closeDetail) {
 }
 function doReject(id, tipoAccion, motivo) {
   const o = getOrganismo(id);
-  const meta = { rol: roleCode, responsable: role.name || roleCode, fecha: today(), accion: tipoAccion, motivo };
+  const meta = { rol: roleCode, responsable: role.userName || roleCode, fecha: today(), accion: tipoAccion, motivo };
   const patch = o.tipo === 'federacion' ? { validacion: { mindeporte: 'pendiente', comite: 'pendiente', ...(o.validacion || {}), [halfOf[roleCode]]: 'rechazado' } } : {};
   setEstado(id, 'Rechazado', { ...meta, patch });
   toast(`${tipoAccion} registrada`, 'success');

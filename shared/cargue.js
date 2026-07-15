@@ -157,7 +157,7 @@ function commit() {
   if (!valids.length) return;
   created = addOrganismosBulk(valids.map(toRecord));
   recordCargue({
-    rol: roleCode, fecha: today(), responsable: role.name || roleCode, tipo: targetTipo,
+    rol: roleCode, fecha: today(), responsable: role.userName || roleCode, tipo: targetTipo,
     archivo: { nombre: parsed.fileName, tamano: parsed.fileSize },
     totales: { filas: parsed.rows.length, cargadas: created.length, error: parsed.rows.length - created.length },
     version: 'v0.4.0'
