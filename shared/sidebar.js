@@ -72,7 +72,7 @@ export const ROLES = {
     userName: 'Valentina Ortiz', userEmail: 'valentina.ortiz@correo.demo.co',
     userDoc: 'CC 1.144.556.778', org: '—', avatar: 'VO',
     color: '#0e7490', short: 'Gestiona su afiliación a un club deportivo',
-    group: 'Personas'
+    group: 'Personas', deportistaId: 'DEP-001'
   }
 };
 

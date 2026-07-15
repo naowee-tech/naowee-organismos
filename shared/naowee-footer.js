@@ -141,7 +141,24 @@ const MODULE_NAME = 'Organismos';
             (overrides de deportista), crearSolicitud/solicitudesDeClub/solicitudDeDeportista/
             resolverAfiliacion/retirarAfiliacion/buscarClubesActivos/allSolicitudes + seedAfiliacionesDemo
             (2 solicitudes Enviada a CLU-001, solo modo demo). Layout local .af-* en forms.css. */
-const MODULE_VERSION = 'v0.7.0';
+/* v0.7.1 — T7 Lado A elevado a PERFIL DEL DEPORTISTA (clon 1:1 del perfil de Eventos, feedback
+            Doug). afiliacion.html deja de ser la tarjeta corta → perfil 360°: hero (avatar por tier +
+            bandera + ribbon + badges de la cadena DERIVADA de la jerarquía) + grid 3 col
+            [nav agrupado | panel con tabs | aside biometría/completitud]. Nuevo grupo "Afiliación"
+            en el nav: "Mi club" (tarjeta del club + CADENA HEREDADA ORG-05 club→liga→federación→
+            comité + cambiar/retirar) y "Solicitudes" (historial). Estado de afiliación reflejado en
+            el hero (Vinculado/Solicitud enviada/Autodeclarado) + CTA "Asociar a club" (autodeclarado/
+            rechazada) → modal registro corto §5.2 (precargados NO editables en resumen compacto +
+            buscador de clubes Activos ≥3 chars acento-insensible + preview de herencia + alerta
+            "club no encontrado"). Secciones Resumen (tabs Datos/Ubicación/Adicionales/Contacto),
+            Documentos (file-uploader mock), Eventos e Historial (trayectoria/medallería/resultados,
+            empty-states para autodeclarados), Config/Notif/Seguridad. Modal Editar datos (identidad+
+            afiliación read-only con candado). Nuevos shared/: deportista-detalle.js
+            (buildDeportistaDetalle: identidad + cadena derivada de ancestorsOf + biometría/tier/
+            medallería demo) y perfil.css (pf-*/af-* + keyframes fadeInUp/fadeIn). Rol DEPORTISTA gana
+            deportistaId (DEP-001, ?id= para vista puntual). Bloque .af-* movido de forms.css a
+            perfil.css. Lado B (bandeja del club) y helpers de datos = v0.7.0 sin cambios. */
+const MODULE_VERSION = 'v0.7.1';
 
 (function () {
   function mount() {
