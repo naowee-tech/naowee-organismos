@@ -108,8 +108,22 @@ const MODULE_NAME = 'Organismos';
    v0.5.7 — fix(bandeja): el .naowee-message de "Documentos de soporte" mostraba "efi"
             (texto "undefined" recortado) en el círculo del ícono porque el objeto de íconos
             `I` no tenía la clave `alert` que la vista referenciaba. Añadido el glifo SVG
-            canónico (triángulo de advertencia, stroke currentColor). */
-const MODULE_VERSION = 'v0.5.7';
+            canónico (triángulo de advertencia, stroke currentColor).
+   v0.6.0 — T6 Perfil del organismo: organismo-detalle.html deja de ser stub → ficha 360°
+            SOLO LECTURA. Botón Volver (referrer/?from → jerarquía) + breadcrumb ascendente
+            (ancestorsOf; crumbs fuera de jurisdicción como texto estático) + header de ficha
+            (emoji · nombre · badge de estado con estadoBadgeVariant · meta NIT/deporte/sector)
+            + .naowee-tabs canónicas (--selected) con 5 paneles: Información (pares etiqueta/valor),
+            Representante legal (anonimizado), Documentos (soportes IVC/aval/RUT/personería; sin
+            adjuntos → .naowee-message--caution con ícono SVG correcto — no repite el bug v0.5.7),
+            Jerarquía (childrenOf + contadores countDescendants con enlace a cada hijo; club →
+            deportistasOf; empty-state si vacío), Historial (allAudit → timeline; empty-state si
+            vacío). RBAC §11: fuera de subtreeOf(scopeFor) → "Sin acceso"; id inexistente →
+            "Organismo no encontrado"; enlace "Gestionar en la Bandeja" si el organismo es
+            accionable por el rol. Nuevos shared/ detalle.css (port .naowee-tabs de forms.css +
+            .naowee-breadcrumb del DS + .od-* timeline/kv/doc) y detalle.js. Solo .naowee-*
+            verificados por grep contra dist/design-system.css. */
+const MODULE_VERSION = 'v0.6.0';
 
 (function () {
   function mount() {
