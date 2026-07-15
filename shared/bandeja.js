@@ -207,7 +207,7 @@ function renderAfiliaciones() {
                 <tr>
                   <td><div class="bj-org"><span class="bj-org__emoji">🏃</span><div><div class="bj-org__name">${esc(r.dep.nombre)}</div><div class="bj-org__sub">${esc(r.dep.tipoDoc)} ${esc(r.dep.numDoc)}</div></div></div></td>
                   <td><div class="bj-org__name" style="font-weight:500">${esc(r.dep.deporte)}</div><div class="bj-org__sub">${esc(r.dep.modalidad || '')}</div></td>
-                  <td>${solBadge(r.estado)}</td>
+                  <td><div class="bj-sol-cell">${r.tipo === 'retiro' ? '<span class="naowee-badge naowee-badge--caution naowee-badge--quiet naowee-badge--small">Baja</span>' : '<span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">Afiliación</span>'}${solBadge(r.estado)}</div></td>
                   <td class="cg-table__nit">${esc(r.fecha || '—')}</td>
                   <td class="bj-row-action"><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openafil="${esc(r.id)}">${puedeAfil && r.estado === 'Enviada' ? 'Revisar' : 'Ver'}</button></td>
                 </tr>`).join('')}
@@ -226,6 +226,11 @@ function openAfilDetail(sid) {
   const dep = getDeportista(sol.deportistaId);
   if (!dep) return;
   const accionable = puedeAfil && sol.estado === 'Enviada';
+  const esRetiro = sol.tipo === 'retiro';
+  const clubNm = esc((getOrganismo(sol.clubId) || {}).nombre || 'tu club');
+  const tipoBadge = esRetiro
+    ? '<span class="naowee-badge naowee-badge--caution naowee-badge--quiet naowee-badge--small">Solicitud de baja</span>'
+    : '<span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">Solicitud de afiliación</span>';
 
   const ov = openModal(`
     <div class="reg-modal bj-modal" role="dialog" aria-modal="true">
@@ -234,23 +239,25 @@ function openAfilDetail(sid) {
         <button type="button" class="reg-modal__close" id="afClose" aria-label="Cerrar">${I.x}</button>
       </div>
       <div class="reg-modal__body bj-detail">
-        <div class="bj-detail__badges">${solBadge(sol.estado)}</div>
+        <div class="bj-detail__badges">${tipoBadge}${solBadge(sol.estado)}</div>
         <dl class="bj-kv">
           ${kv('Documento', `${dep.tipoDoc || ''} ${dep.numDoc || ''}`)}
           ${kv('Deporte', dep.deporte)}
           ${kv('Modalidad', dep.modalidad || '—')}
           ${kv('Correo', dep.correo || '—')}
-          ${kv('Solicitud', sol.fecha || '—')}
+          ${kv(esRetiro ? 'Baja solicitada' : 'Solicitud', sol.fecha || '—')}
         </dl>
         ${sol.estado === 'Rechazada' && sol.motivo ? msg('negative', I.alert, `<strong>Motivo del rechazo:</strong> ${esc(sol.motivo)}`) : ''}
-        ${sol.estado === 'Aprobada' ? msg('positive', I.check, `El deportista quedó <strong>vinculado</strong> a tu club y heredó tu liga y federación.`) : ''}
-        ${accionable ? `<p class="bj-detail__note">Al aprobar, <strong>${esc(dep.nombre)}</strong> quedará vinculado a <strong>${esc((getOrganismo(sol.clubId) || {}).nombre || 'tu club')}</strong> y heredará automáticamente la liga y la federación (ORG-05).</p>` : ''}
+        ${sol.estado === 'Aprobada' ? msg('positive', I.check, esRetiro ? `La baja fue confirmada: el deportista quedó <strong>desvinculado</strong> del club.` : `El deportista quedó <strong>vinculado</strong> a tu club y heredó tu liga y federación.`) : ''}
+        ${accionable ? `<p class="bj-detail__note">${esRetiro
+          ? `Al confirmar la baja, <strong>${esc(dep.nombre)}</strong> dejará de estar afiliado a <strong>${clubNm}</strong> y perderá la liga y la federación heredadas.`
+          : `Al aprobar, <strong>${esc(dep.nombre)}</strong> quedará vinculado a <strong>${clubNm}</strong> y heredará automáticamente la liga y la federación (ORG-05).`}</p>` : ''}
       </div>
       <div class="reg-modal__foot bj-actions">
         ${accionable ? `
           <div class="bj-actions__main">
             <button type="button" class="naowee-btn bj-btn-danger" id="afRej">Rechazar</button>
-            <button type="button" class="naowee-btn bj-btn-success" id="afApr">Aprobar afiliación</button>
+            <button type="button" class="naowee-btn bj-btn-success" id="afApr">${esRetiro ? 'Confirmar retiro' : 'Aprobar afiliación'}</button>
           </div>`
           : `<button type="button" class="naowee-btn naowee-btn--mute" id="afCancel">Cerrar</button>`}
       </div>
@@ -268,8 +275,11 @@ function openAfilDetail(sid) {
 function doApproveAfil(sid) {
   const sol = afilById(sid);
   const dep = sol ? getDeportista(sol.deportistaId) : null;
+  const esRetiro = sol && sol.tipo === 'retiro';
   resolverAfiliacion(sid, 'aprobada', { responsable: role.userName || roleCode });
-  toast(`Afiliación aprobada${dep ? ' — ' + dep.nombre + ' quedó vinculado' : ''}`, 'success');
+  toast(esRetiro
+    ? `Retiro confirmado${dep ? ' — ' + dep.nombre + ' quedó desvinculado' : ''}`
+    : `Afiliación aprobada${dep ? ' — ' + dep.nombre + ' quedó vinculado' : ''}`, 'success');
   render();
 }
 
@@ -277,10 +287,11 @@ function openAfilMotivo(sid, detailOv) {
   closeModal(detailOv);                      // no apilar: cierra el detalle (con su animación)
   const sol = afilById(sid);
   const dep = sol ? getDeportista(sol.deportistaId) : null;
+  const esRetiro = sol && sol.tipo === 'retiro';
   let selMotivo = '';
   const ov = openModal(`
     <div class="reg-modal bj-modal bj-modal--sm bj-modal--overflow" role="dialog" aria-modal="true">
-      <div class="reg-modal__head"><h3 class="reg-modal__title">Rechazar afiliación · ${esc(dep ? dep.nombre : '')}</h3><button type="button" class="reg-modal__close" id="amClose" aria-label="Cerrar">${I.x}</button></div>
+      <div class="reg-modal__head"><h3 class="reg-modal__title">${esRetiro ? 'Rechazar baja' : 'Rechazar afiliación'} · ${esc(dep ? dep.nombre : '')}</h3><button type="button" class="reg-modal__close" id="amClose" aria-label="Cerrar">${I.x}</button></div>
       <div class="reg-modal__body">
         <div class="bj-field">
           <label class="bj-label">Motivo <span class="bj-req">*</span></label>
@@ -306,7 +317,7 @@ function openAfilMotivo(sid, detailOv) {
     if (!selMotivo) { ov.querySelector('#amErr').style.display = 'block'; ov.querySelector('#amDd').classList.add('naowee-dropdown--error'); return; }
     const txt = ov.querySelector('#amTxt').value.trim();
     resolverAfiliacion(sid, 'rechazada', { motivo: txt ? `${selMotivo} — ${txt}` : selMotivo, responsable: role.userName || roleCode });
-    toast('Afiliación rechazada', 'success');
+    toast(esRetiro ? 'Baja rechazada — el deportista sigue afiliado' : 'Afiliación rechazada', 'success');
     closeModal(ov); render();
   });
 }

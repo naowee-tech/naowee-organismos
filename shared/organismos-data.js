@@ -495,7 +495,7 @@ export function crearSolicitud(deportistaId, clubId) {
   const dep = getDeportista(deportistaId);
   const rec = {
     id: 'AF-' + String(list.length + 1).padStart(3, '0'),
-    deportistaId, clubId, estado: 'Enviada', fecha: _todayISO()
+    tipo: 'afiliacion', deportistaId, clubId, estado: 'Enviada', fecha: _todayISO()
   };
   list.unshift(rec);
   writeStore('solicitudes', list);
@@ -505,6 +505,56 @@ export function crearSolicitud(deportistaId, clubId) {
     accion: 'Solicitud de afiliación enviada', de: '', a: 'Enviada', motivo: ''
   });
   return { ...rec };
+}
+
+/* Solicitud de BAJA/retiro (deportista vinculado → pide dejar su club). NO
+   desvincula de inmediato: crea una solicitud tipo 'retiro' que el CLUB debe
+   confirmar (Doug: el club se entera y acepta el retiro). Mientras tanto el
+   deportista sigue Vinculado con la baja "en trámite". Devuelve la copia o null. */
+export function crearSolicitudRetiro(deportistaId) {
+  const dep = getDeportista(deportistaId);
+  if (!dep || !dep.clubId) return null;
+  const list = readStore('solicitudes', []) || [];
+  const rec = {
+    id: 'RT-' + String(list.length + 1).padStart(3, '0'),
+    tipo: 'retiro', deportistaId, clubId: dep.clubId, estado: 'Enviada', fecha: _todayISO()
+  };
+  list.unshift(rec);
+  writeStore('solicitudes', list);
+  auditLog({
+    orgId: dep.clubId, deportistaId, deportistaNombre: dep.nombre,
+    fecha: rec.fecha, responsable: dep.nombre, rol: 'DEPORTISTA',
+    accion: 'Solicitud de baja enviada', de: 'Vinculado', a: 'Baja solicitada', motivo: ''
+  });
+  return { ...rec };
+}
+
+/* Solicitud de baja activa (Enviada) de un deportista, o null. */
+export function retiroPendienteDe(deportistaId) {
+  return allSolicitudes().find((s) => s.tipo === 'retiro' && s.deportistaId === deportistaId && s.estado === 'Enviada') || null;
+}
+
+/* El deportista cancela su propia solicitud de baja antes de que el club la
+   resuelva → la marca Retirada y sigue Vinculado. Audita. */
+export function cancelarRetiro(deportistaId) {
+  const dep = getDeportista(deportistaId);
+  const list = readStore('solicitudes', []) || [];
+  let changed = false;
+  const upd = list.map((s) => {
+    if (s.tipo === 'retiro' && s.deportistaId === deportistaId && s.estado === 'Enviada') {
+      changed = true; return { ...s, estado: 'Retirada', resueltaFecha: _todayISO() };
+    }
+    return s;
+  });
+  if (changed) {
+    writeStore('solicitudes', upd);
+    auditLog({
+      orgId: dep ? dep.clubId : '', deportistaId, deportistaNombre: dep ? dep.nombre : '',
+      fecha: _todayISO(), responsable: dep ? dep.nombre : '', rol: 'DEPORTISTA',
+      accion: 'Solicitud de baja cancelada', de: 'Baja solicitada', a: 'Retirada', motivo: ''
+    });
+  }
+  return getDeportista(deportistaId);
 }
 
 /* Resuelve una solicitud (por el club). `resultado` ∈ {'aprobada','rechazada'}.
@@ -517,18 +567,27 @@ export function resolverAfiliacion(solicitudId, resultado, meta = {}) {
   const i = list.findIndex((s) => s.id === solicitudId);
   if (i < 0) return null;
   const s = list[i];
+  const esRetiro = s.tipo === 'retiro';
   const estadoSol = resultado === 'aprobada' ? 'Aprobada' : 'Rechazada';
   list[i] = { ...s, estado: estadoSol, motivo: meta.motivo || '', responsable: meta.responsable || '', resueltaFecha: _todayISO() };
   writeStore('solicitudes', list);
   const dep = getDeportista(s.deportistaId);
   if (resultado === 'aprobada') {
-    updateDeportista(s.deportistaId, { clubId: s.clubId, estado: 'vinculado' });
+    if (esRetiro) {
+      // El club CONFIRMA la baja → el deportista vuelve a autodeclarado (pierde club/herencia).
+      updateDeportista(s.deportistaId, { clubId: null, estado: 'autodeclarado' });
+    } else {
+      // El club APRUEBA la afiliación → vinculado + hereda la cadena (ancestorsOf).
+      updateDeportista(s.deportistaId, { clubId: s.clubId, estado: 'vinculado' });
+    }
   }
   auditLog({
     orgId: s.clubId, deportistaId: s.deportistaId, deportistaNombre: dep ? dep.nombre : '',
     fecha: _todayISO(), responsable: meta.responsable || '', rol: 'CLUB',
-    accion: resultado === 'aprobada' ? 'Afiliación aprobada' : 'Afiliación rechazada',
-    de: 'Enviada', a: estadoSol, motivo: meta.motivo || ''
+    accion: esRetiro
+      ? (resultado === 'aprobada' ? 'Baja confirmada' : 'Baja rechazada')
+      : (resultado === 'aprobada' ? 'Afiliación aprobada' : 'Afiliación rechazada'),
+    de: esRetiro ? 'Baja solicitada' : 'Enviada', a: estadoSol, motivo: meta.motivo || ''
   });
   return { ...list[i] };
 }

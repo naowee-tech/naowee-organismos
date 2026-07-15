@@ -163,7 +163,23 @@ const MODULE_NAME = 'Organismos';
             state) y getElementById solo ataba el primero. Migrados los CTA de asociación
             (Asociar a club / Buscar un club / Enviar nueva solicitud) a binding por atributo
             `[data-asociar]` con querySelectorAll → todos disparan openAsociarModal. */
-const MODULE_VERSION = 'v0.7.2';
+/* v0.7.3 — T7 refinamientos (feedback Doug):
+   (1) DEDUP: en "Mi club" autodeclarado se quitó el CTA duplicado del header (quedaba
+       "Asociar a club" 2 veces); el CTA vive en el hero + "Buscar un club" en el empty state.
+   (2) RETIRO CON ACEPTACIÓN DEL CLUB: "Retirar afiliación"/"Cambiar de club" ya NO son
+       inmediatos → abren un MODAL DE ADVERTENCIA intermedio y crean una SOLICITUD DE BAJA
+       (tipo 'retiro') que el CLUB debe CONFIRMAR en su bandeja. Mientras: estado "Baja en
+       trámite" (sigue vinculado, con aviso + "Cancelar solicitud de baja"). El club ve la baja
+       etiquetada en su bandeja (chip "Baja") y Confirma/Rechaza (rechazo con motivo). Al
+       confirmar → autodeclarado (pierde herencia); al rechazar → sigue vinculado. Nuevos
+       helpers organismos-data.js: crearSolicitudRetiro/retiroPendienteDe/cancelarRetiro +
+       resolverAfiliacion tipo-aware. "Retirar solicitud" (afiliación aún Enviada) usa confirm.
+   (3) REDISEÑO UI (skill ui-ux-pro-max + panel de diseño 3 direcciones + juez): "Club afiliado"
+       con sello escudo+check SVG (adiós emoji), NIT tabular con divisor y badge "Vínculo
+       confirmado"; "Cadena heredada" como escalera con numeral editorial 01·02·03 (CSS counter)
+       + color-por-tipo (liga verde / federación naranja / comité azul). CSS en perfil.css;
+       forward-port de .naowee-btn--danger (token negative-loud). */
+const MODULE_VERSION = 'v0.7.3';
 
 (function () {
   function mount() {

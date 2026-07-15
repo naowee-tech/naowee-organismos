@@ -13,6 +13,7 @@ import { mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher, getRoleFro
 import {
   seedDemoData, seedAfiliacionesDemo, getDeportista,
   buscarClubesActivos, crearSolicitud, retirarAfiliacion,
+  crearSolicitudRetiro, retiroPendienteDe, cancelarRetiro,
   solicitudDeDeportista, allSolicitudes, getOrganismo
 } from './organismos-data.js';
 import { buildDeportistaDetalle } from './deportista-detalle.js';
@@ -39,6 +40,8 @@ const I = {
   link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  shieldCheck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
   send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
   x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
   refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
@@ -70,9 +73,13 @@ let activeHist = 'trayectoria';
 /* Estado de afiliación derivado. */
 function affState() {
   const sol = solicitudDeDeportista(DEP_ID);
-  if (ATLETA.estado === 'vinculado' && ATLETA.clubId) return { key: 'vinculado', sol };
-  if (sol && sol.estado === 'Enviada') return { key: 'pendiente', sol };
-  if (sol && sol.estado === 'Rechazada') return { key: 'rechazada', sol };
+  const retiro = retiroPendienteDe(DEP_ID);
+  if (ATLETA.estado === 'vinculado' && ATLETA.clubId) {
+    return retiro ? { key: 'baja', sol: retiro } : { key: 'vinculado', sol };
+  }
+  // Estados de afiliación (ignora solicitudes tipo 'retiro' ya resueltas).
+  if (sol && sol.tipo !== 'retiro' && sol.estado === 'Enviada') return { key: 'pendiente', sol };
+  if (sol && sol.tipo !== 'retiro' && sol.estado === 'Rechazada') return { key: 'rechazada', sol };
   return { key: 'autodeclarado', sol };
 }
 
@@ -112,6 +119,7 @@ function navGroups() {
 function render() {
   const t = TIER[ATLETA.tier];
   const st = affState();
+  const afiliado = st.key === 'vinculado' || st.key === 'baja';  // vínculo activo (baja = aún vinculado, en trámite)
   document.getElementById('pfRoot').innerHTML = `
     <section class="pf-hero">
       <div class="pf-ava-wrap">
@@ -124,7 +132,7 @@ function render() {
         <p class="pf-doc">${esc(ATLETA.doc.tipoCorto)} ${esc(ATLETA.doc.numero)}</p>
         <div class="pf-badges">
           <span class="pf-badge pf-badge--deporte"><span class="pf-badge__dot"></span>${ATLETA.deporteEmoji} ${esc(ATLETA.deporte)}</span>
-          ${st.key === 'vinculado' ? `
+          ${afiliado ? `
             <span class="pf-badge pf-badge--club"><span class="pf-badge__dot"></span>${esc(ATLETA.clubNombre)}</span>
             <span class="pf-badge pf-badge--liga"><span class="pf-badge__dot"></span>${esc(ATLETA.ligaNombre || 'Liga')}</span>
             <span class="pf-badge pf-badge--federacion"><span class="pf-badge__dot"></span>${esc(ATLETA.federacionNombre || 'Federación')}</span>`
@@ -134,11 +142,11 @@ function render() {
       <div class="pf-side">
         <div class="pf-aff-state">
           ${affStatePillHTML(st)}
-          ${st.key !== 'vinculado' && st.key !== 'pendiente'
+          ${(st.key === 'autodeclarado' || st.key === 'rechazada')
             ? `<button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" id="heroAsociar">${I.link} Asociar a club</button>`
             : ''}
         </div>
-        ${st.key === 'vinculado' ? medalStripHTML() : ''}
+        ${afiliado ? medalStripHTML() : ''}
       </div>
     </section>
 
@@ -159,6 +167,7 @@ function render() {
 function affStatePillHTML(st) {
   const map = {
     vinculado: ['vinculado', I.check, 'Vinculado'],
+    baja: ['pendiente', I.clock, 'Baja en trámite'],
     pendiente: ['pendiente', I.clock, 'Solicitud enviada'],
     rechazada: ['autodeclarado', I.user, 'Autodeclarado'],
     autodeclarado: ['autodeclarado', I.user, 'Autodeclarado']
@@ -226,9 +235,16 @@ function bindPanel() {
   if (activeSec === 'resumen') document.querySelector('#pfPanel .pf-edit')?.addEventListener('click', openEditModal);
   // Todos los CTA "asociar/buscar/reintentar" comparten data-asociar (evita ids duplicados).
   document.querySelectorAll('#pfPanel [data-asociar]').forEach((b) => b.addEventListener('click', openAsociarModal));
-  document.getElementById('miclubCambiar')?.addEventListener('click', () => { retirarAfiliacion(DEP_ID); openAsociarModal(); });
-  document.getElementById('miclubRetirar')?.addEventListener('click', () => { retirarAfiliacion(DEP_ID); toast('Afiliación retirada. Ahora eres un deportista autodeclarado.', 'info'); refresh(); });
-  document.getElementById('miclubRetirarSol')?.addEventListener('click', () => { retirarAfiliacion(DEP_ID); toast('Solicitud retirada.', 'info'); refresh(); });
+  // Retirar / cambiar = solicitar BAJA (el club debe confirmar) → modal de advertencia intermedio.
+  document.getElementById('miclubCambiar')?.addEventListener('click', () => openRetiroWarning(true));
+  document.getElementById('miclubRetirar')?.addEventListener('click', () => openRetiroWarning(false));
+  document.getElementById('miclubCancelarBaja')?.addEventListener('click', () => { cancelarRetiro(DEP_ID); toast('Cancelaste tu solicitud de baja. Sigues afiliado.', 'info'); refresh(); });
+  document.getElementById('miclubRetirarSol')?.addEventListener('click', () => openConfirm({
+    title: 'Retirar solicitud',
+    body: '<p class="af-confirm-text">¿Seguro que quieres retirar tu solicitud de afiliación? El club dejará de verla en su bandeja. Podrás enviar una nueva cuando quieras.</p>',
+    confirmLabel: 'Sí, retirar solicitud',
+    onConfirm: () => { retirarAfiliacion(DEP_ID); toast('Solicitud retirada.', 'info'); refresh(); }
+  }));
 }
 
 const fld = (l, v, full) => `<div class="pf-field ${full ? 'pf-field--full' : ''}"><div class="pf-field__l">${l}</div><div class="pf-field__v">${v || '—'}</div></div>`;
@@ -292,31 +308,48 @@ function documentosHTML() {
 /* ══════════ Mi club — sección estrella (T7) ══════════ */
 function miclubHTML() {
   const st = affState();
-  if (st.key === 'vinculado') {
-    const chainNodes = [
-      ATLETA.liga && { tipo:'Liga', ico:I.liga, nm:ATLETA.ligaNombre },
-      ATLETA.federacion && { tipo:'Federación', ico:I.federacion, nm:ATLETA.federacionNombre },
-      ATLETA.comite && { tipo:'Comité / cabeza de sector', ico:I.comite, nm:ATLETA.comiteNombre }
+  if (st.key === 'vinculado' || st.key === 'baja') {
+    const enBaja = st.key === 'baja';
+    const chainDefs = [
+      ATLETA.liga && { mod:'liga', tipo:'Liga', ico:I.liga, nm:ATLETA.ligaNombre },
+      ATLETA.federacion && { mod:'fed', tipo:'Federación', ico:I.federacion, nm:ATLETA.federacionNombre },
+      ATLETA.comite && { mod:'comite', tipo:'Comité / cabeza de sector', ico:I.comite, nm:ATLETA.comiteNombre }
     ].filter(Boolean);
-    const chain = chainNodes.map((n) => `
-      <div class="af-node">
+    const chain = chainDefs.map((n) => `
+      <div class="af-node af-node--${n.mod}">
         <span class="af-node__ico">${n.ico}</span>
         <span class="af-node__body"><span class="af-node__type">${n.tipo}</span><span class="af-node__nm">${esc(n.nm)}</span></span>
       </div>`).join('');
-    return `${head('Mi club', 'Estás afiliado a un club. Tu liga y federación se heredan automáticamente de él.')}
-      <div class="pf-body">
+    const clubCard = `
         <div class="af-club-card">
-          <span class="af-club-card__ico">${CLUB_EMOJI}</span>
+          <span class="af-club-card__ico">${I.shieldCheck}</span>
           <div class="af-club-card__body">
             <div class="af-club-card__lead">Club afiliado</div>
             <div class="af-club-card__nm">${esc(ATLETA.clubNombre)}</div>
-            <div class="af-club-card__sub">${esc(ATLETA.deporte)} · ${esc(ATLETA.modalidad)}${ATLETA.club && ATLETA.club.nit ? ' · NIT ' + esc(ATLETA.club.nit) : ''}</div>
+            <div class="af-club-card__sub">${esc(ATLETA.deporte)} · ${esc(ATLETA.modalidad)}${ATLETA.club && ATLETA.club.nit ? ` <span class="af-club-card__nit">NIT ${esc(ATLETA.club.nit)}</span>` : ''}</div>
           </div>
+          <span class="af-club-card__badge">${I.check} Vínculo confirmado</span>
         </div>
         <div class="af-chain">
           <div class="af-chain__title">Cadena heredada (ORG-05)</div>
           ${chain || '<div class="pf-empty">Sin cadena ascendente registrada.</div>'}
-        </div>
+        </div>`;
+    if (enBaja) {
+      return `${head('Mi club', 'Tu baja está en trámite: el club debe confirmar tu retiro.')}
+        <div class="pf-body">
+          <div class="naowee-message naowee-message--caution" role="status" style="margin-bottom:18px">
+            <span class="naowee-message__icon">${I.clock}</span>
+            <div class="naowee-message__content"><p class="naowee-message__text"><strong>Solicitud de baja enviada el ${esc(st.sol.fecha)}.</strong> Estás en espera de que <strong>${esc(ATLETA.clubNombre)}</strong> confirme tu retiro. Hasta entonces sigues vinculado y conservas tu liga y federación.</p></div>
+          </div>
+          ${clubCard}
+          <div class="af-node__actions">
+            <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="miclubCancelarBaja">${I.refresh} Cancelar solicitud de baja</button>
+          </div>
+        </div>`;
+    }
+    return `${head('Mi club', 'Estás afiliado a un club. Tu liga y federación se heredan automáticamente de él.')}
+      <div class="pf-body">
+        ${clubCard}
         <div class="af-node__actions">
           <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="miclubCambiar">${I.refresh} Cambiar de club</button>
           <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="miclubRetirar">Retirar afiliación</button>
@@ -361,14 +394,14 @@ function miclubHTML() {
         </div>
       </div>`;
   }
-  const cta = `<button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" data-asociar>${I.link} Asociar a club</button>`;
-  return `${head('Mi club', 'Aún no estás afiliado a un club.', cta)}
+  // Sin CTA en el header: el hero ya tiene "Asociar a club"; aquí el CTA vive en el empty state.
+  return `${head('Mi club', 'Aún no estás afiliado a un club.')}
     <div class="pf-body">
       <div class="naowee-empty-state">
         <span class="naowee-empty-state__icon">${I.club}</span>
         <p class="naowee-empty-state__title">Eres un deportista autodeclarado</p>
         <p class="naowee-empty-state__description">Estás registrado en el SUID pero sin club. Al afiliarte a un club <strong>Activo</strong> y ser aprobado, heredarás automáticamente su liga y su federación (ORG-05). Podrás cambiar o retirar tu afiliación cuando quieras.</p>
-        <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-asociar>${I.link} Buscar un club</button>
+        <button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" data-asociar>${I.link} Buscar un club</button>
       </div>
     </div>`;
 }
@@ -466,6 +499,68 @@ function seguridadHTML() {
     ${setRow('Inicio de sesión biométrico', 'Huella o rostro en el dispositivo', true)}
     ${setRow('Alertas de inicio de sesión', 'Avísame de accesos nuevos', true)}
     <div class="pf-set"><span class="pf-set__txt"><span class="pf-set__nm">Contraseña</span><span class="pf-set__d">Última actualización hace 3 meses</span></span><button class="pf-edit" style="white-space:nowrap">${I.pencil} Cambiar</button></div></div>`;
+}
+
+/* ══════════ Modal de confirmación genérico (advertencia intermedia) ══════════ */
+let _confirmSeq = 0;
+function openConfirm({ title, body, confirmLabel, danger, onConfirm }) {
+  const titleId = 'confirmTitle' + (++_confirmSeq);
+  const prevFocus = document.activeElement;
+  const ov = document.createElement('div');
+  ov.className = 'pf-modal-ov';
+  ov.innerHTML = `<div class="pf-modal pf-modal--sm" role="dialog" aria-modal="true" aria-labelledby="${titleId}">
+    <header class="pf-modal__head"><h2 id="${titleId}">${title}</h2><button class="pf-modal__close" type="button" aria-label="Cerrar">${I.x}</button></header>
+    <div class="pf-modal__body">${body}</div>
+    <footer class="pf-modal__foot">
+      <button type="button" class="naowee-btn naowee-btn--mute" data-cancel>Cancelar</button>
+      <button type="button" class="naowee-btn ${danger ? 'naowee-btn--danger' : 'naowee-btn--loud'}" data-ok>${confirmLabel}</button>
+    </footer>
+  </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('is-open'));
+  document.body.style.overflow = 'hidden';
+  let closed = false;
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => {
+    if (closed) return; closed = true;
+    document.removeEventListener('keydown', onKey);
+    ov.classList.remove('is-open');
+    setTimeout(() => { ov.remove(); if (!document.querySelector('.pf-modal-ov.is-open')) document.body.style.overflow = ''; }, 220);
+    if (prevFocus && prevFocus.focus) { try { prevFocus.focus(); } catch (_) {} }
+  };
+  ov.querySelector('[data-cancel]').addEventListener('click', close);
+  ov.querySelector('.pf-modal__close').addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  ov.querySelector('[data-ok]').addEventListener('click', () => { close(); onConfirm(); });
+  document.addEventListener('keydown', onKey);
+  setTimeout(() => { try { ov.querySelector('[data-cancel]').focus(); } catch (_) {} }, 40);
+}
+
+/* Advertencia intermedia antes de tramitar la baja del club (Doug: no inmediato +
+   el club debe aceptar). Crea la solicitud de retiro (el club la confirma en su bandeja). */
+function openRetiroWarning(cambiar) {
+  const club = ATLETA.clubNombre || 'tu club';
+  const body = `
+    <div class="af-warn">
+      <span class="af-warn__ico">${I.alert}</span>
+      <div class="af-warn__body">
+        <p class="af-warn__lead">${cambiar
+          ? `Para cambiar de club primero debes tramitar tu <strong>baja de ${esc(club)}</strong>.`
+          : `Vas a solicitar tu <strong>baja de ${esc(club)}</strong>.`}</p>
+        <ul class="af-warn__list">
+          <li>Tu retiro <strong>no es inmediato</strong>: el club debe <strong>confirmarlo</strong>.</li>
+          <li>Al confirmarse <strong>perderás</strong> tu vínculo con la liga y la federación heredadas.</li>
+          <li>Podrás ${cambiar ? 'afiliarte a un nuevo club' : 'volver a afiliarte'} cuando el club acepte la baja.</li>
+        </ul>
+      </div>
+    </div>`;
+  openConfirm({
+    title: cambiar ? 'Cambiar de club' : 'Retirar afiliación',
+    body,
+    confirmLabel: 'Sí, solicitar retiro',
+    danger: true,
+    onConfirm: () => { crearSolicitudRetiro(DEP_ID); toast('Solicitud de baja enviada. El club debe confirmarla.', 'info'); activeSec = 'miclub'; refresh(); }
+  });
 }
 
 /* ══════════ Modal: Asociar a club (§5.2 — registro corto) ══════════ */
