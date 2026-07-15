@@ -24,8 +24,21 @@ const MODULE_NAME = 'Organismos';
             §11.2 + scopeFor) y estados.js (ESTADOS + mapa de badge). Helpers de
             datos subtreeOf/countDescendants/deportistasOf/ancestorsOf. Ports DS
             searchbox/dropdown/message/card. Fixes T1: btn--ghost→--mute,
-            ellipsis en labels del sidebar, copy de bandeja unificado por rol. */
-const MODULE_VERSION = 'v0.2.0';
+            ellipsis en labels del sidebar, copy de bandeja unificado por rol.
+   v0.3.0 — T3 Registro de organismo (wizard por tipo): registro.html deja de
+            ser stub. Wizard-recipe v1.8 (.naowee-stepper --distributed --pulse
+            + shake) con pasos DINÁMICOS por tipo (STEPS_POR_ORGANISMO estilo
+            IVC): Federación/Liga/Club (autoregistro ORG-02/03/04) + Comité
+            reducido para MINDEPORTE (ORG-01). Máscaras NIT/tel, dropdowns
+            dependientes de la jerarquía (Liga→federación Activa, Club→liga
+            Activa) con buscador acento-insensible, modal de dirección
+            estructurada, adjuntos simulados (PDF/JPG/PNG), checkbox de políticas,
+            validación por paso con shake y borradores parciales (ESC-08). Al
+            enviar crea un organismo 'Preinscrito' vía addOrganismo() que ya
+            aparece en la jerarquía; pantalla de éxito con confetti + recibo +
+            CTA "Ver en la jerarquía". Nuevos shared/ forms.css + registro.js;
+            data: helpers addOrganismo/nextOrgId/activosDeTipo/comitePorSector. */
+const MODULE_VERSION = 'v0.3.0';
 
 (function () {
   function mount() {
