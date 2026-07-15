@@ -17,8 +17,15 @@ const MODULE_NAME = 'Organismos';
             jerarquía SND + demo switcher agrupado, seed de datos (3 comités +
             57 federaciones COC reales + ficticias Paralímpico/Sordolímpico +
             ligas/clubes/deportistas de la cadena demo) y 6 páginas stub con
-            empty state canónico. */
-const MODULE_VERSION = 'v0.1.0';
+            empty state canónico.
+   v0.2.0 — T2 Explorador de jerarquía: árbol SND interactivo con jurisdicción
+            por rol (RBAC), contadores heredados, búsqueda acento-insensible y
+            filtro por estado. Nuevos módulos shared/ permissions.js (matriz
+            §11.2 + scopeFor) y estados.js (ESTADOS + mapa de badge). Helpers de
+            datos subtreeOf/countDescendants/deportistasOf/ancestorsOf. Ports DS
+            searchbox/dropdown/message/card. Fixes T1: btn--ghost→--mute,
+            ellipsis en labels del sidebar, copy de bandeja unificado por rol. */
+const MODULE_VERSION = 'v0.2.0';
 
 (function () {
   function mount() {

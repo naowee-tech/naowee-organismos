@@ -27,6 +27,10 @@
   --border: #e7e9f3;
   --border-dark: #d0d4e6;
 
+  /* ─── Bordes de campo (inputs / searchbox / dropdown) ─── */
+  --field-border-idle: #d0d4e6;
+  --field-border-hover: #b9bdd4;
+
   /* ─── Fondos accent (estados activos / hover de opciones) ─── */
   --accent-bg: #fff3e6;
   --accent-bg-warm: #ffe4cf;

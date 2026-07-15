@@ -58,14 +58,20 @@
 .naowee-btn--quiet:active { background: var(--accent-bg-warm); }
 .naowee-btn--quiet svg { color: var(--accent); }
 
-/* Ghost (terciario) — sin fill, borde suave. */
-.naowee-btn--ghost { background: #fff; color: var(--accent); border-color: var(--border-dark); }
-.naowee-btn--ghost:hover { background: var(--bg-soft); border-color: var(--border-dark); }
+/* Mute (terciario / ghost canónico del DS) — sin fill, label accent, hover
+   naranja claro. Port EXACTO de Eventos/demo/shared/forms.css (DS §Button
+   mute/quiet). En el DS la clase es .naowee-btn--mute (no existe --ghost);
+   T1 tenía un --ghost paralelo con borde → reemplazado por el canónico. */
+.naowee-btn--mute { background: transparent; color: var(--accent); }
+.naowee-btn--mute:hover { background: var(--accent-bg); }
+.naowee-btn--mute:active { background: var(--accent-bg-warm); }
+.naowee-btn--mute svg { color: var(--accent); }
+.naowee-btn--mute:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(215, 64, 9, .15); }
 
 /* ─────────────────── Badge de estado (.naowee-badge) ───────────────────
-   Port 1:1 del DS §Badge, mapa semántico ÚNICO del ecosistema:
-   Activo → positive · En revisión → informative · Preinscrito → neutral ·
-   Suspendido/Inactivo → caution · Rechazado/Cancelado → negative.
+   Port 1:1 del DS §Badge. Mapa semántico ÚNICO (centralizado en estados.js):
+   Activo → positive · En revisión/Suspendido → caution ·
+   Preinscrito/Inactivo → neutral · Rechazado/Cancelado → negative.
    loud = fill sólido + texto claro; quiet = fill tenue + texto oscuro. */
 .naowee-badge {
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
@@ -115,6 +121,113 @@
   color: var(--text-secondary); margin: 0; max-width: 340px; line-height: 1.5;
 }
 .naowee-empty-state__action { margin-top: 16px; }
+
+/* ─────────────────── Searchbox (.naowee-searchbox) ───────────────────
+   Port 1:1 de Eventos/demo/shared/list-components.css (DS §Searchbox).
+   pill (radius-full), ícono inline, clear visible con --has-value. */
+.naowee-searchbox { position: relative; flex: 1; min-width: 220px; max-width: 380px; width: 100%; }
+.naowee-searchbox__input-wrap {
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px;
+  background: var(--surface); border: 1px solid var(--field-border-idle); border-radius: var(--radius-full);
+  transition: border-color var(--duration-normal) var(--easing-smoothout),
+              box-shadow var(--duration-normal) var(--easing-smoothout);
+  overflow: hidden; font-feature-settings: 'case' 1;
+}
+.naowee-searchbox__input-wrap:hover { border-color: var(--field-border-hover); }
+.naowee-searchbox__input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 64, 9, .15); }
+.naowee-searchbox__icon { width: 20px; height: 20px; flex-shrink: 0; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+.naowee-searchbox__icon svg { width: 20px; height: 20px; }
+.naowee-searchbox__input { flex: 1; min-width: 0; height: 100%; border: none; background: transparent; outline: none; font-family: inherit; font-size: 14px; font-weight: 400; color: var(--text-primary); padding: 0; }
+.naowee-searchbox__input::placeholder { color: var(--text-muted); }
+.naowee-searchbox__input::-webkit-search-decoration,
+.naowee-searchbox__input::-webkit-search-cancel-button,
+.naowee-searchbox__input::-webkit-search-results-button,
+.naowee-searchbox__input::-webkit-search-results-decoration { -webkit-appearance: none; appearance: none; display: none; }
+.naowee-searchbox__clear { width: 24px; height: 24px; border-radius: var(--radius-md); border: none; background: transparent; color: var(--text-muted); display: none; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background var(--duration-fast), color var(--duration-fast); }
+.naowee-searchbox__clear svg { width: 20px; height: 20px; }
+.naowee-searchbox__clear:hover { background: var(--bg-soft); color: var(--text-secondary); }
+.naowee-searchbox--has-value .naowee-searchbox__clear { display: flex; }
+
+/* ─────────────────── Dropdown (.naowee-dropdown) ───────────────────
+   Port del DS §Dropdown (forms). Toggle: clase .naowee-dropdown--open en el
+   WRAPPER (regla dura del ritual — no .open en trigger+menu). Aquí en tamaño
+   único (44px) para toolbars de filtro; single-select con check. */
+.naowee-dropdown { position: relative; font-feature-settings: 'case' 1; }
+.naowee-dropdown__trigger {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px;
+  padding: 0 14px; background: var(--surface);
+  border: 1px solid var(--field-border-idle); border-radius: var(--radius-md);
+  font-family: inherit; font-size: 14px; font-weight: 500; color: var(--text-primary);
+  cursor: pointer; white-space: nowrap;
+  transition: border-color var(--duration-normal) var(--easing-smoothout),
+              box-shadow var(--duration-normal) var(--easing-smoothout);
+}
+.naowee-dropdown__trigger:hover { border-color: var(--field-border-hover); }
+.naowee-dropdown__trigger:focus-visible,
+.naowee-dropdown--open .naowee-dropdown__trigger {
+  outline: none; border-color: var(--accent); border-width: 2px; padding: 0 13px;
+  box-shadow: 0 0 0 3px rgba(215, 64, 9, .12);
+}
+.naowee-dropdown__icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); display: flex; }
+.naowee-dropdown__icon svg { width: 18px; height: 18px; }
+.naowee-dropdown__value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.naowee-dropdown__value.is-placeholder { color: var(--text-secondary); }
+.naowee-dropdown__chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: transform var(--duration-normal) var(--easing-smoothout), color var(--duration-fast); }
+.naowee-dropdown__chevron svg { width: 18px; height: 18px; }
+.naowee-dropdown__trigger:hover .naowee-dropdown__chevron,
+.naowee-dropdown--open .naowee-dropdown__chevron { color: var(--accent); }
+.naowee-dropdown--open .naowee-dropdown__chevron { transform: rotate(180deg); }
+.naowee-dropdown__menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  padding: 6px; max-height: 0; overflow: hidden; opacity: 0; pointer-events: none;
+  transform: translateY(-6px);
+  transition: max-height var(--duration-normal) var(--easing-smoothout),
+              opacity var(--duration-fast), transform var(--duration-normal) var(--easing-smoothout);
+}
+.naowee-dropdown--open .naowee-dropdown__menu {
+  max-height: 320px; overflow-y: auto; opacity: 1; pointer-events: auto; transform: translateY(0);
+}
+.naowee-dropdown__opt {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-md);
+  font-size: 13.5px; font-weight: 500; color: var(--text-primary); cursor: pointer;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+.naowee-dropdown__opt:hover { background: var(--bg-soft); }
+.naowee-dropdown__opt.is-selected { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.naowee-dropdown__opt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.naowee-dropdown__opt-check { width: 16px; height: 16px; flex-shrink: 0; margin-left: auto; color: var(--accent); opacity: 0; }
+.naowee-dropdown__opt.is-selected .naowee-dropdown__opt-check { opacity: 1; }
+
+/* ─────────────────── Message (.naowee-message) inline banner ───────────
+   Port compacto del DS §Message (bg quiet + ícono loud). Variantes usadas:
+   informative (nota de jurisdicción / solo lectura). */
+.naowee-message {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+  border-radius: var(--radius-lg); font-family: inherit;
+}
+.naowee-message__icon { width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.naowee-message__icon svg { width: 18px; height: 18px; }
+.naowee-message__body { flex: 1; min-width: 0; }
+.naowee-message__title { font-size: 13px; font-weight: 700; margin: 0 0 1px; }
+.naowee-message__text { font-size: 12.5px; font-weight: 400; line-height: 1.45; margin: 0; }
+.naowee-message--informative { background: var(--blue-bg); color: #134a86; }
+.naowee-message--informative .naowee-message__icon { color: var(--blue-info); }
+.naowee-message--positive { background: var(--green-bg); color: #17641a; }
+.naowee-message--positive .naowee-message__icon { color: var(--green); }
+.naowee-message--caution { background: var(--orange-bg); color: #8a4b00; }
+.naowee-message--caution .naowee-message__icon { color: #b26a00; }
+.naowee-message--negative { background: var(--red-bg); color: #c4031d; }
+.naowee-message--negative .naowee-message__icon { color: var(--red); }
+
+/* ─────────────────── Card (.naowee-card) ───────────────────
+   Port minimal del DS §Card (outline). Contenedor del panel de resumen. */
+.naowee-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 20px;
+}
+.naowee-card--flush { padding: 0; }
 
 /* ═══════════════════════════════════════════════════════════════
    LAYOUT HELPERS (locales del módulo — NO son componentes del DS)
