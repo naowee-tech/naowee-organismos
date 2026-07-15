@@ -43,8 +43,18 @@ const MODULE_NAME = 'Organismos';
             transform residual de .reg-pane (animation regPaneIn con fill-mode:both);
             regPaneIn pasa a opacity-only. (2) El Comité (ORG-01) se crea 'Activo'
             (nodo raíz sin aprobación superior) en vez de 'Preinscrito';
-            renderSuccess() deja de hardcodear "Preinscrito" y usa org.estado. */
-const MODULE_VERSION = 'v0.3.1';
+            renderSuccess() deja de hardcodear "Preinscrito" y usa org.estado.
+   v0.3.2 — Barrido de fidelidad al DS canónico (pre-T4): Message re-portado 1:1
+            (ícono = círculo de color con glifo blanco, backgrounds con tokens
+            --naowee-color-feedback-fill-*-quiet/loud canónicos, tipografía 16/14,
+            radius 20) + tokens de feedback añadidos a tokens.css; dropdown trigger
+            text-align:left (el <button> heredaba center → valor centrado); containers
+            SIN box-shadow inventado (.naowee-card/.stub-card/.reg-wizard flat, como el
+            .naowee-card base del DS); estilos inline inventados removidos de mensajes;
+            badges re-portados a tokens canónicos (feedback-fill-* + feedback-text-*-
+            quiet-on-fill) — informative loud #1f78d1→#006aff, caution #d98a00→#d74009,
+            negative #c0392b→#da1630, y quiet con tints canónicos. */
+const MODULE_VERSION = 'v0.3.2';
 
 (function () {
   function mount() {

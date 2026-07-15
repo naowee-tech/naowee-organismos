@@ -42,6 +42,19 @@
   --red: #c0392b;              --red-bg: #fff0ee;     --red-border: #ffc4bb;
   --purple: #7c3aed;           --purple-bg: #f3eeff;
 
+  /* ─── Feedback fills (Message — valores CANÓNICOS del DS §feedback v1.9.0) ─── */
+  --naowee-color-feedback-fill-informative-quiet: #cef4ff; --naowee-color-feedback-fill-informative-loud: #006aff;
+  --naowee-color-feedback-fill-positive-quiet: #defade;    --naowee-color-feedback-fill-positive-loud: #1f8923;
+  --naowee-color-feedback-fill-caution-quiet: #ffedc7;     --naowee-color-feedback-fill-caution-loud: #d74009;
+  --naowee-color-feedback-fill-negative-quiet: #ffe5e9;    --naowee-color-feedback-fill-negative-loud: #da1630;
+  --naowee-color-feedback-fill-neutral-quiet: #f4f5f9;     --naowee-color-feedback-fill-neutral-loud: #646587;
+  /* texto quiet-on-fill (badges) — loud-on-fill = #fff */
+  --naowee-color-feedback-text-informative-quiet-on-fill: #002b5b;
+  --naowee-color-feedback-text-positive-quiet-on-fill: #17641a;
+  --naowee-color-feedback-text-caution-quiet-on-fill: #942700;
+  --naowee-color-feedback-text-negative-quiet-on-fill: #c4031d;
+  --naowee-color-feedback-text-neutral-quiet-on-fill: #282834;
+
   /* ─── Etiqueta de sección (sidebar) ─── */
   --section-label-color: #b5b9d4;
 

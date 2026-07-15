@@ -213,7 +213,7 @@
 .naowee-stepper__connector--skeleton { background: var(--border); opacity: .65; }
 
 /* ═══════════════════ Layout del wizard (scope .reg-*) ═══════════════════ */
-.reg-wizard { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); overflow: hidden; }
+.reg-wizard { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; }
 .reg-stepper-wrap { padding: 24px 28px 22px; border-bottom: 1px solid var(--border); background: var(--surface); }
 .reg-stepper-mobile { display: none; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
 .reg-stepper-mobile strong { color: var(--accent); }

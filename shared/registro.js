@@ -910,7 +910,7 @@ function renderSuccess() {
           <div class="reg-success__check">${I.check}</div>
           <h2 class="reg-success__title">¡Registro enviado con éxito!</h2>
           <p class="reg-success__lead">${esc(TIPO_SINGULAR[org.tipo])} <strong>${esc(org.nombre)}</strong> quedó en estado <strong>${esc(org.estado)}</strong>. ${org.tipo === 'comite' ? 'Como cabeza de sector queda Activo de inmediato, sin aprobación superior.' : 'Su nivel superior la revisará desde la Bandeja de aprobaciones.'}</p>
-          <div class="naowee-message naowee-message--informative" style="max-width:460px;margin:0 auto;text-align:left">
+          <div class="naowee-message naowee-message--informative" style="max-width:460px;margin:0 auto">
             <span class="naowee-message__icon">${I.bang}</span>
             <div class="naowee-message__body"><p class="naowee-message__text">${org.tipo === 'comite' ? 'Como cabeza de sector del SND, este comité queda Activo de inmediato, sin aprobación superior. Ya aparece en la jerarquía como nodo raíz.' : 'Este registro ya aparece en la jerarquía del SND bajo su superior. La aprobación (Preinscrito → En revisión → Activo) se ejercita en la Bandeja.'}</p></div>
           </div>
@@ -974,8 +974,8 @@ function offerDraft() {
   bar.innerHTML = `
     <div class="naowee-message naowee-message--caution" role="status">
       <span class="naowee-message__icon">${I.bang}</span>
-      <div class="naowee-message__body" style="flex:1">
-        <p class="naowee-message__title" style="font-size:13px">Tienes un registro sin terminar</p>
+      <div class="naowee-message__body">
+        <p class="naowee-message__title">Tienes un registro sin terminar</p>
         <p class="naowee-message__text">Borrador de <strong>${esc(tipoLbl)}</strong>${draft.data && draft.data.nombre ? ` · ${esc(draft.data.nombre)}` : ''}. ¿Deseas retomarlo?</p>
       </div>
     </div>
