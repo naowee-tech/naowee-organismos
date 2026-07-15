@@ -158,7 +158,12 @@ const MODULE_NAME = 'Organismos';
             medallería demo) y perfil.css (pf-*/af-* + keyframes fadeInUp/fadeIn). Rol DEPORTISTA gana
             deportistaId (DEP-001, ?id= para vista puntual). Bloque .af-* movido de forms.css a
             perfil.css. Lado B (bandeja del club) y helpers de datos = v0.7.0 sin cambios. */
-const MODULE_VERSION = 'v0.7.1';
+/* v0.7.2 — fix(afiliacion): el botón "Buscar un club" del empty state de "Mi club" no lanzaba
+            el modal — había DOS botones con id="miclubAsociar" (el CTA del header y el del empty
+            state) y getElementById solo ataba el primero. Migrados los CTA de asociación
+            (Asociar a club / Buscar un club / Enviar nueva solicitud) a binding por atributo
+            `[data-asociar]` con querySelectorAll → todos disparan openAsociarModal. */
+const MODULE_VERSION = 'v0.7.2';
 
 (function () {
   function mount() {

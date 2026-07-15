@@ -224,11 +224,11 @@ function bindPanel() {
     }
   });
   if (activeSec === 'resumen') document.querySelector('#pfPanel .pf-edit')?.addEventListener('click', openEditModal);
-  document.getElementById('miclubAsociar')?.addEventListener('click', openAsociarModal);
+  // Todos los CTA "asociar/buscar/reintentar" comparten data-asociar (evita ids duplicados).
+  document.querySelectorAll('#pfPanel [data-asociar]').forEach((b) => b.addEventListener('click', openAsociarModal));
   document.getElementById('miclubCambiar')?.addEventListener('click', () => { retirarAfiliacion(DEP_ID); openAsociarModal(); });
   document.getElementById('miclubRetirar')?.addEventListener('click', () => { retirarAfiliacion(DEP_ID); toast('Afiliación retirada. Ahora eres un deportista autodeclarado.', 'info'); refresh(); });
   document.getElementById('miclubRetirarSol')?.addEventListener('click', () => { retirarAfiliacion(DEP_ID); toast('Solicitud retirada.', 'info'); refresh(); });
-  document.getElementById('miclubReintentar')?.addEventListener('click', openAsociarModal);
 }
 
 const fld = (l, v, full) => `<div class="pf-field ${full ? 'pf-field--full' : ''}"><div class="pf-field__l">${l}</div><div class="pf-field__v">${v || '—'}</div></div>`;
@@ -356,19 +356,19 @@ function miclubHTML() {
             </div>
           </div>
           <div class="af-sol-card__foot">
-            <button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" id="miclubReintentar">${I.link} Enviar nueva solicitud</button>
+            <button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" data-asociar>${I.link} Enviar nueva solicitud</button>
           </div>
         </div>
       </div>`;
   }
-  const cta = `<button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" id="miclubAsociar">${I.link} Asociar a club</button>`;
+  const cta = `<button type="button" class="naowee-btn naowee-btn--loud naowee-btn--small" data-asociar>${I.link} Asociar a club</button>`;
   return `${head('Mi club', 'Aún no estás afiliado a un club.', cta)}
     <div class="pf-body">
       <div class="naowee-empty-state">
         <span class="naowee-empty-state__icon">${I.club}</span>
         <p class="naowee-empty-state__title">Eres un deportista autodeclarado</p>
         <p class="naowee-empty-state__description">Estás registrado en el SUID pero sin club. Al afiliarte a un club <strong>Activo</strong> y ser aprobado, heredarás automáticamente su liga y su federación (ORG-05). Podrás cambiar o retirar tu afiliación cuando quieras.</p>
-        <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="miclubAsociar">${I.link} Buscar un club</button>
+        <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-asociar>${I.link} Buscar un club</button>
       </div>
     </div>`;
 }
