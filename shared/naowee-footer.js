@@ -122,8 +122,26 @@ const MODULE_NAME = 'Organismos';
             "Organismo no encontrado"; enlace "Gestionar en la Bandeja" si el organismo es
             accionable por el rol. Nuevos shared/ detalle.css (port .naowee-tabs de forms.css +
             .naowee-breadcrumb del DS + .od-* timeline/kv/doc) y detalle.js. Solo .naowee-*
-            verificados por grep contra dist/design-system.css. */
-const MODULE_VERSION = 'v0.6.0';
+            verificados por grep contra dist/design-system.css.
+   v0.7.0 — T7 Afiliación del deportista (ORG-05, cierra el ciclo ascendente). LADO A:
+            afiliacion.html deja de ser stub → home del DEPORTISTA (shared/afiliacion.js). Estado
+            arriba (Autodeclarado informative / Solicitud pendiente caution / Vinculado positive) +
+            datos precargados NO editables (§5.2) + buscador de clubes (searchbox del DS + tarjetas
+            de resultado .af-result): SOLO clubes Activos, por nombre/NIT, mín. 3 caracteres, sin
+            texto libre; sin coincidencias → .naowee-message--caution "Club no encontrado". Enviar →
+            Enviada (toast). Vinculado muestra la cadena heredada (club·liga·federación·comité) +
+            cambiar/retirar; pendiente → retirar; rechazada → motivo + reintentar. LADO B: bandeja
+            del CLUB (bandeja.html?role=CLUB) reemplaza el empty-state por la bandeja de solicitudes
+            de deportistas (searchbox + tabs por estado + .cg-table; detalle en .reg-modal con §5.2 +
+            Aprobar/Rechazar; rechazo con MOTIVO obligatorio, patrón modales v0.5.6 sin apilar +
+            motivo .naowee-dropdown; message con ícono SVG real, no repite v0.5.7). HERENCIA: al
+            aprobar → deportista Vinculado, clubId asignado, hereda ancestorsOf(clubId) (liga+
+            federación+comité) reflejado en afiliacion.html, perfil y jerarquía; audita cada acción.
+            Nuevos helpers (organismos-data.js): store `solicitudes` + getDeportista/updateDeportista
+            (overrides de deportista), crearSolicitud/solicitudesDeClub/solicitudDeDeportista/
+            resolverAfiliacion/retirarAfiliacion/buscarClubesActivos/allSolicitudes + seedAfiliacionesDemo
+            (2 solicitudes Enviada a CLU-001, solo modo demo). Layout local .af-* en forms.css. */
+const MODULE_VERSION = 'v0.7.0';
 
 (function () {
   function mount() {
