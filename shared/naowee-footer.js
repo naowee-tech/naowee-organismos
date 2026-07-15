@@ -79,8 +79,14 @@ const MODULE_NAME = 'Organismos';
             updateOrganismo/setEstado/auditLog (data) + puedeTransicionar/resolverFederacion
             (estados). Componentes canónicos (.cg-table, .reg-modal, badges quiet).
    v0.5.1 — Fix: el responsable de la auditoría (bandeja) y del cargue usa
-            role.userName (nombre real) en vez de role.name (inexistente → caía al code). */
-const MODULE_VERSION = 'v0.5.1';
+            role.userName (nombre real) en vez de role.name (inexistente → caía al code).
+   v0.5.2 — T5 refinamiento UI (feedback Doug): searchbox canónico (faltaba
+            .naowee-searchbox__input-wrap); filtros = .naowee-tabs canónico (port,
+            indicador subrayado) en panel unificado (search + tabs + tabla en una
+            card); modal: resumen en grid limpio sobre panel suave (sin divisores por
+            fila, NIT tabular) y footer con jerarquía (corrección izquierda, Rechazar +
+            Aprobar agrupadas a la derecha, sin "Cerrar" redundante — la × cierra). */
+const MODULE_VERSION = 'v0.5.2';
 
 (function () {
   function mount() {

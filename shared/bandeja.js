@@ -105,18 +105,19 @@ function render() {
       ? `Bandeja de <strong>${target.plural}</strong> ${anchor ? `de <strong>${esc(anchor.nombre)}</strong>` : 'del SND'}. Aprueba, rechaza o solicita corrección (motivo obligatorio). ${target.tipo === 'federacion' ? 'La federación requiere <strong>doble validación</strong>: Ministerio + Comité.' : ''}`
       : `Vista de <strong>oversight</strong> (solo lectura) de ${target.plural}.`)}
 
-    <div class="naowee-card bj-toolbar">
-      <div class="naowee-searchbox bj-search">
-        <span class="naowee-searchbox__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input class="naowee-searchbox__input" id="bjSearch" placeholder="Buscar por nombre o NIT…" value="${esc(query)}">
+    <div class="naowee-card bj-panel">
+      <div class="bj-panel__bar">
+        <div class="naowee-searchbox bj-search">
+          <div class="naowee-searchbox__input-wrap">
+            <span class="naowee-searchbox__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input class="naowee-searchbox__input" id="bjSearch" placeholder="Buscar por nombre o NIT…" value="${esc(query)}">
+          </div>
+        </div>
+        <span class="bj-count">${rows.length} de ${all.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
       </div>
-      <div class="bj-filters" id="bjFilters">
-        ${['Accionables', 'En revisión', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="bj-chip-filter ${estadoFiltro === f ? 'is-active' : ''}" data-f="${f}">${f}</button>`).join('')}
+      <div class="naowee-tabs bj-tabs" id="bjFilters">
+        ${['Accionables', 'En revisión', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--active' : ''}" data-f="${f}">${f}</button>`).join('')}
       </div>
-      <span class="bj-count">${rows.length} de ${all.length} · <strong>${pend}</strong> pendientes</span>
-    </div>
-
-    <div class="naowee-card bj-list">
       ${rows.length ? `
         <div class="cg-table-wrap">
           <table class="cg-table bj-table">
@@ -202,18 +203,20 @@ function openDetail(id) {
         </div>
       </div>
       <div class="reg-modal__foot bj-actions">
-        <button type="button" class="naowee-btn naowee-btn--mute" id="bjCancel">Cerrar</button>
         ${accionable ? `
           <button type="button" class="naowee-btn naowee-btn--mute" id="bjCorr">Solicitar corrección</button>
-          <button type="button" class="naowee-btn bj-btn-danger" id="bjRej">Rechazar</button>
-          <button type="button" class="naowee-btn naowee-btn--loud" id="bjApr">${esFed ? 'Aprobar mi mitad' : 'Aprobar'}</button>` : ''}
+          <div class="bj-actions__main">
+            <button type="button" class="naowee-btn bj-btn-danger" id="bjRej">Rechazar</button>
+            <button type="button" class="naowee-btn naowee-btn--loud" id="bjApr">${esFed ? 'Aprobar mi mitad' : 'Aprobar'}</button>
+          </div>`
+          : `<button type="button" class="naowee-btn naowee-btn--mute" id="bjCancel">Cerrar</button>`}
       </div>
     </div>`;
   document.body.appendChild(ov);
   const close = () => ov.remove();
   ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
   ov.querySelector('#bjClose').addEventListener('click', close);
-  ov.querySelector('#bjCancel').addEventListener('click', close);
+  ov.querySelector('#bjCancel')?.addEventListener('click', close);
   if (accionable) {
     ov.querySelector('#bjApr').addEventListener('click', () => { doApprove(id); close(); });
     ov.querySelector('#bjRej').addEventListener('click', () => openMotivo(id, 'Rechazado', close));
