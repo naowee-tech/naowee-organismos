@@ -9,10 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="shared/tokens.css?v=0.3.2">
-<link rel="stylesheet" href="shared/shell.css?v=0.3.2">
-<link rel="stylesheet" href="shared/components.css?v=0.3.2">
-<link rel="stylesheet" href="shared/naowee-footer.css?v=0.3.2">
+<link rel="stylesheet" href="shared/tokens.css?v=0.4.0">
+<link rel="stylesheet" href="shared/shell.css?v=0.4.0">
+<link rel="stylesheet" href="shared/components.css?v=0.4.0">
+<link rel="stylesheet" href="shared/forms.css?v=0.4.0">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=0.4.0">
+
+<!-- SheetJS (solo en esta pantalla, para plantilla .xlsx + parseo) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -24,18 +28,9 @@
       <div class="page-inner">
         <div class="page-head">
           <h1 class="page-head__title">Cargue masivo</h1>
-          <p class="page-head__sub">Pre-registro de los organismos de nivel inferior por plantilla: cada nivel carga masivamente a los que dependen de él.</p>
+          <p class="page-head__sub">Pre-registro de los organismos de nivel inferior por plantilla: cada nivel carga masivamente a los que dependen de él. Las filas válidas quedan Preinscrito y aparecen en la jerarquía.</p>
         </div>
-        <div class="stub-card">
-          <div class="naowee-empty-state">
-            <span class="naowee-empty-state__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            </span>
-            <span class="naowee-badge naowee-badge--neutral naowee-badge--quiet naowee-badge--small">Próximamente</span>
-            <p class="naowee-empty-state__title">Disponible en la próxima versión</p>
-            <p class="naowee-empty-state__description">El cargue masivo con la plantilla .xlsx real (22 columnas), la validación por fila con reporte de errores, la carga parcial y el historial de cargues se habilitan en la siguiente versión de la demo.</p>
-          </div>
-        </div>
+        <div id="cargueRoot"></div>
       </div>
     </div>
   </div>
@@ -51,8 +46,10 @@
   mountHeader({ headerEl: document.getElementById('topHeader'), role });
   mountBackdrop();
   mountDemoSwitcher({ roleCode });
+  /* El módulo se auto-arranca al importar (render por rol). */
+  import('./shared/cargue.js?v=0.4.0');
 </script>
-<script src="shared/naowee-footer.js?v=0.3.2"></script>
+<script src="shared/naowee-footer.js?v=0.4.0"></script>
 
 </body>
 </html>
