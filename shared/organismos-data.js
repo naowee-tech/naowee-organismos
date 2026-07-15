@@ -194,6 +194,7 @@ export function seedDemoData() {
   if (readStore('organismos-overrides') == null) writeStore('organismos-overrides', {});
   if (readStore('deportistas-nuevos') == null) writeStore('deportistas-nuevos', []);
   if (readStore('solicitudes') == null) writeStore('solicitudes', []);
+  if (readStore('cargues') == null) writeStore('cargues', []);
   try { localStorage.setItem(SEED_FLAG, SEED_VERSION); } catch (_) {}
   return { seeded: true, version: SEED_VERSION };
 }
@@ -363,4 +364,29 @@ export function activosDeTipo(tipo) {
    parentId de una Federación a partir de su sector (Olímpico→COC, etc.). */
 export function comitePorSector(sector) {
   return allOrganismos().find((o) => o.tipo === 'comite' && o.sector === sector) || null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Cargue masivo (T4) — alta en lote + historial/auditoría.
+   ═══════════════════════════════════════════════════════════════ */
+/* Alta en lote: crea cada fila como Preinscrito (vía addOrganismo, que persiste
+   en organismos-nuevos → ya aparece en la jerarquía bajo su superior). Cada
+   addOrganismo lee/escribe el store en secuencia, así que los ids N### no
+   colisionan. Devuelve el array de organismos creados (copias). */
+export function addOrganismosBulk(rows) {
+  return (rows || []).map((r) => addOrganismo(r));
+}
+
+/* Historial de cargues (auditoría de la pantalla de cargue masivo). Guarda
+   { fecha, responsable, tipo, archivo{nombre,tamano}, totales{filas,cargadas,error}, version }.
+   Devuelve el registro creado (con id CG-###). Más reciente primero. */
+export function recordCargue(entry) {
+  const list = readStore('cargues', []) || [];
+  const record = { id: 'CG-' + String(list.length + 1).padStart(3, '0'), ...entry };
+  list.unshift(record);
+  writeStore('cargues', list);
+  return { ...record };
+}
+export function allCargues() {
+  return (readStore('cargues', []) || []).map((c) => ({ ...c }));
 }
