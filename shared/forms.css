@@ -1,0 +1,339 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAOWEE ORGANISMOS — Componentes de formulario / wizard (port local DS)
+   Registro de Organismos — Jerarquía SUID · v0.3.0 (T3)
+
+   Se carga DESPUÉS de components.css. Reutiliza de components.css:
+   .naowee-btn · .naowee-badge · .naowee-message · .naowee-card ·
+   .naowee-empty-state · .naowee-searchbox · el core de .naowee-dropdown
+   (trigger/menu/opt/--open). Aquí se AGREGA lo que el wizard necesita y el
+   DS trae pero el módulo aún no portaba: textfield, helper, checkbox, radio,
+   file-uploader, stepper + shake, y las extensiones de dropdown de formulario
+   (label + buscador en el menú + tamaño de campo). Más el layout del wizard,
+   el modal de dirección estructurada y la pantalla de éxito (scope .reg-*).
+   Port 1:1 de Eventos/demo/shared/forms.css + receta wizard-recipe v1.8.
+   Bordes de campo unificados con el dropdown del módulo (#d0d4e6 de tokens).
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --field-h: 48px;                 /* altura de input large (DS) */
+  --field-border-error: #ed314a;   /* feedback-border-negative-loud */
+}
+
+/* ───────────────────────── Textfield ─────────────────────────── */
+.naowee-textfield { display: flex; flex-direction: column; width: 100%; font-feature-settings: 'case' 1; }
+.naowee-textfield__label {
+  font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary);
+  padding-bottom: 7px; display: inline-flex; align-items: center; gap: 4px;
+}
+.naowee-textfield__label--required::after { content: '*'; color: var(--accent); font-weight: 700; }
+.naowee-textfield__input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  height: var(--field-h); padding: 0 12px;
+  background: var(--surface); border: 1px solid var(--field-border-idle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-normal) var(--easing-smoothout),
+              border-width var(--duration-fast) var(--easing-smoothout),
+              box-shadow var(--duration-normal) var(--easing-smoothout);
+}
+.naowee-textfield__input-wrap:hover { border-color: var(--field-border-hover); }
+.naowee-textfield__input-wrap:focus-within {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 64, 9, .15);
+}
+.naowee-textfield__input {
+  flex: 1; min-width: 0; height: 100%; border: none; background: transparent; outline: none;
+  font-family: inherit; font-size: 14px; font-weight: 400; color: var(--text-primary); padding: 0;
+}
+.naowee-textfield__input::placeholder { color: var(--text-muted); }
+.naowee-textfield__prefix { color: var(--text-muted); display: inline-flex; flex-shrink: 0; font-size: 14px; }
+.naowee-textfield__prefix svg { width: 18px; height: 18px; }
+
+/* Textarea */
+.naowee-textfield--textarea .naowee-textfield__input-wrap { align-items: flex-start; padding: 10px 12px; height: auto; }
+.naowee-textfield--textarea .naowee-textfield__input { height: auto; min-height: 84px; resize: vertical; line-height: 1.5; width: 100%; }
+
+/* Readonly (trigger de dirección estructurada) */
+.naowee-textfield--readonly .naowee-textfield__input-wrap { background: var(--bg-soft); cursor: pointer; }
+
+/* Error */
+.naowee-textfield--error .naowee-textfield__input-wrap { border-color: var(--field-border-error); }
+.naowee-textfield--error .naowee-textfield__input-wrap:focus-within {
+  border-color: var(--field-border-error); box-shadow: 0 0 0 3px rgba(237, 49, 74, .15);
+}
+
+/* ── Helper canónico (DS .naowee-helper) — error de campo (variante negative) ── */
+.naowee-helper { display: flex; align-items: flex-start; gap: 6px; width: 100%; padding-top: 5px; font-family: inherit; }
+.naowee-helper[hidden] { display: none; }
+.naowee-helper__text { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 5px; font-size: 12px; font-weight: 400; line-height: 16px; color: var(--text-secondary); }
+.naowee-helper__badge { width: 16px; height: 16px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: #ed314a; color: #fff; margin-top: 1px; }
+.naowee-helper__badge svg { width: 12px; height: 12px; }
+.naowee-helper--negative .naowee-helper__text { font-weight: 600; color: #c4031d; }
+.naowee-field-help { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.45; }
+
+/* ───────────── Dropdown de FORMULARIO (extiende components.css) ─────────────
+   El core (.naowee-dropdown / __trigger / __menu / __opt / --open) vive en
+   components.css. Aquí: label, altura de campo 48px en el wizard, buscador
+   sticky dentro del menú y estado de error. Toggle SIEMPRE --open en wrapper. */
+.naowee-dropdown__label {
+  font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary);
+  padding-bottom: 7px; display: inline-flex; align-items: center; gap: 4px;
+}
+.naowee-dropdown__label--required::after { content: '*'; color: var(--accent); font-weight: 700; }
+.reg-form .naowee-dropdown__trigger { min-height: var(--field-h); }
+.naowee-dropdown--error .naowee-dropdown__trigger { border-color: var(--field-border-error); }
+.naowee-dropdown--error.naowee-dropdown--open .naowee-dropdown__trigger { box-shadow: 0 0 0 3px rgba(237, 49, 74, .15); border-color: var(--field-border-error); }
+.naowee-dropdown__opt-emoji { font-size: 15px; flex-shrink: 0; }
+.naowee-dropdown__opt-sub { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-secondary); margin-top: 1px; }
+.naowee-dropdown__opt-main { min-width: 0; flex: 1; overflow: hidden; }
+.naowee-dropdown__opt-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Buscador sticky dentro del menú (acento-insensible; el filtro lo hace el JS) */
+.dd-search-wrap { padding: 8px 8px 6px; position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--border); z-index: 1; }
+.dd-search-input {
+  width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--field-border-idle);
+  border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--text-primary); outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+.dd-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 64, 9, .12); }
+.dd-empty { padding: 16px 12px; font-size: 12.5px; color: var(--text-muted); text-align: center; }
+
+/* ───────────────────── Checkbox (svg canónico) ───────────────── */
+.naowee-checkbox { display: inline-flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; }
+.naowee-checkbox input { position: absolute; opacity: 0; width: 0; height: 0; }
+.naowee-checkbox__box {
+  width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-dark); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+.naowee-checkbox__box svg { width: 13px; height: 13px; color: #fff; opacity: 0; transform: scale(.6);
+  transition: opacity var(--duration-fast), transform var(--duration-fast) var(--easing-bounce-soft); }
+.naowee-checkbox input:checked + .naowee-checkbox__box { background: var(--accent); border-color: var(--accent); }
+.naowee-checkbox input:checked + .naowee-checkbox__box svg { opacity: 1; transform: scale(1); }
+.naowee-checkbox input:focus-visible + .naowee-checkbox__box { box-shadow: 0 0 0 3px rgba(215, 64, 9, .2); }
+.naowee-checkbox__label { font-size: 13.5px; color: var(--text-primary); line-height: 1.4; }
+.naowee-checkbox--error .naowee-checkbox__box { border-color: var(--field-border-error); }
+
+/* ───────────────────── Radio choice (tipo de club / ámbito) ─────────────────
+   Tarjetas de selección única (DS §Tag choice / radio). Grid responsive. */
+.reg-choice-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.reg-choice {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: pointer;
+  border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface);
+  transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast);
+}
+.reg-choice:hover { border-color: var(--field-border-hover); }
+.reg-choice input { position: absolute; opacity: 0; width: 0; height: 0; }
+.reg-choice__dot { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; border-radius: 50%; border: 1.5px solid var(--border-dark); display: inline-flex; align-items: center; justify-content: center; transition: border-color var(--duration-fast); }
+.reg-choice__dot::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform var(--duration-fast) var(--easing-bounce-soft); }
+.reg-choice__body { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.reg-choice__title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.reg-choice__desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+.reg-choice.is-selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent); }
+.reg-choice.is-selected .reg-choice__dot { border-color: var(--accent); }
+.reg-choice.is-selected .reg-choice__dot::after { transform: scale(1); }
+.reg-choice-group.is-error .reg-choice { border-color: var(--field-border-error); }
+
+/* ───────────────── File uploader (mock, sin backend) ────────────── */
+.naowee-file-uploader { display: flex; flex-direction: column; width: 100%; font-feature-settings: 'case' 1; }
+.naowee-file-uploader__label { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary); padding-bottom: 7px; display: inline-flex; align-items: center; gap: 4px; }
+.naowee-file-uploader__label--required::after { content: '*'; color: var(--accent); font-weight: 700; }
+.naowee-file-uploader__drop-zone {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 22px 20px; border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--border-dark); background: var(--bg-soft);
+  text-align: center; cursor: pointer; min-height: 104px;
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+.naowee-file-uploader__drop-zone:hover,
+.naowee-file-uploader__drop-zone.is-drag-over { border-color: var(--accent); background: var(--accent-bg); }
+.naowee-file-uploader__drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.naowee-file-uploader__drop-icon { color: var(--text-secondary); transition: color var(--duration-fast); }
+.naowee-file-uploader__drop-zone:hover .naowee-file-uploader__drop-icon,
+.naowee-file-uploader__drop-zone.is-drag-over .naowee-file-uploader__drop-icon { color: var(--accent); }
+.naowee-file-uploader__drop-icon svg { width: 26px; height: 26px; }
+.naowee-file-uploader__drop-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.naowee-file-uploader__drop-hint { font-size: 11.5px; color: var(--text-secondary); line-height: 1.4; }
+/* Estado lleno: file tag verde */
+.naowee-file-uploader.has-file .naowee-file-uploader__drop-zone { border-style: solid; border-color: var(--green); background: var(--green-bg); cursor: default; }
+.naowee-file-uploader.has-file .naowee-file-uploader__drop-icon { color: var(--green); }
+.naowee-file-uploader__file-tag {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+  padding: 8px 8px 8px 12px; background: var(--surface);
+  border: 1.5px solid var(--green); border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px var(--green-bg); font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+}
+.naowee-file-uploader__file-tag svg.file-ico { width: 18px; height: 18px; flex-shrink: 0; color: var(--green); }
+.naowee-file-uploader__file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.naowee-file-uploader__file-size { font-size: 11.5px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.naowee-file-uploader__file-dismiss { width: 22px; height: 22px; flex-shrink: 0; border: none; background: transparent; cursor: pointer; color: var(--accent); display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: background var(--duration-fast); }
+.naowee-file-uploader__file-dismiss:hover { background: var(--accent-bg); }
+.naowee-file-uploader__file-dismiss svg { width: 15px; height: 15px; }
+.naowee-file-uploader--error .naowee-file-uploader__drop-zone { border-color: var(--field-border-error); }
+
+/* ── Shake / wiggle canónico (DS §Utility SHAKE). remove→reflow→add. ── */
+.naowee-shake { animation: naoweeShake .45s cubic-bezier(.36, .07, .19, .97); }
+@keyframes naoweeShake {
+  0%, 100% { transform: translateX(0); } 15% { transform: translateX(-6px); }
+  30% { transform: translateX(5px); }    45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); }    75% { transform: translateX(-2px); }
+  90% { transform: translateX(1px); }
+}
+
+/* ═══════════════════ Stepper (wizard-recipe v1.8) ═══════════════════
+   Port del DS §Stepper: base + --distributed + --pulse + skeleton dots. */
+.naowee-stepper { display: flex; align-items: flex-start; gap: 4px; }
+.naowee-stepper--distributed { width: 100%; }
+.naowee-stepper--distributed .naowee-stepper__step { flex: 0 0 auto; }
+.naowee-stepper--distributed .naowee-stepper__connector { flex: 1 1 auto; }
+.naowee-stepper__step { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.naowee-stepper__number {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text-secondary);
+  background: var(--surface); border: 1.5px solid var(--border-dark);
+  transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
+}
+.naowee-stepper__number svg { width: 15px; height: 15px; }
+.naowee-stepper__label { font-size: 11.5px; font-weight: 500; color: var(--text-secondary); max-width: 84px; line-height: 1.25; }
+.naowee-stepper__step--active .naowee-stepper__number { background: var(--accent); border-color: var(--accent); color: #fff; }
+.naowee-stepper__step--active .naowee-stepper__label { color: var(--text-primary); font-weight: 700; }
+.naowee-stepper__step--done .naowee-stepper__number { background: var(--green); border-color: var(--green); color: #fff; }
+.naowee-stepper__step--done { cursor: pointer; }
+.naowee-stepper__step--done:hover .naowee-stepper__label { color: var(--accent); }
+.naowee-stepper__connector { height: 2px; min-width: 16px; margin-top: 15px; background: var(--border-dark); border-radius: 2px; }
+.naowee-stepper__connector--done { background: var(--green); }
+/* --pulse: ring naranja pulsante en el paso activo */
+.naowee-stepper--pulse .naowee-stepper__step--active .naowee-stepper__number { animation: naoweeStepPulse 2s infinite; }
+@keyframes naoweeStepPulse {
+  0% { box-shadow: 0 0 0 0 rgba(215, 64, 9, .38); }
+  70% { box-shadow: 0 0 0 8px rgba(215, 64, 9, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(215, 64, 9, 0); }
+}
+/* Skeleton dots (antes de elegir tipo): "vienen más pasos" sin comprometer conteo */
+.naowee-stepper__step--skeleton .naowee-stepper__number { width: 11px; height: 11px; min-width: 11px; margin-top: 9px; background: var(--border); border: none; box-shadow: none; animation: none; }
+.naowee-stepper__connector--skeleton { background: var(--border); opacity: .65; }
+
+/* ═══════════════════ Layout del wizard (scope .reg-*) ═══════════════════ */
+.reg-wizard { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); overflow: hidden; }
+.reg-stepper-wrap { padding: 24px 28px 22px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.reg-stepper-mobile { display: none; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.reg-stepper-mobile strong { color: var(--accent); }
+.reg-pane { padding: 28px; animation: regPaneIn .35s var(--easing-smoothout) both; }
+@keyframes regPaneIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.reg-pane__title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -.2px; }
+.reg-pane__sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 22px; line-height: 1.5; max-width: 620px; }
+.reg-form { display: flex; flex-direction: column; gap: 18px; max-width: 560px; }
+.reg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.reg-grid-2--full { grid-column: 1 / -1; }
+.reg-section-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); margin: 6px 0 -4px; }
+.reg-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--border); background: var(--bg-soft); }
+.reg-footer__spacer { flex: 1; }
+
+/* ── Selector de tipo (paso 0) — tarjetas grandes ── */
+.reg-tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.reg-tipo-card {
+  position: relative; display: flex; flex-direction: column; gap: 6px; padding: 20px; cursor: pointer;
+  border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface); text-align: left;
+  transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast);
+}
+.reg-tipo-card:hover { border-color: var(--field-border-hover); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.reg-tipo-card__emoji { font-size: 28px; line-height: 1; }
+.reg-tipo-card__title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.reg-tipo-card__desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
+.reg-tipo-card__check { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: none; align-items: center; justify-content: center; }
+.reg-tipo-card__check svg { width: 13px; height: 13px; }
+.reg-tipo-card.is-selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent); }
+.reg-tipo-card.is-selected .reg-tipo-card__check { display: inline-flex; }
+
+/* ── Resumen de confirmación ── */
+.reg-review { display: flex; flex-direction: column; gap: 18px; max-width: 620px; }
+.reg-review__group { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.reg-review__group-head { display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; background: var(--bg-soft); border-bottom: 1px solid var(--border); }
+.reg-review__group-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.reg-review__edit { border: none; background: transparent; color: var(--accent); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+.reg-review__edit:hover { background: var(--accent-bg); }
+.reg-kv { display: grid; grid-template-columns: 180px 1fr; gap: 2px 14px; padding: 12px 16px; }
+.reg-kv__k { font-size: 12.5px; color: var(--text-secondary); padding: 4px 0; }
+.reg-kv__v { font-size: 13px; color: var(--text-primary); font-weight: 500; padding: 4px 0; word-break: break-word; }
+
+/* ═══════════════════ Modal de dirección estructurada ═══════════════════
+   REGLA DURA: una sola capa de backdrop. Sin botón "Cancelar" (X + click overlay). */
+.reg-modal-overlay {
+  position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(40, 40, 52, .5); opacity: 0; pointer-events: none;
+  transition: opacity var(--duration-normal) ease;
+}
+.reg-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+.reg-modal {
+  background: var(--surface); border-radius: var(--radius-xl); width: 95vw; max-width: 560px; max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
+  transform: translateY(18px) scale(.98); opacity: 0;
+  transition: transform var(--duration-slow) var(--easing-bounce-soft), opacity var(--duration-normal) ease;
+}
+.reg-modal-overlay.is-open .reg-modal { transform: none; opacity: 1; }
+.reg-modal__head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.reg-modal__title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.reg-modal__close { width: 32px; height: 32px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; transition: background var(--duration-fast); }
+.reg-modal__close:hover { background: var(--bg-soft); color: var(--accent); }
+.reg-modal__close svg { width: 20px; height: 20px; }
+.reg-modal__body { padding: 22px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.reg-modal__foot { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+.reg-inline-check { display: flex; align-items: flex-end; padding-bottom: 12px; }
+
+/* ═══════════════════ Pantalla de éxito ═══════════════════ */
+.reg-success { position: relative; text-align: center; padding: 44px 24px 40px; overflow: hidden; }
+.reg-success__hero { position: relative; z-index: 1; }
+.reg-success__check {
+  width: 88px; height: 88px; margin: 0 auto 20px; border-radius: 50%;
+  background: linear-gradient(140deg, #25a12a, #1f8923); color: #fff;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(31, 137, 35, .34);
+  animation: regSuccessPop .5s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.reg-success__check svg { width: 44px; height: 44px; }
+@keyframes regSuccessPop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.reg-success__title { font-size: 22px; font-weight: 800; color: var(--azul); margin: 0 0 8px; letter-spacing: -.4px; }
+.reg-success__lead { font-size: 14px; color: var(--text-secondary); margin: 0 auto 20px; max-width: 480px; line-height: 1.55; }
+.reg-receipt { max-width: 460px; margin: 22px auto 0; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: left; overflow: hidden; box-shadow: var(--shadow-sm); }
+.reg-receipt__head { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-soft); border-bottom: 1px solid var(--border); }
+.reg-receipt__ava { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; background: var(--accent-bg); }
+.reg-receipt__name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.reg-receipt__meta { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.reg-receipt__rows { padding: 8px 16px 14px; }
+.reg-kv-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.reg-kv-row:last-child { border-bottom: none; }
+.reg-kv-row__ico { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); }
+.reg-kv-row__ico svg { width: 18px; height: 18px; }
+.reg-kv-row__lbl { font-size: 12.5px; color: var(--text-secondary); flex: 1; }
+.reg-kv-row__val { font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: right; }
+.reg-success__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
+.reg-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.reg-confetti span { position: absolute; top: 0; width: 8px; height: 12px; opacity: 0; animation: regConfettiFall 2.4s linear forwards; }
+@keyframes regConfettiFall {
+  0% { transform: translateY(-30px) rotate(0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(340px) rotate(720deg); opacity: 0; }
+}
+
+/* ═══════════════════ Responsive ═══════════════════ */
+@media (max-width: 760px) {
+  .reg-stepper-wrap .naowee-stepper { display: none; }
+  .reg-stepper-mobile { display: block; }
+  .reg-pane { padding: 20px 16px; }
+  .reg-stepper-wrap { padding: 16px 18px; }
+  .reg-footer { padding: 14px 16px; }
+  .reg-grid-2 { grid-template-columns: 1fr; }
+  .reg-kv { grid-template-columns: 1fr; gap: 0; }
+  .reg-kv__k { padding-bottom: 0; }
+  .reg-kv__v { padding-top: 1px; padding-bottom: 8px; }
+  /* Dropdown del menú como bottom-sheet en móvil */
+  .naowee-dropdown--open .naowee-dropdown__menu {
+    position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 1200;
+    max-height: 70vh; border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    box-shadow: var(--shadow-sheet); padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .naowee-shake, .reg-pane, .reg-success__check, .reg-confetti span,
+  .naowee-stepper--pulse .naowee-stepper__step--active .naowee-stepper__number { animation: none !important; }
+  .naowee-textfield__input-wrap, .naowee-dropdown__trigger, .reg-tipo-card, .reg-choice { transition: none !important; }
+}
