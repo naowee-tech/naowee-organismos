@@ -8,6 +8,11 @@
        estado, repLegal:{tipoDoc,numDoc,nombre,apellido,correo},
        ubicacion:{depto,ciudad,zona,direccion}, contacto:{telefono,correo},
        fechaRegistro }
+     Campos opcionales por tipo (T3 registro):
+       tipoClub:'promotor'|'profesional'|'escuela' (club),
+       ambito:'departamental'|'distrital' (liga),
+       actoAdministrativo (comité), documentos:{ [docId]:{name,size} },
+       aceptaPoliticas:boolean, ficticio:true (todo lo creado en la demo).
    Modelo del deportista:
      { id, nombre, tipoDoc, numDoc, deporte, modalidad, correo,
        clubId|null, estado:'autodeclarado'|'vinculado' }
@@ -307,4 +312,55 @@ export function countDescendants(orgId) {
   });
   c.deportistas = deportistasOf(orgId).length;
   return c;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Escritura — alta de organismo (T3 · registro por tipo).
+   Persiste en el store de sesión `organismos-nuevos`, de modo que
+   allOrganismos() / childrenOf() / subtreeOf() ya lo incluyan y el
+   organismo aparezca en la jerarquía (jerarquia.html) bajo su superior.
+   NO muta el seed. Devuelve una COPIA del registro creado.
+   ═══════════════════════════════════════════════════════════════ */
+const ID_PREFIX = { comite: 'COM', federacion: 'FED', liga: 'LIG', club: 'CLU' };
+
+/* Siguiente id legible por tipo. El sufijo `N###` distingue lo creado en la
+   demo de los ids del seed (FED-001…), evitando colisiones. */
+export function nextOrgId(tipo) {
+  const prefix = ID_PREFIX[tipo] || 'ORG';
+  const nuevos = readStore('organismos-nuevos', []) || [];
+  const n = nuevos.filter((o) => o.tipo === tipo).length + 1;
+  return `${prefix}-N${String(n).padStart(3, '0')}`;
+}
+
+/* Crea un organismo nuevo. `org` debe traer al menos { tipo, nombre, parentId }.
+   Por defecto queda estado 'Preinscrito' (§3.2) y ficticio:true. */
+export function addOrganismo(org) {
+  const nuevos = readStore('organismos-nuevos', []) || [];
+  const record = {
+    estado: 'Preinscrito',
+    ficticio: true,
+    fechaRegistro: new Date().toISOString().slice(0, 10),
+    ...org,
+    id: org.id || nextOrgId(org.tipo)
+  };
+  nuevos.push(record);
+  writeStore('organismos-nuevos', nuevos);
+  return { ...record };
+}
+
+/* Organismos en estado Activo de un tipo, ordenados por nombre. Alimenta los
+   dropdowns dependientes de la jerarquía del registro: la Liga elige su
+   Federación (Activa) y el Club elige su Liga (Activa) — "pre-registro bajo
+   su superior" (ORG-03/04). Copias inmutables. */
+export function activosDeTipo(tipo) {
+  return allOrganismos()
+    .filter((o) => o.tipo === tipo && o.estado === 'Activo')
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map((o) => ({ ...o }));
+}
+
+/* Comité (cabeza de sector) al que pertenece un sector dado — para derivar el
+   parentId de una Federación a partir de su sector (Olímpico→COC, etc.). */
+export function comitePorSector(sector) {
+  return allOrganismos().find((o) => o.tipo === 'comite' && o.sector === sector) || null;
 }
