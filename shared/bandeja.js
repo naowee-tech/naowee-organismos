@@ -52,7 +52,8 @@ const I = {
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>',
   inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
   info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
-  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
 };
 
 /* State (UI) */
@@ -166,6 +167,37 @@ function msg(variant, icon, html) {
 }
 
 /* ═══════════════ Detalle + acciones (modal) ═══════════════ */
+/* ── Modales con animación enter/exit (el CSS de .reg-modal ya trae el easing). ── */
+function openModal(innerHtml) {
+  const ov = document.createElement('div');
+  ov.className = 'reg-modal-overlay bj-modal-ov';
+  ov.innerHTML = innerHtml;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('is-open'));   // dispara la animación de entrada
+  return ov;
+}
+function closeModal(ov, after) {
+  if (!ov || ov.__closing) return;
+  ov.__closing = true;
+  ov.classList.remove('is-open');                              // animación de salida
+  setTimeout(() => { ov.remove(); if (after) after(); }, 340);
+}
+/* Dropdown canónico (.naowee-dropdown): toggle --open en el wrapper + selección con check. */
+function mountDd(scope, onSelect) {
+  const dd = scope.querySelector('.naowee-dropdown');
+  if (!dd) return;
+  const valueEl = dd.querySelector('.naowee-dropdown__value');
+  dd.querySelector('.naowee-dropdown__trigger').addEventListener('click', (e) => { e.stopPropagation(); dd.classList.toggle('naowee-dropdown--open'); });
+  dd.querySelectorAll('.naowee-dropdown__opt').forEach((opt) => opt.addEventListener('click', () => {
+    valueEl.textContent = opt.dataset.value; valueEl.classList.remove('is-placeholder');
+    dd.querySelectorAll('.naowee-dropdown__opt').forEach((o) => o.classList.remove('naowee-dropdown__opt--selected'));
+    opt.classList.add('naowee-dropdown__opt--selected');
+    dd.classList.remove('naowee-dropdown--open', 'naowee-dropdown--error');
+    onSelect(opt.dataset.value);
+  }));
+  scope.addEventListener('click', (e) => { if (!dd.contains(e.target)) dd.classList.remove('naowee-dropdown--open'); });
+}
+
 function openDetail(id) {
   const o = getOrganismo(id);
   if (!o) return;
@@ -179,9 +211,7 @@ function openDetail(id) {
     puedeTransicionar(roleCode, o, 'Activo', superior) && (!esFed || !yaVote);
   const audit = allAudit(id);
 
-  const ov = document.createElement('div');
-  ov.className = 'reg-modal-overlay is-open bj-modal-ov';
-  ov.innerHTML = `
+  const ov = openModal(`
     <div class="reg-modal bj-modal" role="dialog" aria-modal="true">
       <div class="reg-modal__head">
         <h3 class="reg-modal__title">${TIPO_EMOJI[o.tipo]} ${esc(o.nombre)}</h3>
@@ -215,16 +245,15 @@ function openDetail(id) {
           </div>`
           : `<button type="button" class="naowee-btn naowee-btn--mute" id="bjCancel">Cerrar</button>`}
       </div>
-    </div>`;
-  document.body.appendChild(ov);
-  const close = () => ov.remove();
+    </div>`);
+  const close = () => closeModal(ov);
   ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
   ov.querySelector('#bjClose').addEventListener('click', close);
   ov.querySelector('#bjCancel')?.addEventListener('click', close);
   if (accionable) {
     ov.querySelector('#bjApr').addEventListener('click', () => { doApprove(id); close(); });
-    ov.querySelector('#bjRej').addEventListener('click', () => openMotivo(id, 'Rechazado', close));
-    ov.querySelector('#bjCorr').addEventListener('click', () => openMotivo(id, 'Corrección solicitada', close));
+    ov.querySelector('#bjRej').addEventListener('click', () => openMotivo(id, 'Rechazado', ov));
+    ov.querySelector('#bjCorr').addEventListener('click', () => openMotivo(id, 'Corrección solicitada', ov));
   }
 }
 function kv(k, val) { return `<div class="bj-kv__row"><dt>${esc(k)}</dt><dd>${esc(val)}</dd></div>`; }
@@ -268,33 +297,39 @@ function doApprove(id) {
 }
 
 /* ── Rechazar / Corrección (motivo obligatorio) ── */
-function openMotivo(id, tipoAccion, closeDetail) {
+function openMotivo(id, tipoAccion, detailOv) {
+  closeModal(detailOv);                    // no apilar: se cierra el detalle (con su animación de salida)
   const o = getOrganismo(id);
-  const ov = document.createElement('div');
-  ov.className = 'reg-modal-overlay is-open bj-modal-ov';
-  ov.innerHTML = `
-    <div class="reg-modal bj-modal bj-modal--sm" role="dialog" aria-modal="true">
-      <div class="reg-modal__head"><h3 class="reg-modal__title">${tipoAccion} · ${esc(o.nombre)}</h3><button type="button" class="reg-modal__close" id="mtClose" aria-label="Cerrar">${I.x}</button></div>
+  let selMotivo = '';
+  const ov = openModal(`
+    <div class="reg-modal bj-modal bj-modal--sm bj-modal--overflow" role="dialog" aria-modal="true">
+      <div class="reg-modal__head"><h3 class="reg-modal__title">${esc(tipoAccion)} · ${esc(o.nombre)}</h3><button type="button" class="reg-modal__close" id="mtClose" aria-label="Cerrar">${I.x}</button></div>
       <div class="reg-modal__body">
-        <label class="bj-label">Motivo <span class="bj-req">*</span></label>
-        <select class="bj-select" id="mtSel"><option value="">Selecciona un motivo…</option>${MOTIVOS.map((m) => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}</select>
-        <label class="bj-label" style="margin-top:12px">Comentario</label>
-        <textarea class="bj-textarea" id="mtTxt" rows="3" placeholder="Detalle para el organismo…"></textarea>
-        <p class="bj-err" id="mtErr" style="display:none">Selecciona un motivo para continuar.</p>
+        <div class="bj-field">
+          <label class="bj-label">Motivo <span class="bj-req">*</span></label>
+          <div class="naowee-dropdown" id="mtDd">
+            <button type="button" class="naowee-dropdown__trigger" aria-haspopup="listbox"><span class="naowee-dropdown__value is-placeholder">Selecciona un motivo…</span><span class="naowee-dropdown__chevron">${I.chevron}</span></button>
+            <div class="naowee-dropdown__menu" role="listbox">${MOTIVOS.map((m) => `<div class="naowee-dropdown__opt" role="option" data-value="${esc(m)}">${esc(m)}</div>`).join('')}</div>
+          </div>
+          <p class="bj-err" id="mtErr" style="display:none">Selecciona un motivo para continuar.</p>
+        </div>
+        <div class="bj-field">
+          <label class="bj-label">Comentario</label>
+          <div class="naowee-textfield__input-wrap bj-ta-wrap"><textarea id="mtTxt" rows="3" placeholder="Detalle para el organismo…"></textarea></div>
+        </div>
       </div>
-      <div class="reg-modal__foot bj-modal__foot"><button type="button" class="naowee-btn naowee-btn--mute" id="mtCancel">Cancelar</button><button type="button" class="naowee-btn bj-btn-danger" id="mtOk">Confirmar ${tipoAccion.toLowerCase()}</button></div>
-    </div>`;
-  document.body.appendChild(ov);
-  const close = () => ov.remove();
-  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
-  ov.querySelector('#mtClose').addEventListener('click', close);
-  ov.querySelector('#mtCancel').addEventListener('click', close);
+      <div class="reg-modal__foot bj-modal__foot"><button type="button" class="naowee-btn naowee-btn--mute" id="mtCancel">Cancelar</button><button type="button" class="naowee-btn bj-btn-danger" id="mtOk">Confirmar ${esc(tipoAccion.toLowerCase())}</button></div>
+    </div>`);
+  mountDd(ov, (val) => { selMotivo = val; ov.querySelector('#mtErr').style.display = 'none'; });
+  const backToDetail = () => closeModal(ov, () => openDetail(id));   // cancelar/cerrar → vuelve al detalle
+  ov.addEventListener('click', (e) => { if (e.target === ov) backToDetail(); });
+  ov.querySelector('#mtClose').addEventListener('click', backToDetail);
+  ov.querySelector('#mtCancel').addEventListener('click', backToDetail);
   ov.querySelector('#mtOk').addEventListener('click', () => {
-    const sel = ov.querySelector('#mtSel').value;
+    if (!selMotivo) { ov.querySelector('#mtErr').style.display = 'block'; ov.querySelector('#mtDd').classList.add('naowee-dropdown--error'); return; }
     const txt = ov.querySelector('#mtTxt').value.trim();
-    if (!sel) { ov.querySelector('#mtErr').style.display = 'block'; ov.querySelector('#mtSel').classList.add('bj-select--err'); return; }
-    doReject(id, tipoAccion, txt ? `${sel} — ${txt}` : sel);
-    close(); if (closeDetail) closeDetail(); render();
+    doReject(id, tipoAccion, txt ? `${selMotivo} — ${txt}` : selMotivo);
+    closeModal(ov); render();
   });
 }
 function doReject(id, tipoAccion, motivo) {

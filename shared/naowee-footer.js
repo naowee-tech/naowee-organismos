@@ -98,8 +98,14 @@ const MODULE_NAME = 'Organismos';
             Rechazar = rojo (semántico); (3) × del modal ya no se pone accent en hover
             (canónico, solo bg) — aplica a todos los modales; (4) tabs con aire lateral
             (no pegados al borde del container en hover). Auditado cross-página: searchbox
-            de jerarquía ya era canónico; sin clases inventadas sueltas. */
-const MODULE_VERSION = 'v0.5.5';
+            de jerarquía ya era canónico; sin clases inventadas sueltas.
+   v0.5.6 — Modales bandeja (feedback Doug): (1) NO se apilan — al abrir el motivo se
+            cierra el detalle; cancelar/cerrar el motivo reabre el detalle; (2) animación
+            enter/exit en todos los modales (helper openModal/closeModal usa el easing del
+            .reg-modal); (3) el selector de motivo ahora es .naowee-dropdown CANÓNICO (no
+            <select> nativo); (4) el comentario usa el .naowee-textfield__input-wrap del DS
+            (no textarea suelto). */
+const MODULE_VERSION = 'v0.5.6';
 
 (function () {
   function mount() {

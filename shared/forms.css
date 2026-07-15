@@ -495,6 +495,14 @@
 .bj-select--err { border-color: var(--field-border-error); box-shadow: 0 0 0 3px rgba(237, 49, 74, .15); }
 .bj-textarea { resize: vertical; min-height: 68px; }
 .bj-err { font-size: 12px; color: var(--naowee-color-feedback-text-negative-quiet-on-fill); margin: 8px 0 0; }
+/* Textarea sobre el input-wrap CANÓNICO del textfield (borde + focus-within del DS). */
+.bj-ta-wrap { height: auto; align-items: stretch; padding: 0; }
+.bj-ta-wrap textarea { width: 100%; border: none; background: transparent; outline: none; resize: vertical; min-height: 76px; font-family: inherit; font-size: 14px; line-height: 1.5; color: var(--text-primary); padding: 10px 12px; }
+.bj-ta-wrap textarea::placeholder { color: var(--text-muted); }
+/* Modal del motivo: permite que el menú del dropdown canónico escape del recorte del modal
+   (el border-radius del .reg-modal se mantiene porque el bg lo respeta igual). */
+.bj-modal--overflow { overflow: visible; }
+.bj-modal--overflow .reg-modal__body { overflow: visible; }
 
 @media (max-width: 760px) {
   .bj-panel__bar { align-items: stretch; }
