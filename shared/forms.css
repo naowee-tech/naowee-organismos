@@ -419,6 +419,9 @@
 .bj-search { flex: 1 1 240px; min-width: 200px; max-width: 420px; }
 .bj-count { font-size: 12.5px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; }
 .bj-tabs { padding: 0 8px; }
+/* La tabla dentro de un panel sin padding necesita aire: el header gris redondeado
+   debe respirar respecto al divisor de los tabs (patrón table-card establecido). */
+.bj-panel .cg-table-wrap, .cg-preview .cg-table-wrap { padding: 14px 12px 8px; }
 .bj-panel .naowee-empty-state { padding: 48px 24px; }
 
 .bj-org { display: flex; align-items: center; gap: 10px; min-width: 0; }

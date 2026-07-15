@@ -85,8 +85,11 @@ const MODULE_NAME = 'Organismos';
             indicador subrayado) en panel unificado (search + tabs + tabla en una
             card); modal: resumen en grid limpio sobre panel suave (sin divisores por
             fila, NIT tabular) y footer con jerarquía (corrección izquierda, Rechazar +
-            Aprobar agrupadas a la derecha, sin "Cerrar" redundante — la × cierra). */
-const MODULE_VERSION = 'v0.5.2';
+            Aprobar agrupadas a la derecha, sin "Cerrar" redundante — la × cierra).
+   v0.5.3 — Fix UI: el header gris de la tabla dentro del panel unificado (bandeja) y
+            del preview de cargue estaba pegado al divisor de arriba; se le da padding
+            al área de tabla para que el header table-card respire. */
+const MODULE_VERSION = 'v0.5.3';
 
 (function () {
   function mount() {
