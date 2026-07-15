@@ -104,8 +104,12 @@ const MODULE_NAME = 'Organismos';
             enter/exit en todos los modales (helper openModal/closeModal usa el easing del
             .reg-modal); (3) el selector de motivo ahora es .naowee-dropdown CANÓNICO (no
             <select> nativo); (4) el comentario usa el .naowee-textfield__input-wrap del DS
-            (no textarea suelto). */
-const MODULE_VERSION = 'v0.5.6';
+            (no textarea suelto).
+   v0.5.7 — fix(bandeja): el .naowee-message de "Documentos de soporte" mostraba "efi"
+            (texto "undefined" recortado) en el círculo del ícono porque el objeto de íconos
+            `I` no tenía la clave `alert` que la vista referenciaba. Añadido el glifo SVG
+            canónico (triángulo de advertencia, stroke currentColor). */
+const MODULE_VERSION = 'v0.5.7';
 
 (function () {
   function mount() {
