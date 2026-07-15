@@ -7,7 +7,7 @@
    Patrón portado de Eventos/demo/cargue.html. SheetJS (window.XLSX) por CDN.
    Solo componentes .naowee-* + layout local .cg-*.
    ═══════════════════════════════════════════════════════════════ */
-import { getRoleFromQuery, ROLES } from './sidebar.js';
+import { getRoleFromQuery, ROLES, getDemoMode } from './sidebar.js';
 import { allOrganismos, getOrganismo, addOrganismosBulk, recordCargue, allCargues } from './organismos-data.js';
 import { scopeFor } from './permissions.js';
 
@@ -157,7 +157,7 @@ function commit() {
   if (!valids.length) return;
   created = addOrganismosBulk(valids.map(toRecord));
   recordCargue({
-    fecha: today(), responsable: `${role.name || roleCode} (${roleCode})`, tipo: targetTipo,
+    rol: roleCode, fecha: today(), responsable: `${role.name || roleCode} (${roleCode})`, tipo: targetTipo,
     archivo: { nombre: parsed.fileName, tamano: parsed.fileSize },
     totales: { filas: parsed.rows.length, cargadas: created.length, error: parsed.rows.length - created.length },
     version: 'v0.4.0'
@@ -256,14 +256,22 @@ function renderOversight() {
 }
 
 function renderHistory(oversight) {
-  const list = allCargues();
+  const all = oversight ? allCargues() : allCargues().filter((c) => c.rol === roleCode);
+  const list = getDemoMode() === 'blank' ? all.filter((c) => !c.demo) : all;
   const title = oversight ? 'Historial global de cargues' : 'Historial de cargues';
+  const head = `<div class="cg-hist__head"><h3 class="cg-hist__title">${title}</h3>${oversight ? '<span class="oversight-badge">Solo lectura</span>' : ''}</div>`;
   if (!list.length) {
-    return `<div class="naowee-card"><div class="cg-hist__head"><h3 class="cg-hist__title">${title}</h3>${oversight ? '<span class="oversight-badge">Solo lectura</span>' : ''}</div><p class="cg-hist__empty">Aún no hay cargues registrados.</p></div>`;
+    return `<div class="naowee-card">${head}
+      <div class="naowee-empty-state">
+        <span class="naowee-empty-state__icon">${I.file}</span>
+        <p class="naowee-empty-state__title">Sin cargues todavía</p>
+        <p class="naowee-empty-state__description">Cuando cargues una plantilla, cada envío quedará registrado aquí con su radicado, responsable y resultado.</p>
+      </div>
+    </div>`;
   }
   return `
     <div class="naowee-card">
-      <div class="cg-hist__head"><h3 class="cg-hist__title">${title}</h3>${oversight ? '<span class="oversight-badge">Solo lectura</span>' : ''}</div>
+      ${head}
       <div class="cg-table-wrap">
         <table class="cg-table">
           <thead><tr><th>Radicado</th><th>Fecha</th><th>Responsable</th><th>Archivo</th><th>Resultado</th></tr></thead>
@@ -305,4 +313,20 @@ function msg(variant, icon, html) {
 }
 function toast(text, variant) { window.naoweeToast && window.naoweeToast(text, variant === 'negative' ? 'error' : 'success'); }
 
+/* Historial de ejemplo (modo demo "con datos"): un cargue plausible por rol que
+   carga (Comité→57 federaciones COC · Federación→ligas · Liga→clubes). Marcados
+   con demo:true → se ocultan en modo blank y se re-siembran tras "Reiniciar demo".
+   El histórico del Comité referencia el caso real de las 57 federaciones del COC. */
+const DEMO_CARGUES = [
+  { rol: 'COMITE', fecha: '2026-03-18', responsable: 'Camilo Duarte (COMITE)', tipo: 'federacion', archivo: { nombre: 'federaciones-coc.xlsx', tamano: 41520 }, totales: { filas: 57, cargadas: 56, error: 1 }, version: 'v0.4.0' },
+  { rol: 'FEDERACION', fecha: '2026-04-30', responsable: 'Alberto Herrera (FEDERACION)', tipo: 'liga', archivo: { nombre: 'ligas-patinaje.xlsx', tamano: 18240 }, totales: { filas: 8, cargadas: 8, error: 0 }, version: 'v0.4.0' },
+  { rol: 'LIGA', fecha: '2026-05-12', responsable: 'Sandra Mejía (LIGA)', tipo: 'club', archivo: { nombre: 'clubes-liga-valle.xlsx', tamano: 21480 }, totales: { filas: 6, cargadas: 5, error: 1 }, version: 'v0.4.0' }
+];
+function seedCarguesDemo() {
+  if (getDemoMode() !== 'demo') return;
+  if (allCargues().some((c) => c.demo)) return;   // idempotente
+  DEMO_CARGUES.forEach((d) => recordCargue({ ...d, demo: true }));
+}
+
+seedCarguesDemo();
 render();

@@ -60,8 +60,12 @@ const MODULE_NAME = 'Organismos';
             bajo el superior del rol; inválidas se reportan), historial + auditoría
             (recordCargue/allCargues), oversight solo-lectura para Mindeporte.
             Target por rol: Comité→federaciones · Federación→ligas · Liga→clubes.
-            Nuevos: shared/cargue.js + helpers addOrganismosBulk. */
-const MODULE_VERSION = 'v0.4.0';
+            Nuevos: shared/cargue.js + helpers addOrganismosBulk.
+   v0.4.1 — T4 refinamiento: el historial de cargues vacío usa el componente
+            canónico .naowee-empty-state (antes texto plano); en modo demo se
+            siembra un historial real (un cargue por rol, el del Comité = 57
+            federaciones COC), filtrado por rol y oculto en modo blank. */
+const MODULE_VERSION = 'v0.4.1';
 
 (function () {
   function mount() {
