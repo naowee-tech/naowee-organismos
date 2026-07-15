@@ -369,9 +369,14 @@
 .cg-preview__foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); }
 
 .cg-table-wrap { overflow-x: auto; }
-.cg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.cg-table thead th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); padding: 10px 18px; background: var(--th-bg); white-space: nowrap; }
-.cg-table tbody td { padding: 11px 18px; border-top: 1px solid var(--border); color: var(--text-primary); vertical-align: top; }
+/* header redondeado (gray bar) SIN divisor pegado; filas separadas por border-bottom.
+   border-collapse: separate para que el border-radius del thead th sea válido. */
+.cg-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.cg-table thead th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); padding: 9px 16px; background: var(--th-bg); white-space: nowrap; border: none; }
+.cg-table thead th:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+.cg-table thead th:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.cg-table tbody td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: top; }
+.cg-table tbody tr:last-child td { border-bottom: none; }
 .cg-table tbody tr.is-error { background: var(--red-bg); }
 .cg-table__row { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-weight: 600; }
 .cg-table__nit { font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
@@ -387,6 +392,7 @@
 .cg-hist__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .cg-hist__title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; }
 .cg-hist__empty { font-size: 13px; color: var(--text-secondary); margin: 0; }
+.cg-hist__rol { color: var(--text-secondary); font-weight: 500; }
 .oversight-badge { font-size: 11px; font-weight: 700; color: var(--text-secondary); background: var(--bg-soft); border: 1px solid var(--border); padding: 3px 10px; border-radius: var(--radius-full); }
 
 @media (max-width: 760px) {

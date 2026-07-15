@@ -64,8 +64,13 @@ const MODULE_NAME = 'Organismos';
    v0.4.1 — T4 refinamiento: el historial de cargues vacío usa el componente
             canónico .naowee-empty-state (antes texto plano); en modo demo se
             siembra un historial real (un cargue por rol, el del Comité = 57
-            federaciones COC), filtrado por rol y oculto en modo blank. */
-const MODULE_VERSION = 'v0.4.1';
+            federaciones COC), filtrado por rol y oculto en modo blank.
+   v0.4.2 — T4 pulido tabla: header de cargues como barra gris redondeada SIN
+            divisor pegado (border-collapse:separate + radius en thead; filas con
+            border-bottom, patrón table-card canónico); se quita el (ROL) redundante
+            del responsable en la vista propia (se muestra como sufijo solo en el
+            oversight global de Mindeporte). */
+const MODULE_VERSION = 'v0.4.2';
 
 (function () {
   function mount() {

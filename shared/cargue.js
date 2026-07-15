@@ -157,7 +157,7 @@ function commit() {
   if (!valids.length) return;
   created = addOrganismosBulk(valids.map(toRecord));
   recordCargue({
-    rol: roleCode, fecha: today(), responsable: `${role.name || roleCode} (${roleCode})`, tipo: targetTipo,
+    rol: roleCode, fecha: today(), responsable: role.name || roleCode, tipo: targetTipo,
     archivo: { nombre: parsed.fileName, tamano: parsed.fileSize },
     totales: { filas: parsed.rows.length, cargadas: created.length, error: parsed.rows.length - created.length },
     version: 'v0.4.0'
@@ -280,7 +280,7 @@ function renderHistory(oversight) {
               <tr>
                 <td class="cg-table__row">${esc(c.id)}</td>
                 <td>${esc(c.fecha)}</td>
-                <td>${esc(c.responsable)}</td>
+                <td>${esc(c.responsable)}${oversight && c.rol ? ` · <span class="cg-hist__rol">${esc((ROLES[c.rol] || {}).label || c.rol)}</span>` : ''}</td>
                 <td class="cg-table__nit">${esc(c.archivo && c.archivo.nombre || '—')}</td>
                 <td><span class="naowee-badge naowee-badge--positive naowee-badge--quiet naowee-badge--small">${c.totales.cargadas} cargadas</span>${c.totales.error ? ` <span class="naowee-badge naowee-badge--negative naowee-badge--quiet naowee-badge--small">${c.totales.error} error</span>` : ''}</td>
               </tr>`).join('')}
@@ -318,9 +318,9 @@ function toast(text, variant) { window.naoweeToast && window.naoweeToast(text, v
    con demo:true → se ocultan en modo blank y se re-siembran tras "Reiniciar demo".
    El histórico del Comité referencia el caso real de las 57 federaciones del COC. */
 const DEMO_CARGUES = [
-  { rol: 'COMITE', fecha: '2026-03-18', responsable: 'Camilo Duarte (COMITE)', tipo: 'federacion', archivo: { nombre: 'federaciones-coc.xlsx', tamano: 41520 }, totales: { filas: 57, cargadas: 56, error: 1 }, version: 'v0.4.0' },
-  { rol: 'FEDERACION', fecha: '2026-04-30', responsable: 'Alberto Herrera (FEDERACION)', tipo: 'liga', archivo: { nombre: 'ligas-patinaje.xlsx', tamano: 18240 }, totales: { filas: 8, cargadas: 8, error: 0 }, version: 'v0.4.0' },
-  { rol: 'LIGA', fecha: '2026-05-12', responsable: 'Sandra Mejía (LIGA)', tipo: 'club', archivo: { nombre: 'clubes-liga-valle.xlsx', tamano: 21480 }, totales: { filas: 6, cargadas: 5, error: 1 }, version: 'v0.4.0' }
+  { rol: 'COMITE', fecha: '2026-03-18', responsable: 'Camilo Duarte', tipo: 'federacion', archivo: { nombre: 'federaciones-coc.xlsx', tamano: 41520 }, totales: { filas: 57, cargadas: 56, error: 1 }, version: 'v0.4.0' },
+  { rol: 'FEDERACION', fecha: '2026-04-30', responsable: 'Alberto Herrera', tipo: 'liga', archivo: { nombre: 'ligas-patinaje.xlsx', tamano: 18240 }, totales: { filas: 8, cargadas: 8, error: 0 }, version: 'v0.4.0' },
+  { rol: 'LIGA', fecha: '2026-05-12', responsable: 'Sandra Mejía', tipo: 'club', archivo: { nombre: 'clubes-liga-valle.xlsx', tamano: 21480 }, totales: { filas: 6, cargadas: 5, error: 1 }, version: 'v0.4.0' }
 ];
 function seedCarguesDemo() {
   if (getDemoMode() !== 'demo') return;
