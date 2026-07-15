@@ -91,8 +91,15 @@ const MODULE_NAME = 'Organismos';
             al área de tabla para que el header table-card respire.
    v0.5.4 — Fix DS: los tabs usaban una clase inventada (.naowee-tab--active) y estilos
             aproximados; re-portados FIEL al DS §Tabs (clase canónica .naowee-tab--selected,
-            base transparente + hover fill orange-100, pipe full-width 3px accent, height 48). */
-const MODULE_VERSION = 'v0.5.4';
+            base transparente + hover fill orange-100, pipe full-width 3px accent, height 48).
+   v0.5.5 — Bandeja (feedback Doug): (1) detalle muestra "Documentos de soporte"
+            (reconocimiento deportivo IVC + aval + RUT + personería) — el peso legal que
+            frena aprobar cualquier cosa; aviso si faltan; (2) Aprobar = verde (positive),
+            Rechazar = rojo (semántico); (3) × del modal ya no se pone accent en hover
+            (canónico, solo bg) — aplica a todos los modales; (4) tabs con aire lateral
+            (no pegados al borde del container en hover). Auditado cross-página: searchbox
+            de jerarquía ya era canónico; sin clases inventadas sueltas. */
+const MODULE_VERSION = 'v0.5.5';
 
 (function () {
   function mount() {

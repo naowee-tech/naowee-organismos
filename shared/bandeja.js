@@ -51,7 +51,8 @@ const I = {
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>',
   inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
-  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
 };
 
 /* State (UI) */
@@ -65,11 +66,13 @@ function seedBandejaDemo() {
   const base = { tipo: 'federacion', sector: 'Olímpico', parentId: 'COC', estado: 'En revisión', ficticioBandeja: true };
   addOrganismo({ ...base, nombre: 'Federación Colombiana de Triatlón', nit: '901620001-1', deporte: 'Triatlón',
     validacion: { mindeporte: 'pendiente', comite: 'pendiente' },
+    documentos: { reconocimiento: { name: 'reconocimiento-deportivo-mindeporte.pdf' }, aval: { name: 'aval-comite-olimpico.pdf' }, rut: { name: 'rut-fedetriatlon.pdf' }, personeria: { name: 'personeria-juridica.pdf' } },
     repLegal: { tipoDoc: 'CC', numDoc: '79620001', nombre: 'Andrés', apellido: 'Vélez Mora', correo: 'presidencia@fedetriatlon.demo.co' },
     ubicacion: { depto: 'Cundinamarca', ciudad: 'Bogotá', zona: 'Urbana', direccion: 'Calle 63 # 47-06' },
     contacto: { telefono: '6014801122', correo: 'contacto@fedetriatlon.demo.co' } });
   addOrganismo({ ...base, nombre: 'Federación Colombiana de Surf', nit: '901620002-2', deporte: 'Surf',
     validacion: { mindeporte: 'aprobado', comite: 'pendiente' },
+    documentos: { reconocimiento: { name: 'reconocimiento-deportivo-mindeporte.pdf' }, aval: { name: 'aval-comite-olimpico.pdf' }, rut: { name: 'rut-fedesurf.pdf' }, personeria: { name: 'personeria-juridica.pdf' } },
     repLegal: { tipoDoc: 'CC', numDoc: '79620002', nombre: 'Laura', apellido: 'Peña Gil', correo: 'presidencia@fedesurf.demo.co' },
     ubicacion: { depto: 'Valle del Cauca', ciudad: 'Buenaventura', zona: 'Urbana', direccion: 'Cra 2 # 1-40' },
     contacto: { telefono: '6022410033', correo: 'contacto@fedesurf.demo.co' } });
@@ -193,6 +196,7 @@ function openDetail(id) {
           ${o.ubicacion ? kv('Sede', `${o.ubicacion.ciudad || ''}, ${o.ubicacion.depto || ''}`) : ''}
           ${o.contacto ? kv('Contacto', o.contacto.correo || '') : ''}
         </dl>
+        ${docsBlock(o)}
         ${!supActivo ? msg('caution', I.info, `Su superior (${esc(superior.nombre)}) no está <strong>Activo</strong>: no puede aprobarse hasta que se habilite (ORG-06).`) : ''}
         ${esFed && o.estado === 'En revisión' ? `<p class="bj-detail__note">Doble validación: tú registras la mitad de <strong>${roleCode === 'MINDEPORTE' ? 'Ministerio' : 'Comité'}</strong>. Ambas aprobadas → Activo.</p>` : ''}
         <div class="bj-timeline">
@@ -207,7 +211,7 @@ function openDetail(id) {
           <button type="button" class="naowee-btn naowee-btn--mute" id="bjCorr">Solicitar corrección</button>
           <div class="bj-actions__main">
             <button type="button" class="naowee-btn bj-btn-danger" id="bjRej">Rechazar</button>
-            <button type="button" class="naowee-btn naowee-btn--loud" id="bjApr">${esFed ? 'Aprobar mi mitad' : 'Aprobar'}</button>
+            <button type="button" class="naowee-btn bj-btn-success" id="bjApr">${esFed ? 'Aprobar mi mitad' : 'Aprobar'}</button>
           </div>`
           : `<button type="button" class="naowee-btn naowee-btn--mute" id="bjCancel">Cerrar</button>`}
       </div>
@@ -224,6 +228,26 @@ function openDetail(id) {
   }
 }
 function kv(k, val) { return `<div class="bj-kv__row"><dt>${esc(k)}</dt><dd>${esc(val)}</dd></div>`; }
+
+/* Documentos de soporte — el peso legal del trámite (reconocimiento deportivo vía IVC,
+   aval del Comité, RUT, personería). Si no hay adjuntos, aviso para el revisor. */
+const DOC_LABELS = {
+  reconocimiento: 'Reconocimiento deportivo (trámite IVC)',
+  reconocimientoMunicipal: 'Reconocimiento del ente municipal',
+  aval: 'Aval del Comité',
+  rut: 'RUT',
+  personeria: 'Certificado de personería jurídica'
+};
+function docsBlock(o) {
+  const docs = o.documentos || {};
+  const items = Object.keys(DOC_LABELS).filter((k) => docs[k]).map((k) => ({ label: DOC_LABELS[k], file: (docs[k] && docs[k].name) || docs[k] }));
+  return `<div class="bj-docs">
+    <p class="bj-docs__title">Documentos de soporte</p>
+    ${items.length
+      ? items.map((d) => `<div class="bj-doc"><span class="bj-doc__ico">${I.doc}</span><div style="min-width:0"><div class="bj-doc__name">${esc(d.label)}</div><div class="bj-doc__file">${esc(d.file)}</div></div><button type="button" class="bj-doc__view" onclick="return false">Ver</button></div>`).join('')
+      : `<div class="naowee-message naowee-message--caution"><span class="naowee-message__icon">${I.alert}</span><div class="naowee-message__body"><p class="naowee-message__text">El organismo aún no adjuntó el <strong>reconocimiento deportivo</strong> ni los soportes requeridos. El reconocimiento es un acto legal externo (IVC) — verifícalo antes de aprobar.</p></div></div>`}
+  </div>`;
+}
 
 /* ── Aprobar ── */
 function doApprove(id) {
