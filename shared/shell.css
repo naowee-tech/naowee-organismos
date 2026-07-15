@@ -83,8 +83,8 @@ a:hover { text-decoration: none; }
   transition: margin-left var(--duration-normal) var(--easing-smoothout), color var(--duration-normal) ease;
 }
 .nav-row .lbl {
-  flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary);
-  white-space: nowrap; overflow: hidden; max-width: 200px; opacity: 1;
+  flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; opacity: 1;
   transition: opacity var(--duration-normal) ease .18s,
               max-width var(--duration-slow) var(--easing-smoothout) .04s;
 }
