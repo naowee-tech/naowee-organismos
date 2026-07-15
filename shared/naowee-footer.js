@@ -88,8 +88,11 @@ const MODULE_NAME = 'Organismos';
             Aprobar agrupadas a la derecha, sin "Cerrar" redundante — la × cierra).
    v0.5.3 — Fix UI: el header gris de la tabla dentro del panel unificado (bandeja) y
             del preview de cargue estaba pegado al divisor de arriba; se le da padding
-            al área de tabla para que el header table-card respire. */
-const MODULE_VERSION = 'v0.5.3';
+            al área de tabla para que el header table-card respire.
+   v0.5.4 — Fix DS: los tabs usaban una clase inventada (.naowee-tab--active) y estilos
+            aproximados; re-portados FIEL al DS §Tabs (clase canónica .naowee-tab--selected,
+            base transparente + hover fill orange-100, pipe full-width 3px accent, height 48). */
+const MODULE_VERSION = 'v0.5.4';
 
 (function () {
   function mount() {

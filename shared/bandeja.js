@@ -116,7 +116,7 @@ function render() {
         <span class="bj-count">${rows.length} de ${all.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
       </div>
       <div class="naowee-tabs bj-tabs" id="bjFilters">
-        ${['Accionables', 'En revisión', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--active' : ''}" data-f="${f}">${f}</button>`).join('')}
+        ${['Accionables', 'En revisión', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--selected' : ''}" data-f="${f}">${f}</button>`).join('')}
       </div>
       ${rows.length ? `
         <div class="cg-table-wrap">
