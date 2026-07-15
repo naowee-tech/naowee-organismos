@@ -193,6 +193,7 @@ export function seedDemoData() {
   if (readStore('organismos-nuevos') == null) writeStore('organismos-nuevos', []);
   if (readStore('organismos-overrides') == null) writeStore('organismos-overrides', {});
   if (readStore('deportistas-nuevos') == null) writeStore('deportistas-nuevos', []);
+  if (readStore('deportistas-overrides') == null) writeStore('deportistas-overrides', {});
   if (readStore('solicitudes') == null) writeStore('solicitudes', []);
   if (readStore('cargues') == null) writeStore('cargues', []);
   if (readStore('audit') == null) writeStore('audit', []);
@@ -227,7 +228,14 @@ export function childrenOf(id) {
 
 export function allDeportistas() {
   const nuevos = readStore('deportistas-nuevos', []) || [];
-  return [...SEED_DEPORTISTAS.map((d) => ({ ...d })), ...nuevos.map((d) => ({ ...d }))];
+  const ov = readStore('deportistas-overrides', {}) || {};
+  const base = SEED_DEPORTISTAS.map((d) => (ov[d.id] ? { ...d, ...ov[d.id] } : { ...d }));
+  return [...base, ...nuevos.map((d) => ({ ...d }))];
+}
+
+/* Un deportista por id (seed + overrides + nuevos). Copia inmutable. */
+export function getDeportista(id) {
+  return allDeportistas().find((d) => d.id === id) || null;
 }
 
 /* Conteo del seed (para diagnóstico / QA de scaffolding). */
@@ -436,4 +444,149 @@ export function auditLog(entry) {
 export function allAudit(orgId) {
   const list = (readStore('audit', []) || []).map((a) => ({ ...a }));
   return orgId ? list.filter((a) => a.orgId === orgId) : list;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Afiliación del deportista (T7 · ORG-05) — solicitudes deportista→club.
+   Store `naowee-organismos-solicitudes` (sessionStorage, prefijo del módulo,
+   efímero). Estado del deportista (autodeclarado↔vinculado) vía overrides —
+   NUNCA muta el seed. Al aprobar, el club hereda su cadena: se asigna clubId al
+   deportista y su liga/federación/comité se derivan con ancestorsOf(clubId).
+   Estados de solicitud (§3.3, estados.js ESTADOS_SOLICITUD): Enviada → Aprobada
+   / Rechazada; Retirada la marca el propio deportista.
+   ═══════════════════════════════════════════════════════════════ */
+const _todayISO = () => new Date().toISOString().slice(0, 10);
+const _norm = (s) => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+/* Persiste un cambio en un deportista (seed vía overrides; nuevos in-place).
+   No muta el seed base. Devuelve la copia resultante. */
+export function updateDeportista(id, patch) {
+  const nuevos = readStore('deportistas-nuevos', []) || [];
+  const i = nuevos.findIndex((d) => d.id === id);
+  if (i >= 0) {
+    nuevos[i] = { ...nuevos[i], ...patch };
+    writeStore('deportistas-nuevos', nuevos);
+  } else {
+    const ov = readStore('deportistas-overrides', {}) || {};
+    ov[id] = { ...(ov[id] || {}), ...patch };
+    writeStore('deportistas-overrides', ov);
+  }
+  return getDeportista(id);
+}
+
+/* Todas las solicitudes (más reciente primero). Copias inmutables. */
+export function allSolicitudes() {
+  return (readStore('solicitudes', []) || []).map((s) => ({ ...s }));
+}
+/* Solicitudes dirigidas a un club (todas las de la vida del club, cualquier estado). */
+export function solicitudesDeClub(clubId) {
+  return allSolicitudes().filter((s) => s.clubId === clubId);
+}
+/* La solicitud más reciente de un deportista (la lista se guarda con unshift). */
+export function solicitudDeDeportista(deportistaId) {
+  return allSolicitudes().find((s) => s.deportistaId === deportistaId) || null;
+}
+
+/* Crea una solicitud de afiliación (estado Enviada) y la audita.
+   Devuelve la copia creada. NO cambia aún el estado del deportista (queda
+   autodeclarado hasta que el club apruebe). */
+export function crearSolicitud(deportistaId, clubId) {
+  const list = readStore('solicitudes', []) || [];
+  const dep = getDeportista(deportistaId);
+  const rec = {
+    id: 'AF-' + String(list.length + 1).padStart(3, '0'),
+    deportistaId, clubId, estado: 'Enviada', fecha: _todayISO()
+  };
+  list.unshift(rec);
+  writeStore('solicitudes', list);
+  auditLog({
+    orgId: clubId, deportistaId, deportistaNombre: dep ? dep.nombre : '',
+    fecha: rec.fecha, responsable: dep ? dep.nombre : '', rol: 'DEPORTISTA',
+    accion: 'Solicitud de afiliación enviada', de: '', a: 'Enviada', motivo: ''
+  });
+  return { ...rec };
+}
+
+/* Resuelve una solicitud (por el club). `resultado` ∈ {'aprobada','rechazada'}.
+   Al APROBAR: el deportista queda 'vinculado' y se le asigna clubId → hereda
+   automáticamente liga + federación + comité (ancestorsOf(clubId)) en toda la
+   app (perfil, jerarquía). Al RECHAZAR: motivo obligatorio (lo valida la UI).
+   Audita contra el club (orgId=clubId) referenciando al deportista. */
+export function resolverAfiliacion(solicitudId, resultado, meta = {}) {
+  const list = readStore('solicitudes', []) || [];
+  const i = list.findIndex((s) => s.id === solicitudId);
+  if (i < 0) return null;
+  const s = list[i];
+  const estadoSol = resultado === 'aprobada' ? 'Aprobada' : 'Rechazada';
+  list[i] = { ...s, estado: estadoSol, motivo: meta.motivo || '', responsable: meta.responsable || '', resueltaFecha: _todayISO() };
+  writeStore('solicitudes', list);
+  const dep = getDeportista(s.deportistaId);
+  if (resultado === 'aprobada') {
+    updateDeportista(s.deportistaId, { clubId: s.clubId, estado: 'vinculado' });
+  }
+  auditLog({
+    orgId: s.clubId, deportistaId: s.deportistaId, deportistaNombre: dep ? dep.nombre : '',
+    fecha: _todayISO(), responsable: meta.responsable || '', rol: 'CLUB',
+    accion: resultado === 'aprobada' ? 'Afiliación aprobada' : 'Afiliación rechazada',
+    de: 'Enviada', a: estadoSol, motivo: meta.motivo || ''
+  });
+  return { ...list[i] };
+}
+
+/* Retira la afiliación del deportista: marca como Retirada su solicitud activa
+   (Enviada o Aprobada) y lo devuelve a 'autodeclarado' (sin club, sin herencia).
+   "Cambiar de club" = retiro + nueva solicitud (§11.3). Audita. */
+export function retirarAfiliacion(deportistaId, meta = {}) {
+  const dep = getDeportista(deportistaId);
+  const eraVinculado = dep && dep.estado === 'vinculado';
+  const clubPrev = dep ? dep.clubId : null;
+  const list = readStore('solicitudes', []) || [];
+  let changed = false;
+  const upd = list.map((s) => {
+    if (s.deportistaId === deportistaId && (s.estado === 'Enviada' || s.estado === 'Aprobada')) {
+      changed = true;
+      return { ...s, estado: 'Retirada', resueltaFecha: _todayISO() };
+    }
+    return s;
+  });
+  if (changed) writeStore('solicitudes', upd);
+  updateDeportista(deportistaId, { clubId: null, estado: 'autodeclarado' });
+  auditLog({
+    orgId: clubPrev || '', deportistaId, deportistaNombre: dep ? dep.nombre : '',
+    fecha: _todayISO(), responsable: dep ? dep.nombre : '', rol: 'DEPORTISTA',
+    accion: 'Afiliación retirada', de: eraVinculado ? 'Vinculado' : 'Enviada', a: 'Retirada', motivo: ''
+  });
+  return getDeportista(deportistaId);
+}
+
+/* Buscador de clubes para la afiliación (§5.2): SOLO clubes en estado Activo,
+   por nombre o NIT, acento-insensible, MÍNIMO 3 caracteres, sin texto libre.
+   <3 chars → array vacío (la UI muestra la pista). Copias inmutables. */
+export function buscarClubesActivos(query) {
+  const q = String(query || '').trim();
+  if (q.length < 3) return [];
+  const nq = _norm(q);
+  return allOrganismos()
+    .filter((o) => o.tipo === 'club' && o.estado === 'Activo')
+    .filter((o) => _norm(o.nombre).includes(nq) || _norm(o.nit).includes(nq))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map((o) => ({ ...o }));
+}
+
+/* Datos demo (solo modo 'demo', no 'blank'): siembra 1-2 solicitudes Enviada
+   dirigidas al Club Patín Cali (CLU-001) desde deportistas autodeclarados, para
+   que la bandeja del club arranque con algo que aprobar. Idempotente (flag
+   demoSeed en la solicitud). Se llama desde afiliacion.js y bandeja.js (CLUB). */
+export function seedAfiliacionesDemo(mode) {
+  if (mode !== 'demo') return;
+  const list = readStore('solicitudes', []) || [];
+  if (list.some((s) => s.demoSeed)) return;
+  const seeds = [
+    { deportistaId: 'DEP-010', clubId: 'CLU-001', fecha: '2026-07-12' },  // Juan D. Marín · Patinaje
+    { deportistaId: 'DEP-007', clubId: 'CLU-001', fecha: '2026-07-13' }   // Daniela Cárdenas · Patinaje
+  ];
+  seeds.forEach((s, idx) => {
+    list.unshift({ id: 'AF-D' + (idx + 1), deportistaId: s.deportistaId, clubId: s.clubId, estado: 'Enviada', fecha: s.fecha, demoSeed: true });
+  });
+  writeStore('solicitudes', list);
 }
