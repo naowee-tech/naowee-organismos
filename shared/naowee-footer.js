@@ -53,8 +53,15 @@ const MODULE_NAME = 'Organismos';
             .naowee-card base del DS); estilos inline inventados removidos de mensajes;
             badges re-portados a tokens canónicos (feedback-fill-* + feedback-text-*-
             quiet-on-fill) — informative loud #1f78d1→#006aff, caution #d98a00→#d74009,
-            negative #c0392b→#da1630, y quiet con tints canónicos. */
-const MODULE_VERSION = 'v0.3.2';
+            negative #c0392b→#da1630, y quiet con tints canónicos.
+   v0.4.0 — T4 Cargue masivo (cargue.html deja de ser stub): pre-registro por
+            plantilla .xlsx (22 columnas §5.1) vía SheetJS, dropzone, validación
+            por fila con Nº de fila + motivos, carga parcial (válidas → Preinscrito
+            bajo el superior del rol; inválidas se reportan), historial + auditoría
+            (recordCargue/allCargues), oversight solo-lectura para Mindeporte.
+            Target por rol: Comité→federaciones · Federación→ligas · Liga→clubes.
+            Nuevos: shared/cargue.js + helpers addOrganismosBulk. */
+const MODULE_VERSION = 'v0.4.0';
 
 (function () {
   function mount() {
