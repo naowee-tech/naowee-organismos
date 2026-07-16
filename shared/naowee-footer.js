@@ -265,7 +265,21 @@ const MODULE_NAME = 'Organismos';
             existencia y representación legal. `PRE_DOC_LABELS` (bandeja) ampliado con los
             nuevos ids; seeds de entidad del registro público alineados a la matriz.
             Cache-busters ?v=1.2.3. */
-const MODULE_VERSION = 'v1.2.3';
+/* v1.2.4 — Fixes de QA de requerimientos (auditoría multi-agente vs HU del xlsx):
+            (1) MATRIZ DE DOCS corregida (ORG-04/HURU-04): TODO club y escuela ahora exige
+                'reconocimiento del ente municipal' (antes club-promotor/escuela quedaban
+                Preinscritos solo con existencia — contradecía el requerimiento).
+            (2) BYPASS gateado: el atajo demo del 2º «Siguiente» ya NO omite reglas DURAS de
+                negocio (documento ya registrado, edad, aceptación de políticas, firma de
+                consentimiento) — solo salta campos vacíos; aviso rojo cuando hay regla dura.
+            (3) 'En corrección' visible en la bandeja de organismos (estaba fuera de VISIBLES y
+                de los filtros → un organismo en corrección desaparecía de todas las vistas).
+            (4) AUTOREGISTRO de organismo (registro.js) crea en 'En revisión' (antes 'Preinscrito'
+                sin transición → nunca era accionable en la bandeja; ORG-07).
+            (5) DEDUP por NIT (HURU-05): el registro público de entidad rechaza un NIT ya
+                registrado (en jerarquía o en la cola de preinscritos), como regla dura.
+            Cache-busters ?v=1.2.4. */
+const MODULE_VERSION = 'v1.2.4';
 
 (function () {
   function mount() {

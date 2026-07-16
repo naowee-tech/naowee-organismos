@@ -265,6 +265,7 @@
 /* Aviso demo cuando se puede omitir la validación al 2º "Siguiente" (full-width, arriba de los botones). */
 .reg-footer__hint { order: -1; flex-basis: 100%; display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 500; color: var(--accent); }
 .reg-footer__hint svg { width: 14px; height: 14px; flex-shrink: 0; }
+.reg-footer__hint--hard { color: var(--field-border-error); }
 
 /* ── Selector de tipo (paso 0) — tarjetas con ícono en chip ── */
 .reg-tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }

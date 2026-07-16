@@ -15,7 +15,7 @@
    checkbox, file-uploader botón, message, success/confetti).
    Datos demo efímeros en sessionStorage (prefijo naowee-organismos-).
    ═══════════════════════════════════════════════════════════════ */
-import { allDeportistas, allOrganismos, crearPreinscrito } from './organismos-data.js';
+import { allDeportistas, allOrganismos, allPreinscritos, crearPreinscrito } from './organismos-data.js';
 
 /* ─── util ─── */
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
@@ -75,6 +75,14 @@ const DOCS_REGISTRADOS = new Set([
   '1000000001', '79620001'
 ]);
 function docRegistrado(num) { return DOCS_REGISTRADOS.has(String(num || '').trim()); }
+/* Dedup por NIT (HURU-05): una entidad ya registrada (en la jerarquía o en la cola
+   de preinscritos) no puede volver a registrarse por el formulario público. */
+function nitRegistrado(nit) {
+  const n = String(nit || '').replace(/\D/g, '');
+  if (n.length < 5) return false;
+  const same = (o) => String(o.nit || '').replace(/\D/g, '') === n;
+  try { return allOrganismos().some(same) || allPreinscritos().some(same); } catch (_) { return false; }
+}
 
 /* ─── estado ─── */
 const STEP_LABELS = ['Tipo', 'Datos', 'Documentos', 'Listo'];
@@ -248,9 +256,10 @@ function docsDelTipo() {
   }
   if (STATE.tipo === 'entidad') {
     // Documentos DIFERENCIADOS por tipo de entidad (vocabulario canónico de la
-    // bandeja): las entidades reconocidas del SND (Federación/Liga) cargan el peso
-    // legal (personería, estatutos, reconocimiento IVC, aval); los clubes de base y
-    // escuelas van livianos. Matriz validada con negocio.
+    // bandeja). Alineado a HURU-04 + ORG-04: TODO club/escuela requiere el
+    // reconocimiento del ente MUNICIPAL; las entidades reconocidas del SND
+    // (Federación/Liga) cargan además el peso legal (personería, estatutos,
+    // reconocimiento IVC, aval). Detalle fino a validar con Danna/negocio.
     const D = {
       existencia: 'Certificado de existencia y representación legal',
       personeria: 'Certificado de personería jurídica',
@@ -264,8 +273,8 @@ function docsDelTipo() {
       'federacion':       ['personeria', 'estatutos', 'reconocimiento', 'aval', 'rut'],
       'liga':             ['personeria', 'reconocimiento', 'rut'],
       'club-profesional': ['existencia', 'reconocimientoMunicipal', 'rut'],
-      'club-promotor':    ['existencia'],
-      'escuela':          ['existencia']
+      'club-promotor':    ['existencia', 'reconocimientoMunicipal'],
+      'escuela':          ['existencia', 'reconocimientoMunicipal']
     };
     return (POR_TIPO[STATE.entTipo] || ['existencia']).map((id) => ({ id, label: D[id] || id }));
   }
@@ -463,7 +472,7 @@ function clearFieldError(el) { if (!el) return; el.classList.remove('naowee-text
 
 function validate() {
   const d = STATE.d, errs = [];
-  const reqTf = (id, ok, msg) => { if (!ok) errs.push({ field: id, kind: 'tf', msg }); };
+  const reqTf = (id, ok, msg, hard) => { if (!ok) errs.push({ field: id, kind: 'tf', msg, hard: !!hard }); };
   const reqDd = (key) => errs.push({ field: 'dd-' + key, kind: 'dd' });
   if (STATE.step === 0) {
     if (!STATE.tipo) return [{ field: null, kind: 'grid' }];
@@ -479,28 +488,30 @@ function validate() {
       reqTf('f-tutorCorreo', EMAIL_RE.test(d.tutorCorreo), 'Ingresa un correo válido');
       if (!d.tipoDoc) reqDd('tipoDoc');
       reqTf('f-numDoc', d.numDoc.trim());
-      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.');
+      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.', true);
       reqTf('f-nombres', d.nombres.trim()); reqTf('f-apellidos', d.apellidos.trim());
       reqTf('f-fechaNac', d.fechaNac.trim());
-      const e = edadDe(d.fechaNac); if (e != null && e >= 18) reqTf('f-fechaNac', false, 'El menor debe ser menor de 18 años.');
+      const e = edadDe(d.fechaNac); if (e != null && e >= 18) reqTf('f-fechaNac', false, 'El menor debe ser menor de 18 años.', true);
     } else if (STATE.tipo === 'deportista') {
       if (!d.tipoDoc) reqDd('tipoDoc');
       reqTf('f-numDoc', d.numDoc.trim());
-      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.');
+      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.', true);
       reqTf('f-nombres', d.nombres.trim()); reqTf('f-apellidos', d.apellidos.trim());
       reqTf('f-fechaNac', d.fechaNac.trim());
-      const e = edadDe(d.fechaNac); if (e != null && e < 18) reqTf('f-fechaNac', false, 'Menor de edad: usa el registro por padre/tutor.');
+      const e = edadDe(d.fechaNac); if (e != null && e < 18) reqTf('f-fechaNac', false, 'Menor de edad: usa el registro por padre/tutor.', true);
       reqTf('f-correo', EMAIL_RE.test(d.correo), 'Ingresa un correo válido'); reqTf('f-telefono', d.telefono.trim());
     } else if (STATE.tipo === 'personal') {
       if (!STATE.rol) reqDd('rol');
       if (!d.tipoDoc) reqDd('tipoDoc');
       reqTf('f-numDoc', d.numDoc.trim());
-      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.');
+      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.', true);
       reqTf('f-nombres', d.nombres.trim()); reqTf('f-apellidos', d.apellidos.trim());
       reqTf('f-correo', EMAIL_RE.test(d.correo), 'Ingresa un correo válido'); reqTf('f-telefono', d.telefono.trim());
     } else {
       if (!STATE.entTipo) errs.push({ field: 'dd-entTipo', kind: 'choice' });
-      reqTf('f-nit', d.nit.trim()); reqTf('f-entNombre', d.entNombre.trim());
+      reqTf('f-nit', d.nit.trim());
+      if (d.nit.trim() && nitRegistrado(d.nit)) reqTf('f-nit', false, 'Este NIT ya está registrado en el SUID.', true);
+      reqTf('f-entNombre', d.entNombre.trim());
       reqTf('f-repNombre', d.repNombre.trim()); reqTf('f-repDoc', d.repDoc.trim());
       reqTf('f-repCorreo', EMAIL_RE.test(d.repCorreo), 'Ingresa un correo válido');
       if (!d.depto) reqDd('depto'); reqTf('f-ciudad', d.ciudad.trim());
@@ -510,8 +521,8 @@ function validate() {
   if (STATE.step === 2) {
     if (STATE.tipo === 'personal') reqTf('f-profesion', d.profesion.trim());
     docsDelTipo().forEach((doc) => { if (!d.docs[doc.id]) errs.push({ field: 'doc-' + doc.id, kind: 'file' }); });
-    if (STATE.tipo === 'deportista' && STATE.modo === 'tutor' && !d.firma) errs.push({ field: 'f-firma', kind: 'check' });
-    if (!d.aceptaPoliticas) errs.push({ field: 'f-politicas', kind: 'check' });
+    if (STATE.tipo === 'deportista' && STATE.modo === 'tutor' && !d.firma) errs.push({ field: 'f-firma', kind: 'check', hard: true });
+    if (!d.aceptaPoliticas) errs.push({ field: 'f-politicas', kind: 'check', hard: true });
     return errs;
   }
   return errs;
@@ -534,11 +545,14 @@ function shakeErrors(errs) {
 function next() {
   const errs = validate();
   if (errs.length) {
-    // Conveniencia demo: al SEGUNDO "Siguiente" en el mismo paso se omite la
-    // validación de obligatorios y se avanza igual (recorrer el flujo sin llenar todo).
+    shakeErrors(errs);
+    // Reglas DURAS de negocio (documento ya registrado, edad, aceptación de políticas,
+    // firma de consentimiento): NUNCA se omiten, ni con el bypass del 2º clic.
+    const hard = errs.filter((e) => e.hard);
+    if (hard.length) { STATE._armedStep = null; showHardHint(); return; }
+    // Conveniencia demo: al SEGUNDO "Siguiente" se omiten solo los campos VACÍOS.
     if (STATE._armedStep === STATE.step) { STATE._armedStep = null; advance(); return; }
     STATE._armedStep = STATE.step;
-    shakeErrors(errs);
     showBypassHint();
     return;
   }
@@ -549,14 +563,15 @@ function advance() {
   if (STATE.step < 2) { STATE.step++; render(); return; }
   submit();
 }
-function showBypassHint() {
+function setFooterHint(html, hard) {
   const footer = document.getElementById('rpFooter'); if (!footer) return;
-  if (document.getElementById('rpBypassHint')) return;
-  const hint = document.createElement('div');
-  hint.id = 'rpBypassHint'; hint.className = 'reg-footer__hint';
-  hint.innerHTML = `${I.bang}<span>Faltan campos obligatorios — presiona <strong>“Siguiente”</strong> de nuevo para omitir (demo).</span>`;
-  footer.insertBefore(hint, footer.firstChild);
+  let hint = document.getElementById('rpBypassHint');
+  if (!hint) { hint = document.createElement('div'); hint.id = 'rpBypassHint'; footer.insertBefore(hint, footer.firstChild); }
+  hint.className = 'reg-footer__hint' + (hard ? ' reg-footer__hint--hard' : '');
+  hint.innerHTML = `${I.bang}<span>${html}</span>`;
 }
+function showBypassHint() { setFooterHint('Faltan campos obligatorios — presiona <strong>“Siguiente”</strong> de nuevo para omitir (demo).', false); }
+function showHardHint() { setFooterHint('Hay validaciones obligatorias que <strong>no se pueden omitir</strong>: documento ya registrado, edad, aceptación de políticas o firma de consentimiento.', true); }
 
 /* ═══════════════ Envío + éxito ═══════════════ */
 function submit() {

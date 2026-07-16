@@ -41,7 +41,7 @@ const MOTIVOS = [
   'Otro (ver comentario)'
 ];
 /* Estados que se muestran en la bandeja (accionables + visibilidad). */
-const VISIBLES = ['En revisión', 'Preinscrito', 'Rechazado', 'Activo'];
+const VISIBLES = ['En revisión', 'En corrección', 'Preinscrito', 'Rechazado', 'Activo'];
 
 /* ── Registro público (HURU-09) — cola de validación del Registro Único ──
    El validador central (Admin Mindeporte) revisa los usuarios/entidades
@@ -172,7 +172,7 @@ function renderOrgBandeja() {
         <span class="bj-count">${rows.length} de ${all.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
       </div>
       <div class="naowee-tabs bj-tabs" id="bjFilters">
-        ${['Accionables', 'En revisión', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--selected' : ''}" data-f="${f}">${f}</button>`).join('')}
+        ${['Accionables', 'En revisión', 'En corrección', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--selected' : ''}" data-f="${f}">${f}</button>`).join('')}
       </div>
       ${rows.length ? `
         <div class="cg-table-wrap">

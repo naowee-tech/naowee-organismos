@@ -374,7 +374,7 @@ function paneConfirmar() {
 
   return `
     <h2 class="reg-pane__title">Revisa y confirma</h2>
-    <p class="reg-pane__sub">Verifica los datos antes de enviar. Al enviar, el organismo se crea en estado <strong>Preinscrito</strong> y aparece en la jerarquía bajo su superior.</p>
+    <p class="reg-pane__sub">Verifica los datos antes de enviar. Al enviar, el organismo se envía a validación (estado <strong>En revisión</strong>) y aparece en la jerarquía bajo su superior.</p>
     <div class="reg-review">${groups.join('')}</div>`;
 }
 function group(title, gotoStep, rowsHtml) {
@@ -922,7 +922,7 @@ function submit() {
   const org = {
     tipo: STATE.tipo, nombre: d.nombre.trim(), nit: d.nit.trim(),
     sector, deporte: STATE.tipo === 'comite' ? '—' : (d.deporte || '—'),
-    parentId, estado: STATE.tipo === 'comite' ? 'Activo' : 'Preinscrito',
+    parentId, estado: STATE.tipo === 'comite' ? 'Activo' : 'En revisión',
     repLegal: { ...d.repLegal }, ubicacion: { ...d.ubicacion }, contacto: { ...d.contacto },
     documentos: { ...d.documentos }, aceptaPoliticas: d.aceptaPoliticas
   };
@@ -962,7 +962,7 @@ function renderSuccess() {
           <p class="reg-success__lead">${esc(TIPO_SINGULAR[org.tipo])} <strong>${esc(org.nombre)}</strong> quedó en estado <strong>${esc(org.estado)}</strong>. ${org.tipo === 'comite' ? 'Como cabeza de sector queda Activo de inmediato, sin aprobación superior.' : 'Su nivel superior la revisará desde la Bandeja de aprobaciones.'}</p>
           <div class="naowee-message naowee-message--informative" style="max-width:460px;margin:0 auto">
             <span class="naowee-message__icon">${I.bang}</span>
-            <div class="naowee-message__body"><p class="naowee-message__text">${org.tipo === 'comite' ? 'Como cabeza de sector del SND, este comité queda Activo de inmediato, sin aprobación superior. Ya aparece en la jerarquía como nodo raíz.' : 'Este registro ya aparece en la jerarquía del SND bajo su superior. La aprobación (Preinscrito → En revisión → Activo) se ejercita en la Bandeja.'}</p></div>
+            <div class="naowee-message__body"><p class="naowee-message__text">${org.tipo === 'comite' ? 'Como cabeza de sector del SND, este comité queda Activo de inmediato, sin aprobación superior. Ya aparece en la jerarquía como nodo raíz.' : 'Este registro ya aparece en la jerarquía del SND bajo su superior. La aprobación (En revisión → Activo) se ejercita en la Bandeja.'}</p></div>
           </div>
           ${org.tipo === 'comite' ? `<div class="naowee-message naowee-message--positive" style="max-width:480px;margin:12px auto 0;text-align:left">
             <span class="naowee-message__icon">${I.check}</span>
