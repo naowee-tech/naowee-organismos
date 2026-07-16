@@ -301,9 +301,10 @@ function histPanel(o) {
   }
   const rows = audit.map((a, i) => {
     const trans = a.de && a.a ? `${esc(a.de)} → ${esc(a.a)}` : esc(a.a || '');
+    const quien = a.deportistaNombre ? ` · ${esc(a.deportistaNombre)}` : '';   // afiliaciones: nombra al deportista gestionado (ORG-08)
     const who = [a.responsable, a.rol && a.rol !== a.responsable ? a.rol : ''].filter(Boolean).join(' · ');
-    const sub = [fmtDate(a.fecha), who, a.motivo].filter(Boolean).map(esc).join(' · ');
-    return `<div class="od-tl-row"><span class="od-tl-dot"></span><div><div class="od-tl-head"><strong>${esc(a.accion || 'Cambio de estado')}</strong>${trans ? ' · ' + trans : ''}</div><div class="od-tl-sub">${sub}</div></div></div>`;
+    const sub = [fmtDate(a.fecha), who, a.motivo].filter(Boolean).map(esc).join(' · ') + (a.notif ? ' · 🔔 notificado por email/app' : '');
+    return `<div class="od-tl-row"><span class="od-tl-dot"></span><div><div class="od-tl-head"><strong>${esc(a.accion || 'Cambio de estado')}</strong>${trans ? ' · ' + trans : ''}${quien}</div><div class="od-tl-sub">${sub}</div></div></div>`;
   }).join('');
   return `<div class="od-block">${rows}</div>`;
 }

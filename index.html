@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="shared/tokens.css?v=1.0.1">
+<link rel="stylesheet" href="shared/tokens.css?v=1.1.0">
 
 <style>
   body {
@@ -112,6 +112,23 @@
   .foot { margin-top: auto; padding-top: 48px; font-size: 12px; color: var(--text-muted); }
   .foot strong { color: var(--text-secondary); }
 
+  .rp-cta {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 32px;
+    padding: 18px 22px; background: var(--surface);
+    border: 1px solid var(--accent-bg-warm, #ffe4cf); border-radius: var(--radius-xl);
+    text-decoration: none; color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(215, 64, 9, .05);
+    transition: transform var(--duration-normal) var(--easing-smoothout), box-shadow var(--duration-normal), border-color var(--duration-normal);
+  }
+  .rp-cta:hover { transform: translateY(-2px); box-shadow: var(--shadow-card); border-color: var(--accent); }
+  .rp-cta__ico { flex-shrink: 0; width: 46px; height: 46px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; background: var(--accent-bg); color: var(--accent); }
+  .rp-cta__ico svg { width: 24px; height: 24px; }
+  .rp-cta__body { flex: 1; font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+  .rp-cta__body strong { display: block; font-size: 15px; color: var(--text-primary); margin-bottom: 2px; }
+  .rp-cta__arrow { flex-shrink: 0; color: var(--accent); }
+  .rp-cta__arrow svg { width: 20px; height: 20px; transition: transform var(--duration-normal) var(--easing-smoothout); }
+  .rp-cta:hover .rp-cta__arrow svg { transform: translateX(4px); }
+
   @media (max-width: 600px) {
     body { padding: 32px 16px; }
     .masthead { flex-wrap: wrap; gap: 12px; }
@@ -131,7 +148,7 @@
       <div class="masthead__sep"></div>
       <img src="shared/logos/suid.png" alt="SUID">
     </div>
-    <span class="masthead__chip"><span class="dot"></span>Organismos · v1.0.1 · demo</span>
+    <span class="masthead__chip"><span class="dot"></span>Organismos · v1.1.0 · demo</span>
   </header>
 
   <section class="hero">
@@ -143,7 +160,7 @@
       por el nivel inmediatamente superior. Escoge un perfil para entrar a la demo.
     </p>
     <p class="note">
-      Demo completa v1.0.1 — <strong>7 pantallas navegables</strong> por rol (jerarquía SND,
+      Demo completa v1.1.0 — <strong>7 pantallas navegables</strong> por rol (jerarquía SND,
       registro, cargue masivo, bandeja de aprobaciones, perfil del organismo y afiliación del
       deportista), con las <strong>57 federaciones del COC</strong> y la cadena
       <strong>Patinaje → Liga del Valle → Club Patín Cali → deportista</strong>.
@@ -151,11 +168,22 @@
     </p>
   </section>
 
-  <p class="roles-label">Entrar como</p>
+  <a class="rp-cta" href="registro-publico.html">
+    <span class="rp-cta__ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+    </span>
+    <span class="rp-cta__body">
+      <strong>¿Eres deportista, personal deportivo o una entidad?</strong>
+      Regístrate en el SUID — formulario público, sin iniciar sesión.
+    </span>
+    <span class="rp-cta__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+  </a>
+
+  <p class="roles-label">O entra como <span style="text-transform:none;font-weight:600">(demo por rol)</span></p>
   <div class="grid" id="grid"></div>
 
   <footer class="foot">
-    <strong>Naowee · Organismos v1.0.1</strong> — sandbox visual para el equipo.
+    <strong>Naowee · Organismos v1.1.0</strong> — sandbox visual para el equipo.
     Roles: Admin Mindeporte · Comité · Federación · Liga · Club · Deportista.
   </footer>
 </div>

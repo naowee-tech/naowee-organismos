@@ -15,7 +15,7 @@
    ═══════════════════════════════════════════════════════════════ */
 import {
   seedDemoData, allOrganismos, getOrganismo, activosDeTipo,
-  comitePorSector, addOrganismo, readStore, writeStore, clearStore
+  comitePorSector, addOrganismo, auditLog, readStore, writeStore, clearStore
 } from './organismos-data.js';
 import { getRoleFromQuery, ROLES } from './sidebar.js';
 
@@ -825,6 +825,11 @@ function validateStep(step) {
       reqTf('f-nit', d.nit.trim());
       if (!d.tipoClub) errs.push({ field: 'dd-tipoClub', kind: 'choice' });
     }
+    /* Anti-duplicado de NIT (paridad con el cargue masivo, cargue.js). */
+    if (d.nit.trim() && allOrganismos().some((o) => String(o.nit).trim() === d.nit.trim())
+      && !errs.some((e) => e.field === 'f-nit')) {
+      errs.push({ field: 'f-nit', kind: 'tf', msg: 'Este NIT ya está registrado en el SUID.' });
+    }
   } else if (step === 2) {
     if (!d.repLegal.tipoDoc) errs.push({ field: 'dd-tipoDoc', kind: 'dd' });
     reqTf('f-numdoc', d.repLegal.numDoc.trim());
@@ -926,6 +931,13 @@ function submit() {
   if (STATE.tipo === 'comite') org.actoAdministrativo = d.actoAdministrativo;
 
   created = addOrganismo(org);
+  const _actor = ROLES[roleCode] || {};
+  auditLog({
+    orgId: created.id, notif: true, fecha: created.fechaRegistro,
+    responsable: _actor.userName || roleCode, rol: _actor.label || roleCode,
+    accion: 'Registro creado', de: '', a: created.estado,
+    motivo: STATE.tipo === 'comite' ? 'Alta interna por el Ministerio' : 'Autoregistro público'
+  });
   clearStore(DRAFT_KEY);
   STATE.step = 6;
   window.naoweeToast && window.naoweeToast('Registro enviado — organismo ' + org.estado, 'success');
@@ -952,6 +964,10 @@ function renderSuccess() {
             <span class="naowee-message__icon">${I.bang}</span>
             <div class="naowee-message__body"><p class="naowee-message__text">${org.tipo === 'comite' ? 'Como cabeza de sector del SND, este comité queda Activo de inmediato, sin aprobación superior. Ya aparece en la jerarquía como nodo raíz.' : 'Este registro ya aparece en la jerarquía del SND bajo su superior. La aprobación (Preinscrito → En revisión → Activo) se ejercita en la Bandeja.'}</p></div>
           </div>
+          ${org.tipo === 'comite' ? `<div class="naowee-message naowee-message--positive" style="max-width:480px;margin:12px auto 0;text-align:left">
+            <span class="naowee-message__icon">${I.check}</span>
+            <div class="naowee-message__body"><p class="naowee-message__text"><strong>Credenciales del administrador entregadas</strong> (demo): se creó el usuario administrador del Comité y se envió una contraseña temporal a su correo institucional. Con ese usuario el Comité avala a las federaciones de su sector.</p></div>
+          </div>` : ''}
           <div class="reg-receipt">
             <div class="reg-receipt__head">
               <span class="reg-receipt__ava">${TIPO_META[org.tipo].emoji}</span>

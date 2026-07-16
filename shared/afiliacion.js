@@ -420,7 +420,12 @@ function solicitudesHTML() {
   const rows = mine.map((s) => {
     const club = getOrganismo(s.clubId);
     const fecha = s.resueltaFecha || s.fecha;
-    const sub = s.estado === 'Rechazada' && s.motivo ? `Motivo: ${esc(s.motivo)}` : `${s.estado} · ${esc(fecha)}`;
+    const quien = s.responsable ? ` · por ${esc(s.responsable)}` : '';   // trazabilidad ORG-08 (quién confirmó)
+    const resuelta = s.estado === 'Aprobada' || s.estado === 'Rechazada';
+    const notif = resuelta ? ' · 🔔 notificado por email/app' : '';
+    const sub = s.estado === 'Rechazada' && s.motivo
+      ? `Rechazada · ${esc(fecha)}${quien}${notif} · Motivo: ${esc(s.motivo)}`
+      : `${s.estado} · ${esc(fecha)}${resuelta ? quien : ''}${notif}`;
     return `<div class="af-sol-row">
       <span class="af-sol-row__ico pf-tl__node--${nodeCls[s.estado] || 'enviada'}">${SOL_EMOJI[s.estado] || I.send}</span>
       <span class="af-sol-row__body"><span class="af-sol-row__nm">${esc(club ? club.nombre : s.clubId)}</span><span class="af-sol-row__sub">${sub}</span></span>

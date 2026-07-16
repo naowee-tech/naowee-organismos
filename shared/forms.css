@@ -412,6 +412,33 @@
 .cg-table__nit { font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
 .cg-errs { display: block; font-size: 11.5px; color: var(--naowee-color-feedback-text-negative-quiet-on-fill); margin-top: 3px; }
 
+/* ── Visor de documentos (bandeja, HURU-09) — previsualización mock sin descarga ── */
+.bj-docview { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: #f6f7fb; }
+.bj-docview__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.bj-docview__file { font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bj-docview__ro { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+.bj-docview__page { position: relative; margin: 18px; padding: 26px 24px; min-height: 210px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(40, 40, 52, .12); overflow: hidden; }
+.bj-docview__wm { position: absolute; top: 14px; right: 16px; color: var(--border-dark); opacity: .5; }
+.bj-docview__wm svg { width: 42px; height: 42px; }
+.bj-docview__title { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0 0 16px; max-width: 78%; }
+.bj-docview__line { display: block; height: 9px; border-radius: 4px; background: var(--border); margin-bottom: 10px; }
+.bj-docview__gap { display: block; height: 12px; }
+.bj-docview__note { margin: 18px 0 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5; font-style: italic; }
+
+/* ── Tabla → cards apiladas en móvil (patrón Naowee tabla→card) ── */
+@media (max-width: 760px) {
+  .cg-table-wrap { overflow-x: visible; }
+  .cg-table, .cg-table tbody, .cg-table tr, .cg-table td { display: block; }
+  .cg-table thead { display: none; }
+  .cg-table tbody tr { background: var(--surface); border: 1px solid var(--border-dark); border-radius: 14px; padding: 10px 14px 12px; margin-bottom: 10px; }
+  .cg-table tbody tr.is-error { background: var(--red-bg); }
+  .cg-table tbody td { border-bottom: 1px solid var(--border); padding: 8px 0; display: grid; grid-template-columns: minmax(88px, 40%) 1fr; gap: 10px; white-space: normal; vertical-align: initial; }
+  .cg-table tbody td::before { content: attr(data-label); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-secondary); align-self: center; }
+  .cg-table tbody td:last-child { border-bottom: none; padding-top: 12px; }
+  .cg-table tbody td[data-label=""] { grid-template-columns: 1fr; }
+  .cg-table tbody td[data-label=""]::before { display: none; }
+}
+
 .cg-success { text-align: center; padding: 36px 24px; margin-bottom: 16px; }
 .cg-success__check { width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 50%; background: var(--naowee-color-feedback-fill-positive-loud); color: #fff; display: flex; align-items: center; justify-content: center; }
 .cg-success__check svg { width: 30px; height: 30px; }

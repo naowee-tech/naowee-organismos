@@ -8,7 +8,7 @@
    Solo componentes .naowee-* + layout local .cg-*.
    ═══════════════════════════════════════════════════════════════ */
 import { getRoleFromQuery, ROLES, getDemoMode } from './sidebar.js';
-import { allOrganismos, getOrganismo, addOrganismosBulk, recordCargue, allCargues } from './organismos-data.js';
+import { allOrganismos, getOrganismo, addOrganismosBulk, recordCargue, allCargues, auditLog } from './organismos-data.js';
 import { scopeFor } from './permissions.js';
 
 const roleCode = getRoleFromQuery();
@@ -156,6 +156,11 @@ function commit() {
   const valids = parsed.rows.filter((r) => r.valid);
   if (!valids.length) return;
   created = addOrganismosBulk(valids.map(toRecord));
+  created.forEach((o) => auditLog({
+    orgId: o.id, notif: true, fecha: o.fechaRegistro,
+    responsable: role.userName || roleCode, rol: role.label || roleCode,
+    accion: 'Registro creado (cargue masivo)', de: '', a: o.estado, motivo: 'Pre-registro por plantilla'
+  }));
   recordCargue({
     rol: roleCode, fecha: today(), responsable: role.userName || roleCode, tipo: targetTipo,
     archivo: { nombre: parsed.fileName, tamano: parsed.fileSize },
@@ -213,10 +218,10 @@ function render() {
             <tbody>
               ${rows.map((r) => `
                 <tr class="${r.valid ? '' : 'is-error'}">
-                  <td class="cg-table__row">${r.row}</td>
-                  <td>${esc(r.nombre)}</td>
-                  <td class="cg-table__nit">${esc(r.nit)}</td>
-                  <td>${r.valid
+                  <td class="cg-table__row" data-label="Fila">${r.row}</td>
+                  <td data-label="Entidad">${esc(r.nombre)}</td>
+                  <td class="cg-table__nit" data-label="NIT">${esc(r.nit)}</td>
+                  <td data-label="Estado">${r.valid
                     ? '<span class="naowee-badge naowee-badge--positive naowee-badge--quiet naowee-badge--small">Lista</span>'
                     : `<span class="naowee-badge naowee-badge--negative naowee-badge--quiet naowee-badge--small">Error</span><span class="cg-errs">${esc(r.errors.join(' · '))}</span>`}</td>
                 </tr>`).join('')}
@@ -278,11 +283,11 @@ function renderHistory(oversight) {
           <tbody>
             ${list.map((c) => `
               <tr>
-                <td class="cg-table__row">${esc(c.id)}</td>
-                <td>${esc(c.fecha)}</td>
-                <td>${esc(c.responsable)}${oversight && c.rol ? ` · <span class="cg-hist__rol">${esc((ROLES[c.rol] || {}).label || c.rol)}</span>` : ''}</td>
-                <td class="cg-table__nit">${esc(c.archivo && c.archivo.nombre || '—')}</td>
-                <td><span class="naowee-badge naowee-badge--positive naowee-badge--quiet naowee-badge--small">${c.totales.cargadas} cargadas</span>${c.totales.error ? ` <span class="naowee-badge naowee-badge--negative naowee-badge--quiet naowee-badge--small">${c.totales.error} error</span>` : ''}</td>
+                <td class="cg-table__row" data-label="Radicado">${esc(c.id)}</td>
+                <td data-label="Fecha">${esc(c.fecha)}</td>
+                <td data-label="Responsable">${esc(c.responsable)}${oversight && c.rol ? ` · <span class="cg-hist__rol">${esc((ROLES[c.rol] || {}).label || c.rol)}</span>` : ''}</td>
+                <td class="cg-table__nit" data-label="Archivo">${esc(c.archivo && c.archivo.nombre || '—')}</td>
+                <td data-label="Resultado"><span class="naowee-badge naowee-badge--positive naowee-badge--quiet naowee-badge--small">${c.totales.cargadas} cargadas</span>${c.totales.error ? ` <span class="naowee-badge naowee-badge--negative naowee-badge--quiet naowee-badge--small">${c.totales.error} error</span>` : ''}</td>
               </tr>`).join('')}
           </tbody>
         </table>

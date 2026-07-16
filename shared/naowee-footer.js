@@ -197,8 +197,24 @@ const MODULE_NAME = 'Organismos';
             solo tipo (max-width en .reg-tipo-card); (3) el "Acto administrativo"
             del Comité pasó de textfield a file-uploader canónico con BOTÓN
             (input-wrap + placeholder + action, port del DS), no el drop-zone
-            punteado. Cache-busters ?v=1.0.1. */
-const MODULE_VERSION = 'v1.0.1';
+            punteado. Cache-busters ?v=1.0.1.
+   v1.1.0 — Registro público de usuarios (HURU-01..04) + remediación de auditoría.
+            NUEVO: registro-publico.html + shared/registro-publico.js — formulario
+            público SIN autenticación con selector de tipo (Deportista propio/tutor ·
+            Personal deportivo · Entidad) y wizard adaptativo: validación de documento
+            no registrado, detección <18 → tutor, parentesco + firma de consentimiento,
+            rol específico + certificaciones, docs de soporte de entidad → Preinscrito,
+            checkbox de políticas, notificación email/SMS, nota de API Registraduría,
+            responsive; enlazado en la landing (index) y en el tour (HURU-01/03/04).
+            FIXES de la auditoría multi-agente: visor de documentos de la bandeja
+            (HURU-09, antes roto onclick=return false); auditoría de la CREACIÓN de
+            organismos (registro individual + cargue masivo → auditLog con responsable);
+            anti-duplicado de NIT en el registro individual y de solicitud de afiliación;
+            estado propio "En corrección" (≠ Rechazado, reingresa al flujo); notificaciones
+            mock (🔔 email/app) visibles en los timelines (Historial, Solicitudes, bandeja);
+            tablas → cards apiladas en móvil (data-label); entrega de credenciales del
+            Comité en la pantalla de éxito. Cache-busters ?v=1.1.0. */
+const MODULE_VERSION = 'v1.1.0';
 
 (function () {
   function mount() {

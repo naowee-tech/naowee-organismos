@@ -132,11 +132,11 @@ function render() {
             <tbody>
               ${rows.map((o) => `
                 <tr>
-                  <td><div class="bj-org"><span class="bj-org__emoji">${TIPO_EMOJI[o.tipo]}</span><div><div class="bj-org__name">${esc(o.nombre)}</div><div class="bj-org__sub">${esc(o.deporte && o.deporte !== '—' ? o.deporte : TIPO_SING[o.tipo])}</div></div></div></td>
-                  <td class="cg-table__nit">${esc(o.nit)}</td>
-                  <td>${badge(o.estado)}</td>
-                  ${target.tipo === 'federacion' ? `<td>${valChips(o)}</td>` : ''}
-                  <td class="bj-row-action"><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-open="${esc(o.id)}">${puedeAccionar && o.estado === 'En revisión' ? 'Revisar' : 'Ver'}</button></td>
+                  <td data-label="${esc(TIPO_SING[target.tipo])}"><div class="bj-org"><span class="bj-org__emoji">${TIPO_EMOJI[o.tipo]}</span><div><div class="bj-org__name">${esc(o.nombre)}</div><div class="bj-org__sub">${esc(o.deporte && o.deporte !== '—' ? o.deporte : TIPO_SING[o.tipo])}</div></div></div></td>
+                  <td class="cg-table__nit" data-label="NIT">${esc(o.nit)}</td>
+                  <td data-label="Estado">${badge(o.estado)}</td>
+                  ${target.tipo === 'federacion' ? `<td data-label="Validación">${valChips(o)}</td>` : ''}
+                  <td class="bj-row-action" data-label=""><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-open="${esc(o.id)}">${puedeAccionar && o.estado === 'En revisión' ? 'Revisar' : 'Ver'}</button></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -205,11 +205,11 @@ function renderAfiliaciones() {
             <tbody>
               ${view.map((r) => `
                 <tr>
-                  <td><div class="bj-org"><span class="bj-org__emoji">🏃</span><div><div class="bj-org__name">${esc(r.dep.nombre)}</div><div class="bj-org__sub">${esc(r.dep.tipoDoc)} ${esc(r.dep.numDoc)}</div></div></div></td>
-                  <td><div class="bj-org__name" style="font-weight:500">${esc(r.dep.deporte)}</div><div class="bj-org__sub">${esc(r.dep.modalidad || '')}</div></td>
-                  <td><div class="bj-sol-cell">${r.tipo === 'retiro' ? '<span class="naowee-badge naowee-badge--caution naowee-badge--quiet naowee-badge--small">Baja</span>' : '<span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">Afiliación</span>'}${solBadge(r.estado)}</div></td>
-                  <td class="cg-table__nit">${esc(r.fecha || '—')}</td>
-                  <td class="bj-row-action"><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openafil="${esc(r.id)}">${puedeAfil && r.estado === 'Enviada' ? 'Revisar' : 'Ver'}</button></td>
+                  <td data-label="Deportista"><div class="bj-org"><span class="bj-org__emoji">🏃</span><div><div class="bj-org__name">${esc(r.dep.nombre)}</div><div class="bj-org__sub">${esc(r.dep.tipoDoc)} ${esc(r.dep.numDoc)}</div></div></div></td>
+                  <td data-label="Deporte"><div class="bj-org__name" style="font-weight:500">${esc(r.dep.deporte)}</div><div class="bj-org__sub">${esc(r.dep.modalidad || '')}</div></td>
+                  <td data-label="Estado"><div class="bj-sol-cell">${r.tipo === 'retiro' ? '<span class="naowee-badge naowee-badge--caution naowee-badge--quiet naowee-badge--small">Baja</span>' : '<span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">Afiliación</span>'}${solBadge(r.estado)}</div></td>
+                  <td class="cg-table__nit" data-label="Fecha">${esc(r.fecha || '—')}</td>
+                  <td class="bj-row-action" data-label=""><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openafil="${esc(r.id)}">${puedeAfil && r.estado === 'Enviada' ? 'Revisar' : 'Ver'}</button></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -246,6 +246,7 @@ function openAfilDetail(sid) {
           ${kv('Modalidad', dep.modalidad || '—')}
           ${kv('Correo', dep.correo || '—')}
           ${kv(esRetiro ? 'Baja solicitada' : 'Solicitud', sol.fecha || '—')}
+          ${(sol.estado === 'Aprobada' || sol.estado === 'Rechazada') && sol.responsable ? kv('Revisado por', `${esc(sol.responsable)}${sol.resueltaFecha ? ' · ' + esc(sol.resueltaFecha) : ''}`) : ''}
         </dl>
         ${sol.estado === 'Rechazada' && sol.motivo ? msg('negative', I.alert, `<strong>Motivo del rechazo:</strong> ${esc(sol.motivo)}`) : ''}
         ${sol.estado === 'Aprobada' ? msg('positive', I.check, esRetiro ? `La baja fue confirmada: el deportista quedó <strong>desvinculado</strong> del club.` : `El deportista quedó <strong>vinculado</strong> a tu club y heredó tu liga y federación.`) : ''}
@@ -404,7 +405,7 @@ function openDetail(id) {
         <div class="bj-timeline">
           <p class="bj-timeline__title">Trazabilidad</p>
           ${audit.length ? audit.map((a) => `
-            <div class="bj-tl-row"><span class="bj-tl-dot"></span><div><div class="bj-tl-head"><strong>${esc(a.accion)}</strong> · ${esc(a.a)}</div><div class="bj-tl-sub">${esc(a.fecha)} · ${esc(a.responsable || a.rol || '—')}${a.motivo ? ' · ' + esc(a.motivo) : ''}</div></div></div>`).join('')
+            <div class="bj-tl-row"><span class="bj-tl-dot"></span><div><div class="bj-tl-head"><strong>${esc(a.accion)}</strong> · ${esc(a.a)}</div><div class="bj-tl-sub">${esc(a.fecha)} · ${esc(a.responsable || a.rol || '—')}${a.motivo ? ' · ' + esc(a.motivo) : ''}${a.notif ? ' · 🔔 notificado por email/app' : ''}</div></div></div>`).join('')
             : '<p class="bj-tl-empty">Sin movimientos registrados.</p>'}
         </div>
       </div>
@@ -422,6 +423,10 @@ function openDetail(id) {
   ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
   ov.querySelector('#bjClose').addEventListener('click', close);
   ov.querySelector('#bjCancel')?.addEventListener('click', close);
+  ov.querySelectorAll('[data-doc-view]').forEach((b) => b.addEventListener('click', () => {
+    const [label, file] = b.dataset.docView.split('||');
+    closeModal(ov, () => openDocViewer(label, file, id));   // sin apilar: cierra detalle → abre visor → vuelve al detalle
+  }));
   if (accionable) {
     ov.querySelector('#bjApr').addEventListener('click', () => { doApprove(id); close(); });
     ov.querySelector('#bjRej').addEventListener('click', () => openMotivo(id, 'Rechazado', ov));
@@ -429,6 +434,34 @@ function openDetail(id) {
   }
 }
 function kv(k, val) { return `<div class="bj-kv__row"><dt>${esc(k)}</dt><dd>${esc(val)}</dd></div>`; }
+
+/* Visor de documentos (HURU-09): previsualización SIN descarga. Mock del documento
+   cargado (el visor real embebería el PDF/JPG/PNG). Reemplaza al detalle para no
+   apilar backdrops; al cerrar reabre el detalle del organismo. */
+function openDocViewer(label, file, orgId) {
+  const ov = openModal(`
+    <div class="reg-modal bj-modal" role="dialog" aria-modal="true">
+      <div class="reg-modal__head"><h3 class="reg-modal__title">${I.doc} ${esc(label)}</h3><button type="button" class="reg-modal__close" id="dvClose" aria-label="Cerrar">${I.x}</button></div>
+      <div class="reg-modal__body">
+        <div class="bj-docview">
+          <div class="bj-docview__bar"><span class="bj-docview__file">${esc(file)}</span><span class="bj-docview__ro">${I.lock || ''} Vista previa · solo lectura</span></div>
+          <div class="bj-docview__page">
+            <span class="bj-docview__wm">${I.doc}</span>
+            <p class="bj-docview__title">${esc(label)}</p>
+            <span class="bj-docview__line"></span><span class="bj-docview__line"></span><span class="bj-docview__line" style="width:72%"></span>
+            <span class="bj-docview__gap"></span>
+            <span class="bj-docview__line"></span><span class="bj-docview__line" style="width:88%"></span><span class="bj-docview__line" style="width:60%"></span>
+            <p class="bj-docview__note">Documento simulado para la demo — el visor real muestra el PDF/JPG/PNG cargado (${esc(file)}) sin permitir su descarga.</p>
+          </div>
+        </div>
+      </div>
+      <div class="reg-modal__foot bj-modal__foot"><button type="button" class="naowee-btn naowee-btn--mute" id="dvBack">Volver al organismo</button></div>
+    </div>`);
+  const back = () => closeModal(ov, () => (orgId ? openDetail(orgId) : null));
+  ov.addEventListener('click', (e) => { if (e.target === ov) back(); });
+  ov.querySelector('#dvClose').addEventListener('click', back);
+  ov.querySelector('#dvBack').addEventListener('click', back);
+}
 
 /* Documentos de soporte — el peso legal del trámite (reconocimiento deportivo vía IVC,
    aval del Comité, RUT, personería). Si no hay adjuntos, aviso para el revisor. */
@@ -445,7 +478,7 @@ function docsBlock(o) {
   return `<div class="bj-docs">
     <p class="bj-docs__title">Documentos de soporte</p>
     ${items.length
-      ? items.map((d) => `<div class="bj-doc"><span class="bj-doc__ico">${I.doc}</span><div style="min-width:0"><div class="bj-doc__name">${esc(d.label)}</div><div class="bj-doc__file">${esc(d.file)}</div></div><button type="button" class="bj-doc__view" onclick="return false">Ver</button></div>`).join('')
+      ? items.map((d) => `<div class="bj-doc"><span class="bj-doc__ico">${I.doc}</span><div style="min-width:0"><div class="bj-doc__name">${esc(d.label)}</div><div class="bj-doc__file">${esc(d.file)}</div></div><button type="button" class="bj-doc__view" data-doc-view="${esc(d.label)}||${esc(d.file)}">Ver</button></div>`).join('')
       : `<div class="naowee-message naowee-message--caution"><span class="naowee-message__icon">${I.alert}</span><div class="naowee-message__body"><p class="naowee-message__text">El organismo aún no adjuntó el <strong>reconocimiento deportivo</strong> ni los soportes requeridos. El reconocimiento es un acto legal externo (IVC) — verifícalo antes de aprobar.</p></div></div>`}
   </div>`;
 }
@@ -464,7 +497,7 @@ function doApprove(id) {
   } else {
     setEstado(id, 'Activo', { ...meta, accion: 'Aprobado → Activo' });
   }
-  toast('Aprobación registrada', 'success');
+  toast(`Aprobación registrada — se notificó a ${o.nombre} por email y app`, 'success');
   render();
 }
 
@@ -506,10 +539,13 @@ function openMotivo(id, tipoAccion, detailOv) {
 }
 function doReject(id, tipoAccion, motivo) {
   const o = getOrganismo(id);
+  const esCorreccion = tipoAccion === 'Corrección solicitada';
+  const nuevoEstado = esCorreccion ? 'En corrección' : 'Rechazado';
   const meta = { rol: roleCode, responsable: role.userName || roleCode, fecha: today(), accion: tipoAccion, motivo };
-  const patch = o.tipo === 'federacion' ? { validacion: { mindeporte: 'pendiente', comite: 'pendiente', ...(o.validacion || {}), [halfOf[roleCode]]: 'rechazado' } } : {};
-  setEstado(id, 'Rechazado', { ...meta, patch });
-  toast(`${tipoAccion} registrada`, 'success');
+  // La corrección NO es un rechazo: no marca 'rechazado' la mitad de la doble validación (queda pendiente para reingreso).
+  const patch = (o.tipo === 'federacion' && !esCorreccion) ? { validacion: { mindeporte: 'pendiente', comite: 'pendiente', ...(o.validacion || {}), [halfOf[roleCode]]: 'rechazado' } } : {};
+  setEstado(id, nuevoEstado, { ...meta, patch });
+  toast(`${tipoAccion} registrada — se notificó a ${o.nombre} por email y app`, 'success');
 }
 
 /* ── Wiring ── */

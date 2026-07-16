@@ -53,6 +53,7 @@ Cambio de rol = recarga completa vía `?role=CODE` (no SPA — decisión Naowee)
 | `bandeja.html` | ORG-06/08 | Bandeja de aprobaciones por rol: aprobar/rechazar/corrección (motivo obligatorio); federaciones con doble validación; el club confirma afiliaciones |
 | `organismo-detalle.html` | ORG-07 | Perfil 360° del organismo con tabs (Información · Rep. legal · Documentos · Jerarquía · **Historial/trazabilidad**) |
 | `afiliacion.html` | ORG-05 | Perfil del deportista + flujo *Asociar a club* (buscar club Activo → enviar solicitud → herencia) |
+| `registro-publico.html` | HURU-01..04 | **Registro público de usuarios** (sin login): selector de tipo (deportista propio/tutor · personal deportivo · entidad) + wizard adaptativo con validación de documento no registrado, detección <18 → tutor, parentesco + firma, rol + certificaciones, docs de soporte → Preinscrito, políticas y notificación email/SMS |
 
 ## Recorrido guiado por HU 🧭
 
@@ -93,6 +94,7 @@ shared/
   permissions.js estados.js  RBAC (§11) + máquina de estados + badges
   registro.js cargue.js bandeja.js detalle.js afiliacion.js   lógica por pantalla
   deportista-detalle.js     perfil 360° del deportista
+  registro-publico.js       formulario público de registro de usuarios (HURU-01..04)
   tour.js                   recorrido guiado por HU
   naowee-footer.{css,js}    pill de versión + demo switcher (MODULE_VERSION)
   logos/                    branding dual (Ministerio + SUID + Naowee)

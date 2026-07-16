@@ -18,12 +18,13 @@
    ═══════════════════════════════════════════════════════════════ */
 
 export const ESTADOS = [
-  'Preinscrito', 'En revisión', 'Activo', 'Rechazado', 'Suspendido', 'Inactivo', 'Cancelado'
+  'Preinscrito', 'En revisión', 'En corrección', 'Activo', 'Rechazado', 'Suspendido', 'Inactivo', 'Cancelado'
 ];
 
 const BADGE_VARIANT = {
   'Preinscrito': 'neutral',
   'En revisión': 'caution',
+  'En corrección': 'caution',
   'Activo': 'positive',
   'Rechazado': 'negative',
   'Suspendido': 'caution',
@@ -40,6 +41,7 @@ export function estadoBadgeVariant(estado) {
 export const ESTADO_DESC = {
   'Preinscrito': 'Pre-registro creado; aún debe completar y enviar su registro.',
   'En revisión': 'Registro enviado; en validación por el nivel superior.',
+  'En corrección': 'El nivel superior solicitó corrección con motivo; el organismo corrige y reenvía.',
   'Activo': 'Habilitado en el SUID; puede operar y aprobar a su nivel inferior.',
   'Rechazado': 'Rechazado con motivo; puede corregir y reingresar al flujo.',
   'Suspendido': 'Habilitación suspendida temporalmente por el Ministerio.',
@@ -55,6 +57,8 @@ export const TRANSICIONES = [
   { de: 'Preinscrito', a: 'En revisión', quien: 'organismo',  regla: 'El propio organismo completa y envía su registro.' },
   { de: 'En revisión', a: 'Activo',       quien: 'superior',   regla: 'Nivel superior inmediato (federación: doble validación Mindeporte + Comité). El padre debe estar Activo.' },
   { de: 'En revisión', a: 'Rechazado',    quien: 'superior',   regla: 'Motivo obligatorio.' },
+  { de: 'En revisión', a: 'En corrección', quien: 'superior',  regla: 'Solicitud de corrección con motivo obligatorio; NO es rechazo — el organismo corrige y reenvía.' },
+  { de: 'En corrección', a: 'En revisión', quien: 'organismo', regla: 'Corrige y reenvía; reingresa al mismo flujo.' },
   { de: 'Rechazado',   a: 'En revisión',  quien: 'organismo',  regla: 'Corrige y reenvía; reingresa al mismo flujo.' },
   { de: 'Activo',      a: 'Suspendido',   quien: 'MINDEPORTE', regla: 'Sanción temporal (supuesto de demo).' },
   { de: 'Activo',      a: 'Inactivo',     quien: 'MINDEPORTE', regla: 'Sin uso / pérdida de vínculos (condición pendiente de definir).' },

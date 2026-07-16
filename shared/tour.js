@@ -21,6 +21,34 @@
 
   /* ── Catálogo de tours por HU (las 8 historias del visual mapping) ── */
   var TOURS = {
+    'HURU-01': {
+      ph: '0 · Registro público de usuarios', page: 'registro-publico.html', role: 'MINDEPORTE',
+      title: 'Registro de deportista (propio o por tutor)',
+      purpose: 'Cualquier ciudadano se registra en el SUID sin iniciar sesión; si es menor de edad, lo registra su padre o tutor.',
+      steps: [
+        { sel: '.reg-tipo-card[data-tipo="deportista"]', body: 'El formulario es <b>público</b> (sin autenticación). Elige <b>Deportista</b>.', click: true },
+        { sel: '#dd-modo, .reg-choice-group', body: 'Escoge <b>registro propio</b> (mayor de edad) o <b>a través de un padre/tutor</b>. Si la fecha de nacimiento indica menos de 18 años, el sistema exige el flujo por tutor.' },
+        { sel: '#rpFooter', body: 'Al avanzar se valida que tu <b>documento no esté ya registrado</b>, aceptas las políticas y recibes <b>notificación por email/SMS</b>.' }
+      ]
+    },
+    'HURU-03': {
+      ph: '0 · Registro público de usuarios', page: 'registro-publico.html', role: 'MINDEPORTE',
+      title: 'Registro de personal deportivo',
+      purpose: 'Entrenadores, profesores, médicos deportivos y demás personal se registran indicando su rol y adjuntando certificaciones.',
+      steps: [
+        { sel: '.reg-tipo-card[data-tipo="personal"]', body: 'Elige <b>Personal deportivo</b>.', click: true },
+        { sel: '#rpFooter', body: 'En <b>Datos</b> seleccionas el <b>rol específico</b> (entrenador, profesor, médico…) y se valida tu documento; luego adjuntas tus <b>certificaciones</b> profesionales.' }
+      ]
+    },
+    'HURU-04': {
+      ph: '0 · Registro público de usuarios', page: 'registro-publico.html', role: 'MINDEPORTE',
+      title: 'Registro de entidad deportiva',
+      purpose: 'Un representante registra su club, liga, federación o escuela con la documentación legal; la entidad queda Preinscrita para aprobación.',
+      steps: [
+        { sel: '.reg-tipo-card[data-tipo="entidad"]', body: 'Elige <b>Entidad deportiva</b>.', click: true },
+        { sel: '#rpFooter', body: 'Diligencias datos + representante + sede, adjuntas los <b>documentos de soporte</b> (existencia, representación, reconocimiento) y aceptas políticas → queda <b>Preinscrita</b> para su validación.' }
+      ]
+    },
     'ORG-01': {
       ph: '1 · Registro y jerarquía', page: 'registro.html', role: 'MINDEPORTE',
       title: 'Registrar un Comité (cabeza de sector)',
@@ -101,7 +129,7 @@
       ]
     }
   };
-  var ORDER = ['ORG-01', 'ORG-02', 'ORG-03', 'ORG-04', 'ORG-05', 'ORG-06', 'ORG-08', 'ORG-07'];
+  var ORDER = ['HURU-01', 'HURU-03', 'HURU-04', 'ORG-01', 'ORG-02', 'ORG-03', 'ORG-04', 'ORG-05', 'ORG-06', 'ORG-08', 'ORG-07'];
 
   /* ── Estado ── */
   var curHu = null, curStep = 0, _retry = null, _stepActed = false, _curEl = null, _spotFresh = false;

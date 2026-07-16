@@ -425,7 +425,7 @@ export function setEstado(id, estado, meta = {}) {
   const prev = getOrganismo(id);
   const updated = updateOrganismo(id, { estado, ...(meta.patch || {}) });
   auditLog({
-    orgId: id, fecha: meta.fecha || new Date().toISOString().slice(0, 10),
+    orgId: id, notif: true, fecha: meta.fecha || new Date().toISOString().slice(0, 10),
     responsable: meta.responsable || '', rol: meta.rol || '',
     accion: meta.accion || 'Cambio de estado',
     de: prev ? prev.estado : '', a: estado, motivo: meta.motivo || ''
@@ -520,6 +520,9 @@ export function solicitudDeDeportista(deportistaId) {
 export function crearSolicitud(deportistaId, clubId) {
   const list = readStore('solicitudes', []) || [];
   const dep = getDeportista(deportistaId);
+  // Anti-duplicado: si ya hay una solicitud de afiliación 'Enviada' del deportista, no crear otra.
+  const prev = list.find((s) => s.deportistaId === deportistaId && s.tipo !== 'retiro' && s.estado === 'Enviada');
+  if (prev) return { ...prev };
   const rec = {
     id: 'AF-' + String(list.length + 1).padStart(3, '0'),
     tipo: 'afiliacion', deportistaId, clubId, estado: 'Enviada', fecha: _todayISO()
@@ -614,7 +617,7 @@ export function resolverAfiliacion(solicitudId, resultado, meta = {}) {
     accion: esRetiro
       ? (resultado === 'aprobada' ? 'Baja confirmada' : 'Baja rechazada')
       : (resultado === 'aprobada' ? 'Afiliación aprobada' : 'Afiliación rechazada'),
-    de: esRetiro ? 'Baja solicitada' : 'Enviada', a: estadoSol, motivo: meta.motivo || ''
+    de: esRetiro ? 'Baja solicitada' : 'Enviada', a: estadoSol, motivo: meta.motivo || '', notif: true
   });
   return { ...list[i] };
 }
