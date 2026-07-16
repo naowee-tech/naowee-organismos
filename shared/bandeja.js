@@ -10,7 +10,8 @@ import { getRoleFromQuery, ROLES, getDemoMode } from './sidebar.js';
 import {
   allOrganismos, getOrganismo, subtreeOf, addOrganismo,
   updateOrganismo, setEstado, auditLog, allAudit,
-  solicitudesDeClub, resolverAfiliacion, getDeportista, ancestorsOf, seedAfiliacionesDemo
+  solicitudesDeClub, resolverAfiliacion, getDeportista, ancestorsOf, seedAfiliacionesDemo,
+  allPreinscritos, getPreinscrito, resolverPreinscrito, seedPreinscritosDemo
 } from './organismos-data.js';
 import { can, scopeFor } from './permissions.js';
 import { estadoBadgeVariant, resolverFederacion, puedeTransicionar } from './estados.js';
@@ -42,6 +43,30 @@ const MOTIVOS = [
 /* Estados que se muestran en la bandeja (accionables + visibilidad). */
 const VISIBLES = ['En revisión', 'Preinscrito', 'Rechazado', 'Activo'];
 
+/* ── Registro público (HURU-09) — cola de validación del Registro Único ──
+   El validador central (Admin Mindeporte) revisa los usuarios/entidades
+   autoinscritos desde el formulario público. Reusa la máquina de estados. */
+const PRE_EMOJI = { deportista: '🏃', personal: '🧑‍🏫', entidad: '🏛️' };
+const PRE_TIPO_SING = { deportista: 'Deportista', personal: 'Personal deportivo', entidad: 'Entidad deportiva' };
+const PRE_DOC_LABELS = {
+  parentesco: 'Documento de parentesco (registro civil / custodia)',
+  cert: 'Certificaciones profesionales',
+  tarjeta: 'Tarjeta profesional vigente',
+  existencia: 'Certificado de existencia y representación legal',
+  representacion: 'Documento de representación legal',
+  reconocimiento: 'Reconocimiento deportivo vigente'
+};
+const MOTIVOS_PRE = [
+  'Documento de identidad no válido o ilegible',
+  'Certificación / soporte incompleto o vencido',
+  'Datos personales inconsistentes',
+  'Documento de la entidad incompleto',
+  'Registro duplicado',
+  'Otro (ver comentario)'
+];
+/* El validador del registro público es el Admin Mindeporte (Registro Único). */
+const puedePre = roleCode === 'MINDEPORTE';
+
 const root = document.getElementById('bandejaRoot');
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -61,6 +86,8 @@ const I = {
 /* State (UI) */
 let query = '';
 let estadoFiltro = 'Accionables';
+let vista = 'federaciones';      // MINDEPORTE: 'federaciones' | 'publico' (registro público)
+let preFiltro = 'Accionables';   // filtro de la cola de registro público
 
 /* ── Datos demo: federaciones En revisión con doble validación a medias ── */
 function seedBandejaDemo() {
@@ -101,13 +128,30 @@ const puedeAccionar = target && can(roleCode, 'A', target.recurso);
 /* ═══════════════ Render ═══════════════ */
 function render() {
   if (roleCode === 'CLUB') return renderAfiliaciones();
+  if (roleCode === 'MINDEPORTE' && vista === 'publico') return renderPreinscritos();
   if (!target) return renderNoBandeja();
+  return renderOrgBandeja();
+}
+
+/* Switch de sub-vista para el Admin Mindeporte: gestiona federaciones (doble
+   validación) Y valida el registro público. Los demás roles no lo ven. */
+function vistaSwitch() {
+  if (roleCode !== 'MINDEPORTE') return '';
+  const pend = allPreinscritos().filter((p) => p.estado === 'En revisión').length;
+  return `<div class="naowee-tabs bj-tabs bj-vista" id="bjVista" style="margin-bottom:16px">
+    <button type="button" class="naowee-tab ${vista === 'federaciones' ? 'naowee-tab--selected' : ''}" data-vista="federaciones">Federaciones</button>
+    <button type="button" class="naowee-tab ${vista === 'publico' ? 'naowee-tab--selected' : ''}" data-vista="publico">Registro público${pend ? ` · ${pend}` : ''}</button>
+  </div>`;
+}
+
+function renderOrgBandeja() {
   const all = bandejaOrgs();
   const rows = filtered(all);
   const pend = all.filter((o) => o.estado === 'En revisión').length;
   const anchor = scopeId ? getOrganismo(scopeId) : null;
 
   root.innerHTML = `
+    ${vistaSwitch()}
     ${msg('informative', I.info, puedeAccionar
       ? `Bandeja de <strong>${target.plural}</strong> ${anchor ? `de <strong>${esc(anchor.nombre)}</strong>` : 'del SND'}. Aprueba, rechaza o solicita corrección (motivo obligatorio). ${target.tipo === 'federacion' ? 'La federación requiere <strong>doble validación</strong>: Ministerio + Comité.' : ''}`
       : `Vista de <strong>oversight</strong> (solo lectura) de ${target.plural}.`)}
@@ -425,7 +469,7 @@ function openDetail(id) {
   ov.querySelector('#bjCancel')?.addEventListener('click', close);
   ov.querySelectorAll('[data-doc-view]').forEach((b) => b.addEventListener('click', () => {
     const [label, file] = b.dataset.docView.split('||');
-    closeModal(ov, () => openDocViewer(label, file, id));   // sin apilar: cierra detalle → abre visor → vuelve al detalle
+    closeModal(ov, () => openDocViewer(label, file, () => openDetail(id)));   // sin apilar: cierra detalle → abre visor → vuelve al detalle
   }));
   if (accionable) {
     ov.querySelector('#bjApr').addEventListener('click', () => { doApprove(id); close(); });
@@ -438,7 +482,7 @@ function kv(k, val) { return `<div class="bj-kv__row"><dt>${esc(k)}</dt><dd>${es
 /* Visor de documentos (HURU-09): previsualización SIN descarga. Mock del documento
    cargado (el visor real embebería el PDF/JPG/PNG). Reemplaza al detalle para no
    apilar backdrops; al cerrar reabre el detalle del organismo. */
-function openDocViewer(label, file, orgId) {
+function openDocViewer(label, file, onBack) {
   const ov = openModal(`
     <div class="reg-modal bj-modal" role="dialog" aria-modal="true">
       <div class="reg-modal__head"><h3 class="reg-modal__title">${I.doc} ${esc(label)}</h3><button type="button" class="reg-modal__close" id="dvClose" aria-label="Cerrar">${I.x}</button></div>
@@ -457,7 +501,7 @@ function openDocViewer(label, file, orgId) {
       </div>
       <div class="reg-modal__foot bj-modal__foot"><button type="button" class="naowee-btn naowee-btn--mute" id="dvBack">Volver al organismo</button></div>
     </div>`);
-  const back = () => closeModal(ov, () => (orgId ? openDetail(orgId) : null));
+  const back = () => closeModal(ov, () => (typeof onBack === 'function' ? onBack() : null));
   ov.addEventListener('click', (e) => { if (e.target === ov) back(); });
   ov.querySelector('#dvClose').addEventListener('click', back);
   ov.querySelector('#dvBack').addEventListener('click', back);
@@ -548,6 +592,181 @@ function doReject(id, tipoAccion, motivo) {
   toast(`${tipoAccion} registrada — se notificó a ${o.nombre} por email y app`, 'success');
 }
 
+/* ═══════════════ Registro público — cola de validación (HURU-09) ═══════════════
+   Reusa el mismo panel/tabla/modal/visor/motivo de la bandeja de organismos. El
+   Admin Mindeporte aprueba (→ Activo + notificación), rechaza o solicita
+   corrección (motivo obligatorio). La traza vive en el propio registro. */
+function renderPreinscritos() {
+  const all = allPreinscritos();
+  const pend = all.filter((p) => p.estado === 'En revisión').length;
+  let view = all;
+  if (preFiltro === 'Accionables') view = view.filter((p) => p.estado === 'En revisión');
+  else if (preFiltro !== 'Todos') view = view.filter((p) => p.estado === preFiltro);
+  if (query) { const q = norm(query); view = view.filter((p) => norm(p.nombre).includes(q) || norm(p.numDoc || p.nit || '').includes(q) || norm(p.subtipo || '').includes(q)); }
+  view = view.slice().sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+
+  root.innerHTML = `
+    ${vistaSwitch()}
+    ${msg('informative', I.info, `Validación del <strong>registro público</strong> del SUID: usuarios y entidades autoinscritos desde el formulario público. Aprueba, rechaza o solicita corrección (motivo obligatorio). Al aprobar quedan <strong>Activos</strong> en el Registro Único y se notifica por email/SMS.`)}
+
+    <div class="naowee-card bj-panel">
+      <div class="bj-panel__bar">
+        <div class="naowee-searchbox bj-search">
+          <div class="naowee-searchbox__input-wrap">
+            <span class="naowee-searchbox__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input class="naowee-searchbox__input" id="bjSearch" placeholder="Buscar por nombre, documento o tipo…" value="${esc(query)}">
+          </div>
+        </div>
+        <span class="bj-count">${view.length} de ${all.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
+      </div>
+      <div class="naowee-tabs bj-tabs" id="bjFilters">
+        ${['Accionables', 'Activo', 'En corrección', 'Rechazado', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${preFiltro === f ? 'naowee-tab--selected' : ''}" data-pf="${f}">${f === 'Activo' ? 'Validados' : f}</button>`).join('')}
+      </div>
+      ${view.length ? `
+        <div class="cg-table-wrap">
+          <table class="cg-table bj-table">
+            <thead><tr><th>Solicitante</th><th>Tipo</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+            <tbody>
+              ${view.map((p) => `
+                <tr>
+                  <td data-label="Solicitante"><div class="bj-org"><span class="bj-org__emoji">${PRE_EMOJI[p.tipo] || '📄'}</span><div><div class="bj-org__name">${esc(p.nombre)}</div><div class="bj-org__sub">${esc(p.numDoc ? `${p.tipoDoc || ''} ${p.numDoc}`.trim() : (p.nit ? 'NIT ' + p.nit : ''))}</div></div></div></td>
+                  <td data-label="Tipo"><div class="bj-sol-cell"><span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">${esc(PRE_TIPO_SING[p.tipo] || 'Registro')}</span><span class="bj-org__sub">${esc(p.subtipo || '')}</span></div></td>
+                  <td data-label="Estado">${badge(p.estado)}</td>
+                  <td class="cg-table__nit" data-label="Fecha">${esc(p.fecha || '—')}</td>
+                  <td class="bj-row-action" data-label=""><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openpre="${esc(p.id)}">${puedePre && p.estado === 'En revisión' ? 'Revisar' : 'Ver'}</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : emptyState('Sin registros públicos', preFiltro === 'Accionables' ? 'No hay registros públicos pendientes de validación por ahora.' : 'No hay registros que coincidan con el filtro.')}
+    </div>`;
+  wire();
+}
+
+function preDocsBlock(p) {
+  const docs = p.documentos || {};
+  const items = Object.keys(docs).filter((k) => docs[k]).map((k) => ({ label: PRE_DOC_LABELS[k] || k, file: (docs[k] && docs[k].name) || docs[k] }));
+  return `<div class="bj-docs">
+    <p class="bj-docs__title">Documentos de soporte</p>
+    ${items.length
+      ? items.map((d) => `<div class="bj-doc"><span class="bj-doc__ico">${I.doc}</span><div style="min-width:0"><div class="bj-doc__name">${esc(d.label)}</div><div class="bj-doc__file">${esc(d.file)}</div></div><button type="button" class="bj-doc__view" data-doc-view="${esc(d.label)}||${esc(d.file)}">Ver</button></div>`).join('')
+      : `<div class="naowee-message naowee-message--caution"><span class="naowee-message__icon">${I.alert}</span><div class="naowee-message__body"><p class="naowee-message__text">Este registro no adjuntó documentos de soporte.</p></div></div>`}
+  </div>`;
+}
+
+function openPreDetail(id) {
+  const p = getPreinscrito(id);
+  if (!p) return;
+  const accionable = puedePre && p.estado === 'En revisión';
+  const tipoBadge = `<span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">${esc(PRE_TIPO_SING[p.tipo] || 'Registro público')}</span>`;
+  const hist = p.historial || [];
+
+  const ov = openModal(`
+    <div class="reg-modal bj-modal" role="dialog" aria-modal="true">
+      <div class="reg-modal__head">
+        <h3 class="reg-modal__title">${PRE_EMOJI[p.tipo] || '📄'} ${esc(p.nombre)}</h3>
+        <button type="button" class="reg-modal__close" id="prClose" aria-label="Cerrar">${I.x}</button>
+      </div>
+      <div class="reg-modal__body bj-detail">
+        <div class="bj-detail__badges">${badge(p.estado)}${tipoBadge}</div>
+        <dl class="bj-kv">
+          ${kv('Tipo', PRE_TIPO_SING[p.tipo] || '—')}
+          ${p.subtipo ? kv(p.tipo === 'entidad' ? 'Tipo de entidad' : 'Rol', p.subtipo) : ''}
+          ${p.numDoc ? kv('Documento', `${p.tipoDoc || ''} ${p.numDoc}`) : ''}
+          ${p.nit ? kv('NIT / RUT', p.nit) : ''}
+          ${p.deporte ? kv('Deporte', p.deporte) : ''}
+          ${p.profesion ? kv('Profesión', p.profesion) : ''}
+          ${p.experiencia ? kv('Experiencia', p.experiencia + ' años') : ''}
+          ${p.repLegal && p.repLegal.nombre ? kv('Rep. legal', `${p.repLegal.nombre}${p.repLegal.doc ? ' · ' + p.repLegal.doc : ''}`) : ''}
+          ${(p.ciudad || p.depto) ? kv('Sede', `${p.ciudad || ''}${p.ciudad && p.depto ? ', ' : ''}${p.depto || ''}`) : ''}
+          ${p.correo ? kv('Correo', p.correo) : ''}
+          ${p.telefono ? kv('Teléfono', p.telefono) : ''}
+          ${kv('Registro', p.fecha || '—')}
+          ${(p.estado !== 'En revisión') && p.responsable ? kv('Revisado por', `${esc(p.responsable)}${p.resueltaFecha ? ' · ' + esc(p.resueltaFecha) : ''}`) : ''}
+        </dl>
+        ${preDocsBlock(p)}
+        ${msg('informative', I.info, `<strong>Integración externa (demo):</strong> el número de documento se validó contra la Registraduría / entidades externas vía API al procesar el registro.`)}
+        ${p.estado === 'Rechazado' && p.motivo ? msg('negative', I.alert, `<strong>Motivo del rechazo:</strong> ${esc(p.motivo)}`) : ''}
+        ${p.estado === 'En corrección' && p.motivo ? msg('caution', I.alert, `<strong>Corrección solicitada:</strong> ${esc(p.motivo)}`) : ''}
+        ${p.estado === 'Activo' ? msg('positive', I.check, `Registro <strong>validado</strong>: quedó Activo en el Registro Único del SUID.`) : ''}
+        ${accionable ? `<p class="bj-detail__note">Al <strong>aprobar</strong>, <strong>${esc(p.nombre)}</strong> quedará Activo en el Registro Único y se notificará por email/SMS. También puedes solicitar corrección o rechazar con motivo.</p>` : ''}
+        <div class="bj-timeline">
+          <p class="bj-timeline__title">Trazabilidad</p>
+          ${hist.length ? hist.slice().reverse().map((a) => `
+            <div class="bj-tl-row"><span class="bj-tl-dot"></span><div><div class="bj-tl-head"><strong>${esc(a.accion)}</strong> · ${esc(a.a)}</div><div class="bj-tl-sub">${esc(a.fecha)} · ${esc(a.responsable || a.rol || '—')}${a.motivo ? ' · ' + esc(a.motivo) : ''}${a.notif ? ' · 🔔 notificado por email/app' : ''}</div></div></div>`).join('')
+            : '<p class="bj-tl-empty">Sin movimientos registrados.</p>'}
+        </div>
+      </div>
+      <div class="reg-modal__foot bj-actions">
+        ${accionable ? `
+          <button type="button" class="naowee-btn naowee-btn--mute" id="prCorr">Solicitar corrección</button>
+          <div class="bj-actions__main">
+            <button type="button" class="naowee-btn bj-btn-danger" id="prRej">Rechazar</button>
+            <button type="button" class="naowee-btn bj-btn-success" id="prApr">Validar y activar</button>
+          </div>`
+          : `<button type="button" class="naowee-btn naowee-btn--mute" id="prCancel">Cerrar</button>`}
+      </div>
+    </div>`);
+  const close = () => closeModal(ov);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  ov.querySelector('#prClose').addEventListener('click', close);
+  ov.querySelector('#prCancel')?.addEventListener('click', close);
+  ov.querySelectorAll('[data-doc-view]').forEach((b) => b.addEventListener('click', () => {
+    const [label, file] = b.dataset.docView.split('||');
+    closeModal(ov, () => openDocViewer(label, file, () => openPreDetail(id)));   // sin apilar
+  }));
+  if (accionable) {
+    ov.querySelector('#prApr').addEventListener('click', () => { doApprovePre(id); close(); });
+    ov.querySelector('#prRej').addEventListener('click', () => openPreMotivo(id, 'Rechazado', ov));
+    ov.querySelector('#prCorr').addEventListener('click', () => openPreMotivo(id, 'Corrección solicitada', ov));
+  }
+}
+
+function doApprovePre(id) {
+  const p = getPreinscrito(id);
+  resolverPreinscrito(id, 'aprobado', { responsable: role.userName || roleCode, rol: roleCode });
+  toast(`Registro validado — ${p ? p.nombre + ' quedó Activo; se ' : 'se '}notificó por email y app`, 'success');
+  render();
+}
+
+function openPreMotivo(id, tipoAccion, detailOv) {
+  closeModal(detailOv);                    // no apilar: se cierra el detalle (con su animación)
+  const p = getPreinscrito(id);
+  let selMotivo = '';
+  const ov = openModal(`
+    <div class="reg-modal bj-modal bj-modal--sm bj-modal--overflow" role="dialog" aria-modal="true">
+      <div class="reg-modal__head"><h3 class="reg-modal__title">${esc(tipoAccion)} · ${esc(p ? p.nombre : '')}</h3><button type="button" class="reg-modal__close" id="pmClose" aria-label="Cerrar">${I.x}</button></div>
+      <div class="reg-modal__body">
+        <div class="bj-field">
+          <label class="bj-label">Motivo <span class="bj-req">*</span></label>
+          <div class="naowee-dropdown" id="pmDd">
+            <button type="button" class="naowee-dropdown__trigger" aria-haspopup="listbox"><span class="naowee-dropdown__value is-placeholder">Selecciona un motivo…</span><span class="naowee-dropdown__chevron">${I.chevron}</span></button>
+            <div class="naowee-dropdown__menu" role="listbox">${MOTIVOS_PRE.map((m) => `<div class="naowee-dropdown__opt" role="option" data-value="${esc(m)}">${esc(m)}</div>`).join('')}</div>
+          </div>
+          <p class="bj-err" id="pmErr" style="display:none">Selecciona un motivo para continuar.</p>
+        </div>
+        <div class="bj-field">
+          <label class="bj-label">Comentario</label>
+          <div class="naowee-textfield__input-wrap bj-ta-wrap"><textarea id="pmTxt" rows="3" placeholder="Detalle para el solicitante…"></textarea></div>
+        </div>
+      </div>
+      <div class="reg-modal__foot bj-modal__foot"><button type="button" class="naowee-btn naowee-btn--mute" id="pmCancel">Cancelar</button><button type="button" class="naowee-btn bj-btn-danger" id="pmOk">Confirmar ${esc(tipoAccion.toLowerCase())}</button></div>
+    </div>`);
+  mountDd(ov, (val) => { selMotivo = val; ov.querySelector('#pmErr').style.display = 'none'; });
+  const backToDetail = () => closeModal(ov, () => openPreDetail(id));
+  ov.addEventListener('click', (e) => { if (e.target === ov) backToDetail(); });
+  ov.querySelector('#pmClose').addEventListener('click', backToDetail);
+  ov.querySelector('#pmCancel').addEventListener('click', backToDetail);
+  ov.querySelector('#pmOk').addEventListener('click', () => {
+    if (!selMotivo) { ov.querySelector('#pmErr').style.display = 'block'; ov.querySelector('#pmDd').classList.add('naowee-dropdown--error'); return; }
+    const txt = ov.querySelector('#pmTxt').value.trim();
+    const motivo = txt ? `${selMotivo} — ${txt}` : selMotivo;
+    const resultado = tipoAccion === 'Corrección solicitada' ? 'correccion' : 'rechazado';
+    resolverPreinscrito(id, resultado, { motivo, responsable: role.userName || roleCode, rol: roleCode });
+    toast(`${tipoAccion} registrada${p ? ' — se notificó a ' + p.nombre + ' por email y app' : ''}`, 'success');
+    closeModal(ov); render();
+  });
+}
+
 /* ── Wiring ── */
 function wire() {
   const s = document.getElementById('bjSearch');
@@ -556,12 +775,16 @@ function wire() {
   if (f) {
     f.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { estadoFiltro = b.dataset.f; render(); }));
     f.querySelectorAll('[data-af]').forEach((b) => b.addEventListener('click', () => { afilFiltro = b.dataset.af; render(); }));
+    f.querySelectorAll('[data-pf]').forEach((b) => b.addEventListener('click', () => { preFiltro = b.dataset.pf; render(); }));
   }
+  root.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => { vista = b.dataset.vista; render(); }));
   root.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openDetail(b.dataset.open)));
   root.querySelectorAll('[data-openafil]').forEach((b) => b.addEventListener('click', () => openAfilDetail(b.dataset.openafil)));
+  root.querySelectorAll('[data-openpre]').forEach((b) => b.addEventListener('click', () => openPreDetail(b.dataset.openpre)));
 }
 function toast(text, variant) { window.naoweeToast && window.naoweeToast(text, variant === 'negative' ? 'error' : 'success'); }
 
 seedBandejaDemo();
 seedAfiliacionesDemo(getDemoMode());
+seedPreinscritosDemo(getDemoMode());
 render();

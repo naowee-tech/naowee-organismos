@@ -254,27 +254,41 @@
 .reg-pane__title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -.2px; }
 .reg-pane__sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 22px; line-height: 1.5; max-width: 620px; }
 .reg-form { display: flex; flex-direction: column; gap: 18px; max-width: 560px; }
-.reg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+/* align-items:start → las celdas NO se estiran a la altura de la fila; así el
+   .naowee-dropdown de una celda no crece cuando su vecina muestra un helper de
+   error, y su menú (top:100%) queda pegado al trigger (no al fondo estirado). */
+.reg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; align-items: start; }
 .reg-grid-2--full { grid-column: 1 / -1; }
 .reg-section-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); margin: 6px 0 -4px; }
-.reg-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--border); background: var(--bg-soft); }
+.reg-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--border); background: var(--bg-soft); }
 .reg-footer__spacer { flex: 1; }
+/* Aviso demo cuando se puede omitir la validación al 2º "Siguiente" (full-width, arriba de los botones). */
+.reg-footer__hint { order: -1; flex-basis: 100%; display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 500; color: var(--accent); }
+.reg-footer__hint svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-/* ── Selector de tipo (paso 0) — tarjetas grandes ── */
-.reg-tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+/* ── Selector de tipo (paso 0) — tarjetas con ícono en chip ── */
+.reg-tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .reg-tipo-card {
-  position: relative; display: flex; flex-direction: column; gap: 6px; padding: 20px; cursor: pointer;
-  max-width: 340px; /* con un solo tipo (Comité), la card no se estira a todo el ancho */
+  position: relative; display: flex; flex-direction: column; gap: 3px; padding: 18px 18px 16px; cursor: pointer;
+  max-width: 360px; /* con un solo tipo (Comité), la card no se estira a todo el ancho */
   border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface); text-align: left;
   transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast);
 }
-.reg-tipo-card:hover { border-color: var(--field-border-hover); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-.reg-tipo-card__emoji { font-size: 28px; line-height: 1; }
-.reg-tipo-card__title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.reg-tipo-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+/* Ícono contenido en un chip tintado (los SVG no traen width/height → se acotan aquí). */
+.reg-tipo-card__emoji {
+  width: 44px; height: 44px; margin-bottom: 10px; border-radius: var(--radius-md);
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: var(--accent-bg); color: var(--accent);
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+.reg-tipo-card__emoji svg { width: 24px; height: 24px; }
+.reg-tipo-card__title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
 .reg-tipo-card__desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
-.reg-tipo-card__check { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: none; align-items: center; justify-content: center; }
+.reg-tipo-card__check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: none; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(215, 64, 9, .3); }
 .reg-tipo-card__check svg { width: 13px; height: 13px; }
 .reg-tipo-card.is-selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent); }
+.reg-tipo-card.is-selected .reg-tipo-card__emoji { background: var(--accent); color: #fff; }
 .reg-tipo-card.is-selected .reg-tipo-card__check { display: inline-flex; }
 
 /* ── Resumen de confirmación ── */

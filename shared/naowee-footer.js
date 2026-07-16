@@ -214,7 +214,33 @@ const MODULE_NAME = 'Organismos';
             mock (🔔 email/app) visibles en los timelines (Historial, Solicitudes, bandeja);
             tablas → cards apiladas en móvil (data-label); entrega de credenciales del
             Comité en la pantalla de éxito. Cache-busters ?v=1.1.0. */
-const MODULE_VERSION = 'v1.1.0';
+/* v1.2.0 — HURU-09 · Encolado del REGISTRO PÚBLICO en la bandeja de validación.
+            El formulario público (registro-publico.html) deja de cerrar solo con éxito
+            mock: al enviar, PERSISTE el registro (personal deportivo + entidad — los que
+            requieren validación; el deportista sigue de alta autónoma) en el nuevo store
+            `preinscritos` como 'En revisión'. El Admin Mindeporte (validador central del
+            Registro Único) gana en la bandeja un switch de sub-vista 'Federaciones |
+            Registro público · N' con la cola de usuarios/entidades autoinscritos:
+            buscador + filtros (Accionables/Validados/En corrección/Rechazado/Todos),
+            detalle en modal (datos + documentos de soporte + visor sin descarga, sin
+            doble backdrop) y acciones Validar y activar (→ Activo) / Rechazar / Solicitar
+            corrección (MOTIVO obligatorio) → notificación mock (🔔 email/app) + traza
+            autocontenida por registro. Reusa 100% los componentes de la bandeja
+            (.cg-table, .reg-modal, .bj-*, visor, motivo, timeline) y la máquina de
+            estados (estados.js). La materialización del usuario/organismo en el roster/
+            jerarquía queda para HURU-05/06 (creación automática). Nuevos helpers
+            organismos-data.js: allPreinscritos/getPreinscrito/crearPreinscrito/
+            resolverPreinscrito/seedPreinscritosDemo (+ store `preinscritos` en el seed);
+            openDocViewer parametrizado (callback de retorno) para servir a organismo y
+            preinscrito. **Refinamiento UI del form público** (feedback Doug): cards de
+            tipo de usuario con ícono en CHIP tintado 44px (los SVG no traían width/height
+            → salían enormes) + estado seleccionado (chip accent sólido, ícono blanco);
+            fix del menú de los dropdowns que salía LEJOS del trigger (la celda del
+            `.reg-grid-2` se estiraba a la altura de la fila cuando la celda vecina mostraba
+            su helper de error → el menú `top:100%` caía al fondo; fix `align-items:start`);
+            y conveniencia demo: al SEGUNDO «Siguiente» en un paso se omiten los campos
+            obligatorios y se avanza (con aviso en el footer). Cache-busters ?v=1.2.0. */
+const MODULE_VERSION = 'v1.2.0';
 
 (function () {
   function mount() {

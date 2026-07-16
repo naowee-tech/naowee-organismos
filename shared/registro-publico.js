@@ -15,7 +15,7 @@
    checkbox, file-uploader botón, message, success/confetti).
    Datos demo efímeros en sessionStorage (prefijo naowee-organismos-).
    ═══════════════════════════════════════════════════════════════ */
-import { allDeportistas, allOrganismos } from './organismos-data.js';
+import { allDeportistas, allOrganismos, crearPreinscrito } from './organismos-data.js';
 
 /* ─── util ─── */
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
@@ -79,7 +79,7 @@ function docRegistrado(num) { return DOCS_REGISTRADOS.has(String(num || '').trim
 /* ─── estado ─── */
 const STEP_LABELS = ['Tipo', 'Datos', 'Documentos', 'Listo'];
 const STATE = {
-  step: 0, created: false,
+  step: 0, created: false, _armedStep: null,
   tipo: null, modo: null, rol: '', entTipo: null,
   d: {
     tipoDoc: '', numDoc: '', nombres: '', apellidos: '', fechaNac: '', sexo: '', correo: '', telefono: '', deporte: '',
@@ -135,7 +135,7 @@ function paneTipo() {
   const cards = TIPOS.map((t) => `
     <button type="button" class="reg-tipo-card ${STATE.tipo === t.v ? 'is-selected' : ''}" data-tipo="${t.v}">
       <span class="reg-tipo-card__check">${I.check}</span>
-      <span class="reg-tipo-card__emoji" style="color:var(--accent)">${t.emoji}</span>
+      <span class="reg-tipo-card__emoji">${t.emoji}</span>
       <span class="reg-tipo-card__title">${t.t}</span>
       <span class="reg-tipo-card__desc">${t.d}</span>
     </button>`).join('');
@@ -348,7 +348,7 @@ function renderFooter() {
   f.innerHTML = `${back}<span class="reg-footer__spacer"></span>
     <button type="button" class="naowee-btn naowee-btn--loud" id="rpNext">${STATE.step === 0 ? 'Comenzar' : (last ? 'Enviar registro' : 'Siguiente')}</button>`;
   document.getElementById('rpNext').addEventListener('click', next);
-  document.getElementById('rpBack')?.addEventListener('click', () => { STATE.step = Math.max(0, STATE.step - 1); render(); });
+  document.getElementById('rpBack')?.addEventListener('click', () => { STATE._armedStep = null; STATE.step = Math.max(0, STATE.step - 1); render(); });
 }
 
 /* ═══════════════ Bind ═══════════════ */
@@ -513,16 +513,68 @@ function shakeErrors(errs) {
 }
 function next() {
   const errs = validate();
-  if (errs.length) { shakeErrors(errs); return; }
+  if (errs.length) {
+    // Conveniencia demo: al SEGUNDO "Siguiente" en el mismo paso se omite la
+    // validación de obligatorios y se avanza igual (recorrer el flujo sin llenar todo).
+    if (STATE._armedStep === STATE.step) { STATE._armedStep = null; advance(); return; }
+    STATE._armedStep = STATE.step;
+    shakeErrors(errs);
+    showBypassHint();
+    return;
+  }
+  STATE._armedStep = null;
+  advance();
+}
+function advance() {
   if (STATE.step < 2) { STATE.step++; render(); return; }
   submit();
+}
+function showBypassHint() {
+  const footer = document.getElementById('rpFooter'); if (!footer) return;
+  if (document.getElementById('rpBypassHint')) return;
+  const hint = document.createElement('div');
+  hint.id = 'rpBypassHint'; hint.className = 'reg-footer__hint';
+  hint.innerHTML = `${I.bang}<span>Faltan campos obligatorios — presiona <strong>“Siguiente”</strong> de nuevo para omitir (demo).</span>`;
+  footer.insertBefore(hint, footer.firstChild);
 }
 
 /* ═══════════════ Envío + éxito ═══════════════ */
 function submit() {
+  persistPreinscrito();
   STATE.created = true;
   try { window.naoweeToast && window.naoweeToast('Registro enviado — notificación por email/SMS', 'success'); } catch (_) {}
   render();
+}
+
+/* HURU-09: encola el registro en la cola de validación de la bandeja. Solo
+   personal + entidad requieren validación (los que la propia demo marca
+   "pendiente de validación" / "preinscrito"); el deportista queda de alta
+   autónoma (autodeclarado). Los documentos guardan solo el nombre de archivo
+   (mock, sin subida real). */
+function persistPreinscrito() {
+  if (STATE.tipo !== 'personal' && STATE.tipo !== 'entidad') return;
+  const d = STATE.d;
+  const docs = {};
+  Object.keys(d.docs || {}).forEach((k) => { docs[k] = { name: String(d.docs[k]).split(' · ')[0] }; });
+  if (STATE.tipo === 'personal') {
+    crearPreinscrito({
+      tipo: 'personal', subtipo: STATE.rol || 'Personal deportivo', rol: STATE.rol || '',
+      nombre: `${d.nombres} ${d.apellidos}`.trim() || 'Personal deportivo',
+      tipoDoc: d.tipoDoc, numDoc: d.numDoc, correo: d.correo, telefono: d.telefono,
+      profesion: d.profesion, experiencia: d.experiencia, deporte: d.deporte,
+      documentos: docs
+    });
+  } else {
+    const entLabel = (ENT_TIPOS.find((e) => e.v === STATE.entTipo) || {}).t || 'Entidad deportiva';
+    crearPreinscrito({
+      tipo: 'entidad', subtipo: entLabel, entTipo: STATE.entTipo,
+      nombre: d.entNombre || 'Entidad deportiva',
+      nit: d.nit, correo: d.repCorreo,
+      depto: d.depto, ciudad: d.ciudad,
+      repLegal: { nombre: d.repNombre, doc: d.repDoc, correo: d.repCorreo },
+      documentos: docs
+    });
+  }
 }
 const TIPO_TXT = {
   deportista: 'Deportista', personal: 'Personal deportivo', entidad: 'Entidad deportiva'

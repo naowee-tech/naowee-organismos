@@ -197,6 +197,7 @@ export function seedDemoData() {
   if (readStore('solicitudes') == null) writeStore('solicitudes', []);
   if (readStore('cargues') == null) writeStore('cargues', []);
   if (readStore('audit') == null) writeStore('audit', []);
+  if (readStore('preinscritos') == null) writeStore('preinscritos', []);
   try { localStorage.setItem(SEED_FLAG, SEED_VERSION); } catch (_) {}
   return { seeded: true, version: SEED_VERSION };
 }
@@ -678,4 +679,100 @@ export function seedAfiliacionesDemo(mode) {
     list.unshift({ id: 'AF-D' + (idx + 1), deportistaId: s.deportistaId, clubId: s.clubId, estado: 'Enviada', fecha: s.fecha, demoSeed: true });
   });
   writeStore('solicitudes', list);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Registro público → cola de validación (HURU-09).
+   Los registros del formulario público (registro-publico.html) que requieren
+   validación (personal deportivo + entidades) se persisten en
+   `naowee-organismos-preinscritos` (sessionStorage, efímero) como 'En revisión'.
+   El rol validador (Admin Mindeporte · Registro Único del SUID) los aprueba /
+   rechaza / solicita corrección desde la bandeja, reusando la máquina de estados
+   (estados.js) y el mapa de badge. Cada registro lleva su propio `historial`
+   (traza autocontenida, como las solicitudes de afiliación) con notif mock.
+   NO materializa aún el usuario/organismo en el roster/jerarquía (eso es la
+   creación automática HURU-05/06); cierra el lazo de validación + notificación.
+   ═══════════════════════════════════════════════════════════════ */
+const _preHist = (fecha, accion, de, a, responsable, rol, motivo) => ({
+  fecha, accion, de, a, responsable: responsable || '', rol: rol || '', motivo: motivo || '', notif: true
+});
+
+/* Todas las preinscripciones públicas (más reciente primero). Copias. */
+export function allPreinscritos() {
+  return (readStore('preinscritos', []) || []).map((p) => ({ ...p }));
+}
+export function getPreinscrito(id) {
+  return allPreinscritos().find((p) => p.id === id) || null;
+}
+
+/* Crea una preinscripción pública en estado 'En revisión' y siembra su traza.
+   Anti-duplicado: si ya existe una 'En revisión' con el mismo documento/NIT, la
+   reutiliza (no crea otra). Devuelve la copia creada. */
+export function crearPreinscrito(rec) {
+  const list = readStore('preinscritos', []) || [];
+  const clave = String((rec && (rec.numDoc || rec.nit)) || '').trim();
+  if (clave) {
+    const dup = list.find((p) => p.estado === 'En revisión' && String(p.numDoc || p.nit || '').trim() === clave);
+    if (dup) return { ...dup };
+  }
+  const fecha = _todayISO();
+  const record = {
+    origen: 'registro-publico',
+    estado: 'En revisión',
+    documentos: {},
+    ...rec,
+    id: (rec && rec.id) || ('PRE-' + String(list.length + 1).padStart(3, '0')),
+    fecha,
+    historial: [_preHist(fecha, 'Registro público recibido', '', 'En revisión', (rec && rec.nombre) || '', 'PÚBLICO', '')]
+  };
+  list.unshift(record);
+  writeStore('preinscritos', list);
+  return { ...record };
+}
+
+/* Resuelve una preinscripción (por el validador). `resultado` ∈
+   {'aprobado','rechazado','correccion'} → estado Activo / Rechazado / En
+   corrección. Agrega la traza (responsable, fecha, motivo, notif). Devuelve la
+   copia resultante o null si no existe. */
+export function resolverPreinscrito(id, resultado, meta = {}) {
+  const list = readStore('preinscritos', []) || [];
+  const i = list.findIndex((p) => p.id === id);
+  if (i < 0) return null;
+  const p = list[i];
+  const MAP = { aprobado: 'Activo', rechazado: 'Rechazado', correccion: 'En corrección' };
+  const ACC = { aprobado: 'Registro validado', rechazado: 'Registro rechazado', correccion: 'Corrección solicitada' };
+  const nuevo = MAP[resultado] || p.estado;
+  const fecha = _todayISO();
+  const hist = _preHist(fecha, ACC[resultado] || 'Actualización', p.estado, nuevo, meta.responsable || '', meta.rol || '', meta.motivo || '');
+  list[i] = { ...p, estado: nuevo, motivo: meta.motivo || '', responsable: meta.responsable || '', resueltaFecha: fecha, historial: [...(p.historial || []), hist] };
+  writeStore('preinscritos', list);
+  return { ...list[i] };
+}
+
+/* Datos demo (solo 'demo'): siembra registros públicos para que la cola de
+   validación de Mindeporte arranque con algo que revisar (2 accionables + 1
+   validado + 1 en corrección, para poblar los filtros). Idempotente. */
+export function seedPreinscritosDemo(mode) {
+  if (mode !== 'demo') return;
+  const list = readStore('preinscritos', []) || [];
+  if (list.some((p) => p.demoSeed)) return;
+  const mk = (o) => ({ origen: 'registro-publico', demoSeed: true, documentos: {}, historial: [], ...o });
+  const seeds = [
+    mk({ id: 'PRE-D1', tipo: 'personal', subtipo: 'Entrenador', rol: 'Entrenador', nombre: 'Carlos Palacio Mesa', tipoDoc: 'CC', numDoc: '79345612', correo: 'carlos.palacio@correo.demo.co', telefono: '+57 300 555 1010', profesion: 'Entrenador de patinaje', experiencia: '8', deporte: 'Patinaje', depto: 'Valle del Cauca', ciudad: 'Cali', estado: 'En revisión', fecha: '2026-07-13',
+      documentos: { cert: { name: 'certificacion-entrenador-nivel-2.pdf' } },
+      historial: [_preHist('2026-07-13', 'Registro público recibido', '', 'En revisión', 'Carlos Palacio Mesa', 'PÚBLICO', '')] }),
+    mk({ id: 'PRE-D2', tipo: 'entidad', subtipo: 'Club promotor', entTipo: 'club-promotor', nombre: 'Club Deportivo Ruedas de Occidente', nit: '901720045-3', correo: 'contacto@ruedasdeoccidente.demo.co', telefono: '+57 602 555 2020', deporte: 'Patinaje', depto: 'Valle del Cauca', ciudad: 'Palmira', estado: 'En revisión', fecha: '2026-07-14',
+      repLegal: { nombre: 'Ana María Torres', doc: '31567001', correo: 'ana.torres@correo.demo.co' },
+      documentos: { existencia: { name: 'certificado-existencia-representacion.pdf' }, representacion: { name: 'acta-representacion-legal.pdf' }, reconocimiento: { name: 'reconocimiento-deportivo-municipal.pdf' } },
+      historial: [_preHist('2026-07-14', 'Registro público recibido', '', 'En revisión', 'Ana María Torres', 'PÚBLICO', '')] }),
+    mk({ id: 'PRE-D3', tipo: 'personal', subtipo: 'Juez / Árbitro', rol: 'Juez / Árbitro', nombre: 'Lucía Ramírez Peña', tipoDoc: 'CC', numDoc: '52889314', correo: 'lucia.ramirez@correo.demo.co', telefono: '+57 301 555 3030', profesion: 'Juez de natación', experiencia: '5', deporte: 'Natación', depto: 'Antioquia', ciudad: 'Medellín', estado: 'Activo', fecha: '2026-07-08', resueltaFecha: '2026-07-10', responsable: 'María F. Rojas',
+      documentos: { cert: { name: 'licencia-juez-natacion.pdf' } },
+      historial: [_preHist('2026-07-08', 'Registro público recibido', '', 'En revisión', 'Lucía Ramírez Peña', 'PÚBLICO', ''), _preHist('2026-07-10', 'Registro validado', 'En revisión', 'Activo', 'María F. Rojas', 'MINDEPORTE', '')] }),
+    mk({ id: 'PRE-D4', tipo: 'entidad', subtipo: 'Liga departamental', entTipo: 'liga', nombre: 'Liga de Triatlón de Bogotá', nit: '901720099-1', correo: 'contacto@ligatriatlonbogota.demo.co', telefono: '+57 601 555 4040', deporte: 'Triatlón', depto: 'Bogotá D.C.', ciudad: 'Bogotá', estado: 'En corrección', fecha: '2026-07-09', resueltaFecha: '2026-07-11', responsable: 'María F. Rojas', motivo: 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente',
+      repLegal: { nombre: 'Jorge Beltrán', doc: '79990012', correo: 'jorge.beltran@correo.demo.co' },
+      documentos: { existencia: { name: 'certificado-existencia.pdf' } },
+      historial: [_preHist('2026-07-09', 'Registro público recibido', '', 'En revisión', 'Jorge Beltrán', 'PÚBLICO', ''), _preHist('2026-07-11', 'Corrección solicitada', 'En revisión', 'En corrección', 'María F. Rojas', 'MINDEPORTE', 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente')] })
+  ];
+  seeds.forEach((s) => list.push(s));
+  writeStore('preinscritos', list);
 }
