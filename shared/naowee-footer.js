@@ -189,8 +189,16 @@ const MODULE_NAME = 'Organismos';
             Fed. Patinaje → Liga del Valle → Club Patín Cali con su ciclo de
             estados real) para el Historial del perfil (ORG-07). QA por rol
             Funcional/UI/Responsive en verde + README del repo. Cache-busters
-            ?v=1.0.0 sincronizados. */
-const MODULE_VERSION = 'v1.0.0';
+            ?v=1.0.0 sincronizados.
+   v1.0.1 — T9 refinamientos post-publicación (feedback Doug): (1) hover de las
+            tabs del perfil del organismo con aire (padding en .naowee-tabs +
+            divisor full-width en #odPanel) para que no toque los bordes del card;
+            (2) la card de tipo del wizard ya no se estira a todo el ancho con un
+            solo tipo (max-width en .reg-tipo-card); (3) el "Acto administrativo"
+            del Comité pasó de textfield a file-uploader canónico con BOTÓN
+            (input-wrap + placeholder + action, port del DS), no el drop-zone
+            punteado. Cache-busters ?v=1.0.1. */
+const MODULE_VERSION = 'v1.0.1';
 
 (function () {
   function mount() {

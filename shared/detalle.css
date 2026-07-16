@@ -17,7 +17,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Tabs canónicos (PORT FIEL — shared/forms.css:409-427) ─── */
-.naowee-tabs { display: flex; width: 100%; border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.naowee-tabs { display: flex; width: 100%; padding: 6px 8px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .naowee-tabs::-webkit-scrollbar { display: none; }
 .naowee-tab {
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -81,6 +81,9 @@
 
 /* ─── Panel de tabs ─── */
 .od-tabs-card { padding: 0; overflow: hidden; }
+/* Divisor full-width entre tabs y panel: las tabs quedan con aire (padding) para
+   que el hover no toque los bordes del card; el divisor lo pone el panel. */
+#odPanel { border-top: 1px solid var(--border); }
 .od-panel { padding: 22px 24px; }
 .od-panel:focus { outline: none; }
 

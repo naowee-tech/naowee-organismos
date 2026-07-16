@@ -169,6 +169,35 @@
 .naowee-file-uploader__file-dismiss svg { width: 15px; height: 15px; }
 .naowee-file-uploader--error .naowee-file-uploader__drop-zone { border-color: var(--field-border-error); }
 
+/* ── File-uploader · variante BOTÓN (input-wrap + placeholder + action) ──
+   Port del DS canónico §file-uploader (el que tiene botón "Subir", NO el
+   drop-zone punteado). Sub-clases nuevas → no chocan con el drop-zone de arriba. */
+.naowee-file-uploader__input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 46px; padding: 6px 8px 6px 14px;
+  border: 1px solid var(--border-dark); border-radius: var(--radius-md);
+  background: var(--surface); transition: border-color var(--duration-fast);
+}
+.naowee-file-uploader__input-wrap:hover { border-color: var(--field-border-hover, var(--accent)); }
+.naowee-file-uploader__placeholder {
+  flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.naowee-file-uploader__placeholder--filled { color: var(--text-primary); font-weight: 500; }
+.naowee-file-uploader__placeholder--filled svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--green); }
+.naowee-file-uploader__action {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+  padding: 7px 12px; border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+.naowee-file-uploader__action:hover { background: var(--accent-bg); }
+.naowee-file-uploader__action svg { width: 15px; height: 15px; }
+.naowee-file-uploader__action input[type="file"] { display: none; }
+.naowee-file-uploader--error .naowee-file-uploader__input-wrap { border-color: var(--field-border-error); }
+
 /* ── Shake / wiggle canónico (DS §Utility SHAKE). remove→reflow→add. ── */
 .naowee-shake { animation: naoweeShake .45s cubic-bezier(.36, .07, .19, .97); }
 @keyframes naoweeShake {
@@ -235,6 +264,7 @@
 .reg-tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
 .reg-tipo-card {
   position: relative; display: flex; flex-direction: column; gap: 6px; padding: 20px; cursor: pointer;
+  max-width: 340px; /* con un solo tipo (Comité), la card no se estira a todo el ancho */
   border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface); text-align: left;
   transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast);
 }

@@ -272,7 +272,7 @@ function paneComite() {
       ${tf({ id: 'f-nombre', label: 'Nombre del Comité', required: true, path: 'nombre', value: d.nombre, placeholder: 'Ej: Comité Olímpico Colombiano' })}
       ${ddPlaceholder('sector', 'Sector', true)}
       ${tf({ id: 'f-nit', label: 'NIT', required: true, path: 'nit', value: d.nit, placeholder: '860028097-1', mask: 'tel', maxLength: 13 })}
-      ${tf({ id: 'f-acto', label: 'Acto administrativo de reconocimiento del Ministerio', required: true, path: 'actoAdministrativo', value: d.actoAdministrativo, placeholder: 'Ej: Resolución 001234 de 2026' })}
+      ${actoUploader()}
       <div class="reg-section-label">Aceptación</div>
       ${privacyCheck()}
     </form>`;
@@ -472,6 +472,23 @@ function fileField(doc) {
   </div>`;
 }
 
+/* Uploader del Acto administrativo (Comité, ORG-01): variante BOTÓN del DS
+   (input-wrap + placeholder + botón "Subir archivo"), NO el drop-zone punteado.
+   Guarda el nombre del archivo en STATE.data.actoAdministrativo (mock, igual que
+   los documentos), así la confirmación y el submit lo muestran sin cambiar el modelo. */
+function actoUploader() {
+  const name = STATE.data.actoAdministrativo;
+  const inner = name
+    ? `<span class="naowee-file-uploader__placeholder naowee-file-uploader__placeholder--filled">${I.check}${esc(name)}</span>
+       <button type="button" class="naowee-file-uploader__action" data-acto-remove>${I.x} Quitar</button>`
+    : `<span class="naowee-file-uploader__placeholder">Ningún archivo seleccionado · PDF, JPG o PNG</span>
+       <label class="naowee-file-uploader__action">${I.upload} Subir archivo<input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-acto-input></label>`;
+  return `<div class="naowee-file-uploader" data-field="f-acto" id="f-acto">
+    <label class="naowee-file-uploader__label naowee-file-uploader__label--required">Acto administrativo de reconocimiento del Ministerio</label>
+    <div class="naowee-file-uploader__input-wrap">${inner}</div>
+  </div>`;
+}
+
 /* ─── Footer (CTAs) ─── */
 function renderFooter() {
   const footer = document.getElementById('regFooter');
@@ -526,6 +543,12 @@ function bindPane() {
   });
   root.querySelectorAll('[data-doc-remove]').forEach((btn) => {
     btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); delete STATE.data.documentos[btn.dataset.docRemove]; scheduleSave(); renderPane(); bindPane(); });
+  });
+  /* Acto administrativo (Comité) — uploader con botón */
+  root.querySelector('[data-acto-input]')?.addEventListener('change', (e) => onActoPick(e.target));
+  document.querySelector('[data-acto-remove]')?.addEventListener('click', (e) => {
+    e.preventDefault(); STATE.data.actoAdministrativo = '';
+    clearFieldError(document.getElementById('f-acto')); scheduleSave(); renderPane(); bindPane();
   });
   /* Trigger de dirección */
   const dt = document.getElementById('dirTrigger');
@@ -661,6 +684,21 @@ function onFilePick(inp) {
   renderPane(); bindPane();
 }
 
+/* Acto administrativo (Comité) — mismo mock, guarda solo el nombre del archivo. */
+function onActoPick(inp) {
+  const f = inp.files && inp.files[0];
+  if (!f) return;
+  if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) {
+    fieldError(document.getElementById('f-acto'), 'Formato no permitido. Usa PDF, JPG o PNG.');
+    window.naoweeToast && window.naoweeToast('Formato no permitido (PDF/JPG/PNG)', 'error');
+    inp.value = ''; return;
+  }
+  STATE.data.actoAdministrativo = f.name;
+  clearFieldError(document.getElementById('f-acto'));
+  scheduleSave();
+  renderPane(); bindPane();
+}
+
 /* ═══ Modal de dirección estructurada (una sola capa de backdrop) ═══ */
 function openDirModal() {
   document.getElementById('regDirModal')?.remove();
@@ -769,7 +807,7 @@ function validateStep(step) {
       reqTf('f-nombre', d.nombre.trim());
       if (!d.sector) errs.push({ field: 'dd-sector', kind: 'dd' });
       reqTf('f-nit', d.nit.trim());
-      reqTf('f-acto', d.actoAdministrativo.trim());
+      reqTf('f-acto', d.actoAdministrativo.trim(), 'Adjunta el acto administrativo de reconocimiento');
       if (!d.aceptaPoliticas) errs.push({ field: 'f-politicas', kind: 'check' });
     } else if (STATE.tipo === 'federacion') {
       if (!d.sector) errs.push({ field: 'dd-sector', kind: 'dd' });
