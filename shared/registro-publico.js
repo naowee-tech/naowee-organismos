@@ -606,7 +606,7 @@ function renderSuccess() {
             <div class="naowee-message__body"><p class="naowee-message__text">Enviamos una <strong>notificación por email/SMS</strong> a ${esc(correo)} confirmando el registro y los siguientes pasos.</p></div>
           </div>
           <div class="reg-receipt">
-            <div class="reg-receipt__head"><span class="reg-receipt__ava" style="color:var(--accent)">${STATE.tipo === 'entidad' ? I.entity : STATE.tipo === 'personal' ? I.staff : I.athlete}</span>
+            <div class="reg-receipt__head"><span class="reg-receipt__ava">${STATE.tipo === 'entidad' ? I.entity : STATE.tipo === 'personal' ? I.staff : I.athlete}</span>
               <div><div class="reg-receipt__name">${esc(r.nombre)}</div><div class="reg-receipt__meta">${esc(r.meta)}</div></div></div>
             <div class="reg-receipt__rows">
               ${receiptRow(I.check, 'Tipo', TIPO_TXT[STATE.tipo])}

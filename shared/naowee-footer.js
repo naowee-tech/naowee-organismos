@@ -250,7 +250,12 @@ const MODULE_NAME = 'Organismos';
             `margin-bottom:-4px` de `.reg-section-label` SOLAPABA el checkbox → todo el
             cuerpo del pane se envuelve en un solo `.reg-form` (gap 18px uniforme).
             Cache-busters ?v=1.2.1. */
-const MODULE_VERSION = 'v1.2.1';
+/* v1.2.2 — Pulido del recibo del paso «Listo» (feedback Doug): los iconos del
+            recibo (fila ✓/!/✉ y el avatar del header) pasan de naranja (accent) a
+            GRIS (--text-secondary; avatar sobre --bg-soft), y se quita la elevación
+            (box-shadow) del container .reg-receipt — queda plano con solo su borde.
+            Cache-busters ?v=1.2.2. */
+const MODULE_VERSION = 'v1.2.2';
 
 (function () {
   function mount() {
