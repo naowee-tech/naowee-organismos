@@ -240,7 +240,17 @@ const MODULE_NAME = 'Organismos';
             su helper de error → el menú `top:100%` caía al fondo; fix `align-items:start`);
             y conveniencia demo: al SEGUNDO «Siguiente» en un paso se omiten los campos
             obligatorios y se avanza (con aviso en el footer). Cache-busters ?v=1.2.0. */
-const MODULE_VERSION = 'v1.2.0';
+/* v1.2.1 — Fixes UI post-v1.2.0 (feedback Doug): (1) paso «Listo» (pantalla de éxito):
+            las filas del recibo salían con ICONOS enormes y clave/valor pegados
+            ("TipoEntidad deportiva") porque faltaban las clases .reg-receipt__row/__ico/
+            __k/__v en forms.css → agregadas (ícono acotado a 16px + fila flex con clave
+            muted y valor a la derecha) + `.reg-receipt__ava svg` acotado. (2) Paso
+            Documentos: el message azul, la etiqueta «Aceptación» y el checkbox quedaban
+            FUERA del `.reg-form` (hijos sueltos de `.reg-pane` block, sin ritmo) y el
+            `margin-bottom:-4px` de `.reg-section-label` SOLAPABA el checkbox → todo el
+            cuerpo del pane se envuelve en un solo `.reg-form` (gap 18px uniforme).
+            Cache-busters ?v=1.2.1. */
+const MODULE_VERSION = 'v1.2.1';
 
 (function () {
   function mount() {

@@ -275,12 +275,14 @@ function paneDocs() {
   return `
     <h2 class="reg-pane__title">${docs.length ? 'Documentos de soporte' : 'Confirmación'}</h2>
     <p class="reg-pane__sub">${docs.length ? 'Adjunta los soportes requeridos. Formatos: PDF, JPG o PNG (simulado — no se sube ningún archivo).' : 'Último paso antes de enviar tu registro.'}</p>
-    ${extra}
-    ${uploaders}
-    ${firma}
-    ${api}
-    <div class="reg-section-label">Aceptación</div>
-    ${privacyCheck()}`;
+    <div class="reg-form">
+      ${extra}
+      ${uploaders}
+      ${firma}
+      ${api}
+      <div class="reg-section-label">Aceptación</div>
+      ${privacyCheck()}
+    </div>`;
 }
 
 /* ═══════════════ Helpers de campo (markup canónico) ═══════════════ */
