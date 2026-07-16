@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandeja — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.2">
+<link rel="stylesheet" href="shared/shell.css?v=1.2.2">
+<link rel="stylesheet" href="shared/components.css?v=1.2.2">
+<link rel="stylesheet" href="shared/forms.css?v=1.2.2">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.2">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-head__title" id="pageTitle">Bandeja de aprobaciones</h1>
+          <p class="page-head__sub" id="pageSub">Revisión de los organismos que dependen de ti: aprobar, rechazar o solicitar corrección con motivo obligatorio. Federaciones con doble validación (Ministerio + Comité).</p>
+        </div>
+        <div id="bandejaRoot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getRoleFromQuery, ROLES, getMenuForRole, mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher } from './shared/sidebar.js';
+  import { seedDemoData } from './shared/organismos-data.js';
+  seedDemoData();
+  const roleCode = getRoleFromQuery();
+  const role = ROLES[roleCode];
+  /* H1 según la etiqueta del ítem de bandeja para ese rol. */
+  getMenuForRole(roleCode).forEach((s) => s.items.forEach((it) => {
+    if (it.id === 'bandeja') document.getElementById('pageTitle').textContent = it.label;
+  }));
+  /* Subtítulo por rol: el CLUB gestiona afiliaciones de deportistas (no organismos). */
+  if (roleCode === 'CLUB') {
+    document.getElementById('pageSub').textContent =
+      'Solicitudes de afiliación de deportistas a tu club: aprobar o rechazar (motivo obligatorio). Al aprobar, el deportista hereda tu liga y federación.';
+  }
+  mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: 'bandeja' });
+  mountHeader({ headerEl: document.getElementById('topHeader'), role });
+  mountBackdrop();
+  mountDemoSwitcher({ roleCode });
+  /* El módulo se auto-arranca al importar (render por rol). */
+  import('./shared/bandeja.js?v=1.2.2');
+</script>
+<script src="shared/naowee-footer.js?v=1.2.2"></script>
+<script src="shared/tour.js?v=1.2.2"></script>
+
+</body>
+</html>

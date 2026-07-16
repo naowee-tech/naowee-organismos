@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro público — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.2">
+<link rel="stylesheet" href="shared/components.css?v=1.2.2">
+<link rel="stylesheet" href="shared/forms.css?v=1.2.2">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.2">
+
+<style>
+  body {
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(255, 117, 0, .08), transparent 60%),
+      radial-gradient(900px 500px at -5% 110%, rgba(0, 43, 91, .08), transparent 55%),
+      linear-gradient(180deg, #f8f9fc 0%, #eef0f7 100%);
+    min-height: 100vh; padding: 40px 24px 96px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-primary);
+  }
+  .rp-wrap { max-width: 880px; width: 100%; margin: 0 auto; }
+  .rp-masthead { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .rp-masthead__logos { display: flex; align-items: center; gap: 12px; }
+  .rp-masthead__logos img { height: 38px; width: auto; display: block; }
+  .rp-masthead__sep { width: 1px; height: 28px; background: var(--border-dark); }
+  .rp-back { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; border-radius: var(--radius-full); }
+  .rp-back:hover { color: var(--accent); background: var(--surface); }
+  .rp-hero { margin-bottom: 22px; }
+  .rp-hero .eyebrow { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--naranja); margin-bottom: 10px; }
+  .rp-hero h1 { font-size: clamp(24px, 3.2vw, 34px); font-weight: 800; line-height: 1.1; letter-spacing: -.8px; color: var(--azul); margin: 0 0 10px; }
+  .rp-hero p { font-size: 15px; line-height: 1.55; color: var(--text-secondary); margin: 0; max-width: 640px; }
+  .rp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 28px; box-shadow: var(--shadow-card); }
+  /* micro-overrides del módulo público */
+  .rp-subchoice { margin-top: 22px; }
+  .rp-agehint:empty { display: none; }
+  .rp-agehint { margin-top: 8px; }
+  @media (max-width: 600px) {
+    body { padding: 24px 14px 90px; }
+    .rp-card { padding: 20px 16px; }
+    .rp-masthead { flex-wrap: wrap; }
+    .rp-back { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rp-wrap">
+  <header class="rp-masthead">
+    <div class="rp-masthead__logos">
+      <img src="shared/logos/ministerio.svg" alt="Ministerio del Deporte">
+      <div class="rp-masthead__sep"></div>
+      <img src="shared/logos/suid.png" alt="SUID">
+    </div>
+    <a class="rp-back" href="index.html">← Volver al inicio</a>
+  </header>
+
+  <section class="rp-hero">
+    <span class="eyebrow">Registro público · SUID</span>
+    <h1>Regístrate en el Sistema Único de Información del Deporte</h1>
+    <p>
+      Formulario público — no necesitas iniciar sesión. Regístrate como deportista
+      (propio o a través de un padre/tutor), como personal deportivo o como entidad
+      deportiva; el formulario se adapta a tu caso.
+    </p>
+  </section>
+
+  <div class="rp-card">
+    <div id="rpRoot"></div>
+  </div>
+</div>
+
+<script type="module" src="shared/registro-publico.js?v=1.2.2"></script>
+<script src="shared/naowee-footer.js?v=1.2.2"></script>
+<script src="shared/tour.js?v=1.2.2"></script>
+
+</body>
+</html>
