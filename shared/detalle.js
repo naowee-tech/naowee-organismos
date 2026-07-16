@@ -19,7 +19,8 @@
 import { getRoleFromQuery, ROLES, homeForRole } from './sidebar.js';
 import {
   getOrganismo, childrenOf, subtreeOf, ancestorsOf,
-  countDescendants, deportistasOf, allAudit, allDeportistas
+  countDescendants, deportistasOf, allAudit, allDeportistas,
+  seedTrazabilidadDemo
 } from './organismos-data.js';
 import { can, scopeFor, isGlobalScope } from './permissions.js';
 import { estadoBadgeVariant } from './estados.js';
@@ -357,6 +358,7 @@ function wireBack() {
 }
 
 /* ═══════════════ Arranque ═══════════════ */
+seedTrazabilidadDemo();   // trazabilidad demo del hilo conductor (ORG-07), solo modo demo
 const o = id ? getOrganismo(id) : null;
 if (!o) renderNotFound();
 else if (!inJurisdiction(id)) renderNoAccess(o);

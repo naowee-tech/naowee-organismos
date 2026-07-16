@@ -446,6 +446,33 @@ export function allAudit(orgId) {
   return orgId ? list.filter((a) => a.orgId === orgId) : list;
 }
 
+/* Trazabilidad demo (ORG-07): siembra el ciclo de vida real del hilo conductor
+   (Fed. Patinaje → Liga del Valle → Club Patín Cali) para que el Historial del
+   perfil muestre transiciones con responsable/fecha/motivo. Idempotente y solo
+   en modo demo (en modo guiado/vacío el historial arranca vacío, coherente con
+   un organismo aún sin gestionar). auditLog hace unshift → se siembra en orden
+   cronológico (más antiguo primero) para que quede el más reciente arriba. */
+export function seedTrazabilidadDemo() {
+  const mode = (function () { try { return localStorage.getItem('naowee-organismos-demo-mode'); } catch (_) { return null; } })();
+  if (mode === 'blank') return;                         // modo guiado/vacío → sin historial sembrado
+  if (allAudit('FED-040').length) return;               // idempotente
+  const trail = [
+    // Fed. Patinaje (doble validación Ministerio + Comité)
+    { orgId: 'FED-040', fecha: '2026-02-10', responsable: 'Alberto Herrera', rol: 'Federación', accion: 'Registro recibido', de: '', a: 'Preinscrito', motivo: '' },
+    { orgId: 'FED-040', fecha: '2026-02-12', responsable: 'Alberto Herrera', rol: 'Federación', accion: 'Enviada a validación', de: 'Preinscrito', a: 'En revisión', motivo: '' },
+    { orgId: 'FED-040', fecha: '2026-02-16', responsable: 'Camilo Duarte', rol: 'Comité (COC)', accion: 'Aval del Comité registrado', de: 'En revisión', a: 'En revisión', motivo: 'Doble validación: mitad del Comité aprobada' },
+    { orgId: 'FED-040', fecha: '2026-02-20', responsable: 'María F. Rojas', rol: 'Ministerio', accion: 'Habilitada por el Ministerio', de: 'En revisión', a: 'Activo', motivo: 'Doble validación completa (Ministerio + Comité)' },
+    // Liga del Valle (aprueba la Federación)
+    { orgId: 'LIG-001', fecha: '2026-03-02', responsable: 'Sandra Mejía', rol: 'Liga', accion: 'Registro recibido', de: '', a: 'Preinscrito', motivo: '' },
+    { orgId: 'LIG-001', fecha: '2026-03-08', responsable: 'Alberto Herrera', rol: 'Federación', accion: 'Habilitada por la Federación', de: 'Preinscrito', a: 'Activo', motivo: 'Reconocimiento deportivo (IVC) verificado' },
+    // Club Patín Cali (aprueba la Liga; incluye una corrección para mostrar el reingreso al flujo)
+    { orgId: 'CLU-001', fecha: '2026-03-15', responsable: 'Óscar Cardona', rol: 'Club', accion: 'Registro recibido', de: '', a: 'Preinscrito', motivo: '' },
+    { orgId: 'CLU-001', fecha: '2026-03-18', responsable: 'Sandra Mejía', rol: 'Liga', accion: 'Corrección solicitada', de: 'Preinscrito', a: 'Preinscrito', motivo: 'Falta el reconocimiento del ente municipal' },
+    { orgId: 'CLU-001', fecha: '2026-03-25', responsable: 'Sandra Mejía', rol: 'Liga', accion: 'Habilitado por la Liga', de: 'Preinscrito', a: 'Activo', motivo: 'Documentación completa' }
+  ];
+  trail.forEach((e) => auditLog(e));
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Afiliación del deportista (T7 · ORG-05) — solicitudes deportista→club.
    Store `naowee-organismos-solicitudes` (sessionStorage, prefijo del módulo,

@@ -155,7 +155,7 @@ const MODULE_NAME = 'Organismos';
             empty-states para autodeclarados), Config/Notif/Seguridad. Modal Editar datos (identidad+
             afiliación read-only con candado). Nuevos shared/: deportista-detalle.js
             (buildDeportistaDetalle: identidad + cadena derivada de ancestorsOf + biometría/tier/
-            medallería demo) y perfil.css (pf-*/af-* + keyframes fadeInUp/fadeIn). Rol DEPORTISTA gana
+            medallería demo) y perfil.css (prefijos pf- y af- + keyframes fadeInUp/fadeIn). Rol DEPORTISTA gana
             deportistaId (DEP-001, ?id= para vista puntual). Bloque .af-* movido de forms.css a
             perfil.css. Lado B (bandeja del club) y helpers de datos = v0.7.0 sin cambios. */
 /* v0.7.2 — fix(afiliacion): el botón "Buscar un club" del empty state de "Mi club" no lanzaba
@@ -178,8 +178,19 @@ const MODULE_NAME = 'Organismos';
        con sello escudo+check SVG (adiós emoji), NIT tabular con divisor y badge "Vínculo
        confirmado"; "Cadena heredada" como escalera con numeral editorial 01·02·03 (CSS counter)
        + color-por-tipo (liga verde / federación naranja / comité azul). CSS en perfil.css;
-       forward-port de .naowee-btn--danger (token negative-loud). */
-const MODULE_VERSION = 'v0.7.3';
+       forward-port de .naowee-btn--danger (token negative-loud).
+   v1.0.0 — T8 Release 1.0: RECORRIDO GUIADO por HU (shared/tour.js, patrón
+            canónico naowee-guided-tour). Catálogo de las 8 HU (ORG-01..08)
+            cross-rol agrupadas por fase del flujo, lanzador flotante + índice,
+            spotlight glass con tokens del módulo + coach (tarea · propósito ·
+            "Paso N de M"), pasos de acción que abren modal/pestaña, auto-arranque
+            ?tour= y navegación cross-pantalla+rol; enganchado en las 6 páginas con
+            shell. Trazabilidad demo del hilo conductor (seedTrazabilidadDemo:
+            Fed. Patinaje → Liga del Valle → Club Patín Cali con su ciclo de
+            estados real) para el Historial del perfil (ORG-07). QA por rol
+            Funcional/UI/Responsive en verde + README del repo. Cache-busters
+            ?v=1.0.0 sincronizados. */
+const MODULE_VERSION = 'v1.0.0';
 
 (function () {
   function mount() {
