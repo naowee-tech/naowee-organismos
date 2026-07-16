@@ -34,14 +34,14 @@ export function getIcon(name) { return ICONS[name] || ''; }
 export const ROLES = {
   MINDEPORTE: {
     code: 'MINDEPORTE', label: 'Admin Mindeporte',
-    userName: 'María F. Rojas', userEmail: 'maria.rojas@mindeporte.gov.co',
+    userName: 'María F. Rojas', userEmail: 'maria.rojas@mindeporte.demo.co',
     userDoc: 'CC 41.234.567', org: 'Ministerio del Deporte', avatar: 'MR',
     color: '#002B5B', short: 'Rectoría del SND · registra comités, ve toda la jerarquía y aprueba federaciones',
     group: 'Rectoría'
   },
   COMITE: {
     code: 'COMITE', label: 'Comité (COC)',
-    userName: 'Camilo Duarte', userEmail: 'cduarte@coc.org.co',
+    userName: 'Camilo Duarte', userEmail: 'cduarte@coc.demo.co',
     userDoc: 'CC 79.456.123', org: 'Comité Olímpico Colombiano', avatar: 'CD',
     color: '#d74009', short: 'Cabeza de sector · pre-registra y avala las federaciones de su sector',
     group: 'Cabezas de sector'

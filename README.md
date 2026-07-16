@@ -108,5 +108,7 @@ shared/
 
 ---
 
-*Naowee · Ministerio del Deporte de Colombia — demo interna. Datos de personas y
-NIT ficticios/parciales para fines de demostración.*
+*Naowee · Ministerio del Deporte de Colombia — demo interna. Los nombres, NIT y sector
+de las 57 federaciones del COC son información pública real; los datos de personas
+(representantes legales, deportistas) y de contacto (correos y teléfonos) son ficticios
+—dominio `.demo.co`— para fines de demostración.*
