@@ -255,7 +255,17 @@ const MODULE_NAME = 'Organismos';
             GRIS (--text-secondary; avatar sobre --bg-soft), y se quita la elevación
             (box-shadow) del container .reg-receipt — queda plano con solo su borde.
             Cache-busters ?v=1.2.2. */
-const MODULE_VERSION = 'v1.2.2';
+/* v1.2.3 — Documentos DIFERENCIADOS por tipo de entidad en el registro público
+            (feedback Doug: un club de base no tiene la carga legal de una federación).
+            `docsDelTipo()` deja de pedir los mismos 3 docs a las 5 entidades y usa una
+            matriz por `entTipo` con el vocabulario canónico de la bandeja:
+            Federación = personería + estatutos + reconocimiento (IVC) + aval del Comité +
+            RUT · Liga = personería + reconocimiento (IVC) + RUT · Club profesional =
+            existencia + reconocimiento municipal + RUT · Club promotor / Escuela =
+            existencia y representación legal. `PRE_DOC_LABELS` (bandeja) ampliado con los
+            nuevos ids; seeds de entidad del registro público alineados a la matriz.
+            Cache-busters ?v=1.2.3. */
+const MODULE_VERSION = 'v1.2.3';
 
 (function () {
   function mount() {

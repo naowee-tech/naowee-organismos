@@ -54,7 +54,12 @@ const PRE_DOC_LABELS = {
   tarjeta: 'Tarjeta profesional vigente',
   existencia: 'Certificado de existencia y representación legal',
   representacion: 'Documento de representación legal',
-  reconocimiento: 'Reconocimiento deportivo vigente'
+  personeria: 'Certificado de personería jurídica',
+  estatutos: 'Estatutos vigentes',
+  reconocimiento: 'Reconocimiento deportivo (trámite IVC)',
+  reconocimientoMunicipal: 'Reconocimiento del ente municipal',
+  aval: 'Aval del Comité',
+  rut: 'RUT'
 };
 const MOTIVOS_PRE = [
   'Documento de identidad no válido o ilegible',

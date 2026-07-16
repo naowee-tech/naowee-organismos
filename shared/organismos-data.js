@@ -763,14 +763,14 @@ export function seedPreinscritosDemo(mode) {
       historial: [_preHist('2026-07-13', 'Registro público recibido', '', 'En revisión', 'Carlos Palacio Mesa', 'PÚBLICO', '')] }),
     mk({ id: 'PRE-D2', tipo: 'entidad', subtipo: 'Club promotor', entTipo: 'club-promotor', nombre: 'Club Deportivo Ruedas de Occidente', nit: '901720045-3', correo: 'contacto@ruedasdeoccidente.demo.co', telefono: '+57 602 555 2020', deporte: 'Patinaje', depto: 'Valle del Cauca', ciudad: 'Palmira', estado: 'En revisión', fecha: '2026-07-14',
       repLegal: { nombre: 'Ana María Torres', doc: '31567001', correo: 'ana.torres@correo.demo.co' },
-      documentos: { existencia: { name: 'certificado-existencia-representacion.pdf' }, representacion: { name: 'acta-representacion-legal.pdf' }, reconocimiento: { name: 'reconocimiento-deportivo-municipal.pdf' } },
+      documentos: { existencia: { name: 'certificado-existencia-representacion.pdf' } },
       historial: [_preHist('2026-07-14', 'Registro público recibido', '', 'En revisión', 'Ana María Torres', 'PÚBLICO', '')] }),
     mk({ id: 'PRE-D3', tipo: 'personal', subtipo: 'Juez / Árbitro', rol: 'Juez / Árbitro', nombre: 'Lucía Ramírez Peña', tipoDoc: 'CC', numDoc: '52889314', correo: 'lucia.ramirez@correo.demo.co', telefono: '+57 301 555 3030', profesion: 'Juez de natación', experiencia: '5', deporte: 'Natación', depto: 'Antioquia', ciudad: 'Medellín', estado: 'Activo', fecha: '2026-07-08', resueltaFecha: '2026-07-10', responsable: 'María F. Rojas',
       documentos: { cert: { name: 'licencia-juez-natacion.pdf' } },
       historial: [_preHist('2026-07-08', 'Registro público recibido', '', 'En revisión', 'Lucía Ramírez Peña', 'PÚBLICO', ''), _preHist('2026-07-10', 'Registro validado', 'En revisión', 'Activo', 'María F. Rojas', 'MINDEPORTE', '')] }),
     mk({ id: 'PRE-D4', tipo: 'entidad', subtipo: 'Liga departamental', entTipo: 'liga', nombre: 'Liga de Triatlón de Bogotá', nit: '901720099-1', correo: 'contacto@ligatriatlonbogota.demo.co', telefono: '+57 601 555 4040', deporte: 'Triatlón', depto: 'Bogotá D.C.', ciudad: 'Bogotá', estado: 'En corrección', fecha: '2026-07-09', resueltaFecha: '2026-07-11', responsable: 'María F. Rojas', motivo: 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente',
       repLegal: { nombre: 'Jorge Beltrán', doc: '79990012', correo: 'jorge.beltran@correo.demo.co' },
-      documentos: { existencia: { name: 'certificado-existencia.pdf' } },
+      documentos: { personeria: { name: 'personeria-juridica-liga.pdf' }, reconocimiento: { name: 'reconocimiento-deportivo-ivc.pdf' }, rut: { name: 'rut-liga-triatlon.pdf' } },
       historial: [_preHist('2026-07-09', 'Registro público recibido', '', 'En revisión', 'Jorge Beltrán', 'PÚBLICO', ''), _preHist('2026-07-11', 'Corrección solicitada', 'En revisión', 'En corrección', 'María F. Rojas', 'MINDEPORTE', 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente')] })
   ];
   seeds.forEach((s) => list.push(s));

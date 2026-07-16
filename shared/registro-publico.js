@@ -246,11 +246,29 @@ function docsDelTipo() {
     if ((STATE.rol || '').startsWith('Médico') || (STATE.rol || '').startsWith('Fisio')) base.push({ id: 'tarjeta', label: 'Tarjeta profesional vigente' });
     return base;
   }
-  if (STATE.tipo === 'entidad') return [
-    { id: 'existencia', label: 'Certificado de existencia y representación legal' },
-    { id: 'representacion', label: 'Documento de representación legal' },
-    { id: 'reconocimiento', label: 'Reconocimiento deportivo vigente' }
-  ];
+  if (STATE.tipo === 'entidad') {
+    // Documentos DIFERENCIADOS por tipo de entidad (vocabulario canónico de la
+    // bandeja): las entidades reconocidas del SND (Federación/Liga) cargan el peso
+    // legal (personería, estatutos, reconocimiento IVC, aval); los clubes de base y
+    // escuelas van livianos. Matriz validada con negocio.
+    const D = {
+      existencia: 'Certificado de existencia y representación legal',
+      personeria: 'Certificado de personería jurídica',
+      estatutos: 'Estatutos vigentes',
+      reconocimiento: 'Reconocimiento deportivo (trámite IVC)',
+      reconocimientoMunicipal: 'Reconocimiento del ente municipal',
+      aval: 'Aval del Comité',
+      rut: 'RUT'
+    };
+    const POR_TIPO = {
+      'federacion':       ['personeria', 'estatutos', 'reconocimiento', 'aval', 'rut'],
+      'liga':             ['personeria', 'reconocimiento', 'rut'],
+      'club-profesional': ['existencia', 'reconocimientoMunicipal', 'rut'],
+      'club-promotor':    ['existencia'],
+      'escuela':          ['existencia']
+    };
+    return (POR_TIPO[STATE.entTipo] || ['existencia']).map((id) => ({ id, label: D[id] || id }));
+  }
   return []; // deportista propio: sin adjuntos
 }
 function paneDocs() {
