@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="shared/tokens.css?v=1.2.10">
-<link rel="stylesheet" href="shared/components.css?v=1.2.10">
-<link rel="stylesheet" href="shared/forms.css?v=1.2.10">
-<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.10">
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.11">
+<link rel="stylesheet" href="shared/components.css?v=1.2.11">
+<link rel="stylesheet" href="shared/forms.css?v=1.2.11">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.11">
 
 <style>
   body {
@@ -28,8 +28,7 @@
   .rp-masthead__logos { display: flex; align-items: center; gap: 12px; }
   .rp-masthead__logos img { height: 38px; width: auto; display: block; }
   .rp-masthead__sep { width: 1px; height: 28px; background: var(--border-dark); }
-  .rp-back { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-decoration: none; padding: 8px 12px; border-radius: var(--radius-full); }
-  .rp-back:hover { color: var(--accent); background: var(--surface); }
+  .rp-back-wrap { margin-bottom: 14px; }
   .rp-hero { margin-bottom: 22px; }
   .rp-hero .eyebrow { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--naranja); margin-bottom: 10px; }
   .rp-hero h1 { font-size: clamp(24px, 3.2vw, 34px); font-weight: 800; line-height: 1.1; letter-spacing: -.8px; color: var(--azul); margin: 0 0 10px; }
@@ -43,20 +42,21 @@
     body { padding: 24px 14px 90px; }
     .rp-card { padding: 20px 16px; }
     .rp-masthead { flex-wrap: wrap; }
-    .rp-back { margin-left: 0; }
   }
 </style>
 </head>
 <body>
 
 <div class="rp-wrap">
+  <div class="rp-back-wrap">
+    <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" onclick="window.location.href='index.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al inicio</button>
+  </div>
   <header class="rp-masthead">
     <div class="rp-masthead__logos">
       <img src="shared/logos/ministerio.svg" alt="Ministerio del Deporte">
       <div class="rp-masthead__sep"></div>
       <img src="shared/logos/suid.png" alt="SUID">
     </div>
-    <a class="rp-back" href="index.html">← Volver al inicio</a>
   </header>
 
   <section class="rp-hero">
@@ -74,9 +74,9 @@
   </div>
 </div>
 
-<script type="module" src="shared/registro-publico.js?v=1.2.10"></script>
-<script src="shared/naowee-footer.js?v=1.2.10"></script>
-<script src="shared/tour.js?v=1.2.10"></script>
+<script type="module" src="shared/registro-publico.js?v=1.2.11"></script>
+<script src="shared/naowee-footer.js?v=1.2.11"></script>
+<script src="shared/tour.js?v=1.2.11"></script>
 
 </body>
 </html>

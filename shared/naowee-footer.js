@@ -349,7 +349,17 @@ const MODULE_NAME = 'Organismos';
              azul. Los iconos de fila pasan de líneas grises sueltas a CHIPS
              tintados semánticos: Tipo = azul info, Estado = ámbar (Preinscrito) /
              verde (Activo), Notificación = verde (enviada). Cache-busters ?v=1.2.10. */
-const MODULE_VERSION = 'v1.2.10';
+/* v1.2.11 — Fix del datepicker + "Volver al inicio" canónico (feedback Doug).
+             (1) El datepicker se CERRABA al navegar mes/año o al abrir la vista
+             "mes/año": el handler de nav reconstruye el innerHTML del popover
+             (draw()) y el botón clicado quedaba detached → al burbujear el 'click'
+             a document, `pop.contains(e.target)` daba false y cerraba. El cierre
+             por clic-fuera pasa a escuchar 'pointerdown' (el target sigue adjunto
+             antes del re-render). (2) "Volver al inicio" deja de ser un link pill
+             custom arriba-derecha y pasa al botón canónico `.naowee-btn--mute
+             --small` (patrón backBtnHtml del módulo) arriba-IZQUIERDA (ubicación
+             convencional de "volver"). Cache-busters ?v=1.2.11. */
+const MODULE_VERSION = 'v1.2.11';
 
 (function () {
   function mount() {

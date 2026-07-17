@@ -436,13 +436,18 @@ function openDatePicker(fieldEl) {
   }
   draw();
   requestAnimationFrame(() => pop.classList.add('naowee-datepicker--open'));
+  /* Cierre por clic-fuera en POINTERDOWN (no 'click'): al navegar mes/año, draw()
+     reconstruye el innerHTML del popover DENTRO del handler → el botón clicado se
+     desprende del DOM y, si escucháramos 'click', al burbujear a document
+     `pop.contains(e.target)` daría false (target ya detached) y cerraría el picker.
+     En pointerdown el target sigue adjunto (el re-render ocurre después). */
   const onDoc = (e) => { if (!pop.contains(e.target) && !fieldEl.contains(e.target)) closeDatePicker(); };
   const onKey = (e) => { if (e.key === 'Escape') closeDatePicker(); };
-  setTimeout(() => document.addEventListener('click', onDoc), 0);
+  setTimeout(() => document.addEventListener('pointerdown', onDoc), 0);
   document.addEventListener('keydown', onKey);
   window.addEventListener('scroll', anchor, true);
   window.addEventListener('resize', anchor);
-  _dpCleanup = () => { document.removeEventListener('click', onDoc); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', anchor, true); window.removeEventListener('resize', anchor); };
+  _dpCleanup = () => { document.removeEventListener('pointerdown', onDoc); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', anchor, true); window.removeEventListener('resize', anchor); };
 }
 
 /* ── Paso 2 — documentos (adaptativo) + políticas ── */
