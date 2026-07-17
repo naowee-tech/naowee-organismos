@@ -15,7 +15,7 @@
    checkbox, file-uploader botón, message, success/confetti).
    Datos demo efímeros en sessionStorage (prefijo naowee-organismos-).
    ═══════════════════════════════════════════════════════════════ */
-import { allDeportistas, allOrganismos, allPreinscritos, crearPreinscrito } from './organismos-data.js';
+import { allDeportistas, allOrganismos, allPreinscritos, crearPreinscrito, activosDeTipo, comitePorSector } from './organismos-data.js';
 
 /* ─── util ─── */
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
@@ -66,6 +66,23 @@ const ENT_TIPOS = [
 ];
 const TIPOS_DOC = ['CC', 'TI', 'CE', 'PA'];
 const TIPODOC_LABEL = { CC: 'Cédula de ciudadanía (CC)', TI: 'Tarjeta de identidad (TI)', CE: 'Cédula de extranjería (CE)', PA: 'Pasaporte (PA)' };
+/* Municipios principales por departamento (demo). El campo Ciudad/Municipio se
+   carga dependiente del Departamento seleccionado. */
+const MUNICIPIOS = {
+  'Antioquia': ['Medellín', 'Bello', 'Itagüí', 'Envigado', 'Rionegro', 'Apartadó', 'Turbo', 'Sabaneta', 'Caucasia', 'La Estrella'],
+  'Atlántico': ['Barranquilla', 'Soledad', 'Malambo', 'Sabanalarga', 'Puerto Colombia', 'Galapa', 'Baranoa'],
+  'Bogotá D.C.': ['Bogotá'],
+  'Bolívar': ['Cartagena', 'Magangué', 'Turbaco', 'El Carmen de Bolívar', 'Arjona', 'Mompox'],
+  'Boyacá': ['Tunja', 'Duitama', 'Sogamoso', 'Chiquinquirá', 'Paipa', 'Puerto Boyacá'],
+  'Caldas': ['Manizales', 'La Dorada', 'Chinchiná', 'Villamaría', 'Riosucio', 'Anserma'],
+  'Cundinamarca': ['Soacha', 'Facatativá', 'Zipaquirá', 'Chía', 'Girardot', 'Fusagasugá', 'Mosquera', 'Madrid', 'Funza', 'Cajicá'],
+  'Meta': ['Villavicencio', 'Acacías', 'Granada', 'Puerto López', 'Cumaral', 'Restrepo'],
+  'Nariño': ['Pasto', 'Tumaco', 'Ipiales', 'Túquerres', 'La Unión', 'Samaniego'],
+  'Risaralda': ['Pereira', 'Dosquebradas', 'Santa Rosa de Cabal', 'La Virginia', 'Marsella'],
+  'Santander': ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta', 'Barrancabermeja', 'San Gil'],
+  'Tolima': ['Ibagué', 'Espinal', 'Melgar', 'Honda', 'Líbano', 'Chaparral'],
+  'Valle del Cauca': ['Cali', 'Buenaventura', 'Palmira', 'Tuluá', 'Cartago', 'Buga', 'Jamundí', 'Yumbo', 'Candelaria']
+};
 const DEPORTES = [...new Set(allOrganismos().filter((o) => o.tipo === 'federacion' && o.deporte && o.deporte !== '—').map((o) => o.deporte))].sort((a, b) => a.localeCompare(b, 'es'));
 
 /* Documentos ya registrados (mock) para validar duplicidad por número (HURU-01/03). */
@@ -96,7 +113,7 @@ const STATE = {
     // personal
     profesion: '', experiencia: '', tarjetaProf: '',
     // entidad
-    nit: '', entNombre: '', repNombre: '', repDoc: '', repCorreo: '', depto: '', ciudad: '',
+    nit: '', entNombre: '', repNombre: '', repDoc: '', repCorreo: '', depto: '', ciudad: '', superiorId: '', sector: '',
     // docs (nombre de archivo)
     docs: {},
     aceptaPoliticas: false
@@ -226,6 +243,7 @@ function paneDatos() {
     <form class="reg-form" id="rpForm">
       <div class="reg-section-label">Tipo de entidad</div>
       ${choiceGroup('entTipo', 'Tipo de entidad', ENT_TIPOS, STATE.entTipo, true)}
+      ${entSuperiorSection()}
       <div class="reg-grid-2">
         ${tf({ id: 'f-nit', label: 'NIT / RUT', required: true, path: 'nit', value: d.nit, mask: 'tel', maxLength: 13, placeholder: '900123456-7' })}
         ${tf({ id: 'f-entNombre', label: 'Nombre de la entidad', required: true, path: 'entNombre', value: d.entNombre, placeholder: 'Ej: Club Deportivo …' })}
@@ -238,10 +256,39 @@ function paneDatos() {
       ${tf({ id: 'f-repCorreo', label: 'Correo del representante', required: true, path: 'repCorreo', value: d.repCorreo, mask: 'email', type: 'email', placeholder: 'representante@correo.co' })}
       <div class="reg-section-label">Sede</div>
       <div class="reg-grid-2">
-        ${dd('depto', 'Departamento', ['Antioquia','Atlántico','Bogotá D.C.','Bolívar','Boyacá','Caldas','Cundinamarca','Meta','Nariño','Risaralda','Santander','Tolima','Valle del Cauca'].map((v) => ({ v, t: v })), d.depto, true, true)}
-        ${tf({ id: 'f-ciudad', label: 'Ciudad / Municipio', required: true, path: 'ciudad', value: d.ciudad, placeholder: 'Ej: Cali' })}
+        ${dd('depto', 'Departamento', Object.keys(MUNICIPIOS).map((v) => ({ v, t: v })), d.depto, true, true)}
+        ${d.depto && MUNICIPIOS[d.depto]
+          ? dd('ciudad', 'Ciudad / Municipio', MUNICIPIOS[d.depto].map((c) => ({ v: c, t: c })), d.ciudad, true, true)
+          : `<div class="naowee-dropdown" data-field="dd-ciudad" style="opacity:.55;pointer-events:none">
+              <label class="naowee-dropdown__label naowee-dropdown__label--required">Ciudad / Municipio</label>
+              <button type="button" class="naowee-dropdown__trigger"><span class="naowee-dropdown__value is-placeholder">Elige el departamento primero</span><span class="naowee-dropdown__chevron">${I.chevron}</span></button>
+              <div class="naowee-dropdown__menu"></div>
+            </div>`}
       </div>
     </form>`;
+}
+
+/* Sección del organismo SUPERIOR (dependiente del tipo de entidad). El registro
+   público captura a qué nivel superior se afilia, para el enrutamiento DESCENDENTE
+   de validación (club→Liga, liga→Federación, federación→sector/Comité) y ORG-06.
+   Se re-renderiza al cambiar el tipo de entidad. */
+function entSuperiorSection() {
+  const d = STATE.d, et = STATE.entTipo;
+  if (!et) return '';
+  if (et === 'federacion') {
+    return `<div class="reg-section-label">Sector y deporte</div>
+      <div class="reg-grid-2">
+        ${dd('sector', 'Sector', [{ v: 'Olímpico', t: 'Olímpico' }, { v: 'Paralímpico', t: 'Paralímpico' }, { v: 'Sordolímpico', t: 'Sordolímpico' }], d.sector, true)}
+        ${tf({ id: 'f-deporte', label: 'Deporte(s)', required: true, path: 'deporte', value: d.deporte, placeholder: 'Ej: Patinaje' })}
+      </div>`;
+  }
+  const supTipo = et === 'liga' ? 'federacion' : 'liga';
+  const supLabel = et === 'liga' ? 'Federación a la que perteneces' : 'Liga a la que te afilias';
+  const opts = activosDeTipo(supTipo).map((o) => ({ v: o.id, t: `${o.nombre}${o.deporte && o.deporte !== '—' ? ' · ' + o.deporte : ''}` }));
+  const inner = opts.length
+    ? dd('superiorId', supLabel, opts, d.superiorId, true, true)
+    : `<div class="naowee-message naowee-message--caution" style="margin:0"><span class="naowee-message__icon">${I.bang}</span><div class="naowee-message__body"><p class="naowee-message__text">Aún no hay ${supTipo === 'federacion' ? 'federaciones' : 'ligas'} Activas para asociar. En modo demo, aprueba una desde la bandeja primero.</p></div></div>`;
+  return `<div class="reg-section-label">Organismo superior</div>${inner}`;
 }
 
 /* ── Paso 2 — documentos (adaptativo) + políticas ── */
@@ -396,7 +443,10 @@ function bindPane() {
   root().querySelectorAll('.reg-choice').forEach((ch) => ch.addEventListener('click', (e) => {
     e.preventDefault();
     const key = ch.dataset.choice, val = ch.dataset.value;
-    if (key === 'modo') STATE.modo = val; else if (key === 'entTipo') STATE.entTipo = val; else STATE.d[key] = val;
+    // Cambiar el tipo de entidad re-renderiza el pane: cambia la sección del superior
+    // (federación→sector/deporte · liga→federación · club/escuela→liga) y sus documentos.
+    if (key === 'entTipo') { STATE.entTipo = val; STATE.d.superiorId = ''; STATE.d.sector = ''; renderPane(); bindPane(); return; }
+    if (key === 'modo') STATE.modo = val; else STATE.d[key] = val;
     ch.parentElement.querySelectorAll('.reg-choice').forEach((c) => c.classList.toggle('is-selected', c === ch));
     ch.parentElement.classList.remove('is-error');
     const cb = ch.querySelector('input'); if (cb) cb.checked = true;
@@ -437,13 +487,39 @@ function mountDD(el) {
     menu.innerHTML = html;
     if (searchable) { const si = menu.querySelector('.dd-search-input'); si.addEventListener('click', (e) => e.stopPropagation()); si.addEventListener('input', () => build(si.value)); setTimeout(() => si.focus(), 40); }
   }
-  function open() { document.querySelectorAll('.naowee-dropdown--open').forEach((o) => { if (o !== el) o.classList.remove('naowee-dropdown--open'); }); build(''); el.classList.add('naowee-dropdown--open'); trigger.setAttribute('aria-expanded', 'true'); }
-  function close() { el.classList.remove('naowee-dropdown--open'); trigger.setAttribute('aria-expanded', 'false'); }
+  /* Ancla el menú (position:fixed) al trigger para escapar el overflow:hidden del
+     wizard; abre hacia arriba si no cabe abajo; reposiciona en scroll/resize. */
+  function anchor() {
+    const r = trigger.getBoundingClientRect();
+    menu.style.left = r.left + 'px';
+    menu.style.width = r.width + 'px';
+    menu.style.right = 'auto';
+    const below = window.innerHeight - r.bottom;
+    const flipUp = below < 240 && r.top > below;
+    const space = (flipUp ? r.top : below) - 16;
+    menu.style.maxHeight = Math.max(160, Math.min(300, space)) + 'px';
+    if (flipUp) { menu.style.top = 'auto'; menu.style.bottom = (window.innerHeight - r.top + 6) + 'px'; }
+    else { menu.style.bottom = 'auto'; menu.style.top = (r.bottom + 6) + 'px'; }
+  }
+  function open() {
+    document.querySelectorAll('.naowee-dropdown--open').forEach((o) => { if (o !== el) o.classList.remove('naowee-dropdown--open'); });
+    build(''); el.classList.add('naowee-dropdown--open'); trigger.setAttribute('aria-expanded', 'true');
+    anchor();
+    window.addEventListener('scroll', anchor, true);
+    window.addEventListener('resize', anchor);
+  }
+  function close() {
+    el.classList.remove('naowee-dropdown--open'); trigger.setAttribute('aria-expanded', 'false');
+    window.removeEventListener('scroll', anchor, true);
+    window.removeEventListener('resize', anchor);
+  }
   trigger.addEventListener('click', (e) => { e.stopPropagation(); el.classList.contains('naowee-dropdown--open') ? close() : open(); });
   menu.addEventListener('click', (e) => {
     const opt = e.target.closest('.naowee-dropdown__opt'); if (!opt) return;
     const o = opts.find((x) => String(x.v) === opt.dataset.value); if (!o) return;
     if (key === 'rol') STATE.rol = o.v; else STATE.d[key] = o.v;
+    // Al cambiar el Departamento, el Municipio se recarga dependiente → re-render.
+    if (key === 'depto') { STATE.d.ciudad = ''; close(); renderPane(); bindPane(); return; }
     valueEl.textContent = o.t; valueEl.classList.remove('is-placeholder');
     el.classList.remove('naowee-dropdown--error'); close();
   });
@@ -473,7 +549,7 @@ function clearFieldError(el) { if (!el) return; el.classList.remove('naowee-text
 function validate() {
   const d = STATE.d, errs = [];
   const reqTf = (id, ok, msg, hard) => { if (!ok) errs.push({ field: id, kind: 'tf', msg, hard: !!hard }); };
-  const reqDd = (key) => errs.push({ field: 'dd-' + key, kind: 'dd' });
+  const reqDd = (key, hard) => errs.push({ field: 'dd-' + key, kind: 'dd', hard: !!hard });
   if (STATE.step === 0) {
     if (!STATE.tipo) return [{ field: null, kind: 'grid' }];
     if (STATE.tipo === 'deportista' && !STATE.modo) errs.push({ field: 'dd-modo', kind: 'choice' });
@@ -509,12 +585,14 @@ function validate() {
       reqTf('f-correo', EMAIL_RE.test(d.correo), 'Ingresa un correo válido'); reqTf('f-telefono', d.telefono.trim());
     } else {
       if (!STATE.entTipo) errs.push({ field: 'dd-entTipo', kind: 'choice' });
+      if (STATE.entTipo === 'federacion') { if (!d.sector) reqDd('sector', true); reqTf('f-deporte', d.deporte.trim()); }
+      else if (STATE.entTipo) { if (!d.superiorId) reqDd('superiorId', true); }
       reqTf('f-nit', d.nit.trim());
       if (d.nit.trim() && nitRegistrado(d.nit)) reqTf('f-nit', false, 'Este NIT ya está registrado en el SUID.', true);
       reqTf('f-entNombre', d.entNombre.trim());
       reqTf('f-repNombre', d.repNombre.trim()); reqTf('f-repDoc', d.repDoc.trim());
       reqTf('f-repCorreo', EMAIL_RE.test(d.repCorreo), 'Ingresa un correo válido');
-      if (!d.depto) reqDd('depto'); reqTf('f-ciudad', d.ciudad.trim());
+      if (!d.depto) reqDd('depto'); if (!d.ciudad) reqDd('ciudad');
     }
     return errs;
   }
@@ -601,12 +679,18 @@ function persistPreinscrito() {
     });
   } else {
     const entLabel = (ENT_TIPOS.find((e) => e.v === STATE.entTipo) || {}).t || 'Entidad deportiva';
+    // orgTipo canónico + cadena jerárquica (para el enrutamiento descendente + ORG-06):
+    const orgTipo = STATE.entTipo === 'federacion' ? 'federacion' : STATE.entTipo === 'liga' ? 'liga' : 'club';
+    let parentId = '', deporte = d.deporte || '', sector = d.sector || '';
+    if (orgTipo === 'federacion') { const c = comitePorSector(sector); parentId = c ? c.id : 'COC'; }
+    else { const sup = allOrganismos().find((o) => o.id === d.superiorId); if (sup) { parentId = sup.id; deporte = sup.deporte || deporte; sector = sup.sector || sector; } }
     crearPreinscrito({
-      tipo: 'entidad', subtipo: entLabel, entTipo: STATE.entTipo,
+      tipo: 'entidad', subtipo: entLabel, entTipo: STATE.entTipo, orgTipo,
       nombre: d.entNombre || 'Entidad deportiva',
       nit: d.nit, correo: d.repCorreo,
-      depto: d.depto, ciudad: d.ciudad,
+      depto: d.depto, ciudad: d.ciudad, deporte, sector, parentId,
       repLegal: { nombre: d.repNombre, doc: d.repDoc, correo: d.repCorreo },
+      validacion: orgTipo === 'federacion' ? { mindeporte: 'pendiente', comite: 'pendiente' } : undefined,
       documentos: docs
     });
   }

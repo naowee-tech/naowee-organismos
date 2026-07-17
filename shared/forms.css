@@ -259,7 +259,7 @@
    error, y su menú (top:100%) queda pegado al trigger (no al fondo estirado). */
 .reg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; align-items: start; }
 .reg-grid-2--full { grid-column: 1 / -1; }
-.reg-section-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); margin: 6px 0 -4px; }
+.reg-section-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); margin: 6px 0 4px; }
 .reg-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--border); background: var(--bg-soft); }
 .reg-footer__spacer { flex: 1; }
 /* Aviso demo cuando se puede omitir la validación al 2º "Siguiente" (full-width, arriba de los botones). */
@@ -380,12 +380,15 @@
   .reg-kv { grid-template-columns: 1fr; gap: 0; }
   .reg-kv__k { padding-bottom: 0; }
   .reg-kv__v { padding-top: 1px; padding-bottom: 8px; }
-  /* Dropdown del menú como bottom-sheet en móvil */
-  .naowee-dropdown--open .naowee-dropdown__menu {
-    position: fixed; top: auto; left: 0; right: 0; bottom: 0; z-index: 1200;
-    max-height: 70vh; border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    box-shadow: var(--shadow-sheet); padding-bottom: env(safe-area-inset-bottom);
-  }
+}
+
+/* El menú del dropdown del wizard va en position:fixed anclado por JS al trigger
+   (mountDD): así ESCAPA el overflow:hidden del .reg-wizard (que redondea el card y
+   recortaba el menú en desktop) y queda por encima de todo. Solo aplica dentro del
+   wizard del registro público — los dropdowns de los modales de la bandeja usan su
+   propio posicionamiento. */
+.reg-wizard .naowee-dropdown--open .naowee-dropdown__menu {
+  position: fixed; z-index: 1200; margin: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

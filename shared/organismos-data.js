@@ -744,7 +744,23 @@ export function resolverPreinscrito(id, resultado, meta = {}) {
   const nuevo = MAP[resultado] || p.estado;
   const fecha = _todayISO();
   const hist = _preHist(fecha, ACC[resultado] || 'Actualización', p.estado, nuevo, meta.responsable || '', meta.rol || '', meta.motivo || '');
-  list[i] = { ...p, estado: nuevo, motivo: meta.motivo || '', responsable: meta.responsable || '', resueltaFecha: fecha, historial: [...(p.historial || []), hist] };
+  list[i] = { ...p, ...(meta.patch || {}), estado: nuevo, motivo: meta.motivo || '', responsable: meta.responsable || '', resueltaFecha: fecha, historial: [...(p.historial || []), hist] };
+  writeStore('preinscritos', list);
+  return { ...list[i] };
+}
+
+/* Actualiza campos de un preinscrito SIN cambiar el estado (p.ej. la mitad de la
+   doble validación de una federación pública) y, opcionalmente, agrega una entrada
+   al historial. Para transiciones de estado usar resolverPreinscrito. */
+export function updatePreinscrito(id, patch, hist) {
+  const list = readStore('preinscritos', []) || [];
+  const i = list.findIndex((p) => p.id === id);
+  if (i < 0) return null;
+  const p = list[i];
+  const historial = hist
+    ? [...(p.historial || []), _preHist(_todayISO(), hist.accion || 'Actualización', p.estado, p.estado, hist.responsable || '', hist.rol || '', hist.motivo || '')]
+    : (p.historial || []);
+  list[i] = { ...p, ...(patch || {}), historial };
   writeStore('preinscritos', list);
   return { ...list[i] };
 }
@@ -761,17 +777,21 @@ export function seedPreinscritosDemo(mode) {
     mk({ id: 'PRE-D1', tipo: 'personal', subtipo: 'Entrenador', rol: 'Entrenador', nombre: 'Carlos Palacio Mesa', tipoDoc: 'CC', numDoc: '79345612', correo: 'carlos.palacio@correo.demo.co', telefono: '+57 300 555 1010', profesion: 'Entrenador de patinaje', experiencia: '8', deporte: 'Patinaje', depto: 'Valle del Cauca', ciudad: 'Cali', estado: 'En revisión', fecha: '2026-07-13',
       documentos: { cert: { name: 'certificacion-entrenador-nivel-2.pdf' } },
       historial: [_preHist('2026-07-13', 'Registro público recibido', '', 'En revisión', 'Carlos Palacio Mesa', 'PÚBLICO', '')] }),
-    mk({ id: 'PRE-D2', tipo: 'entidad', subtipo: 'Club promotor', entTipo: 'club-promotor', nombre: 'Club Deportivo Ruedas de Occidente', nit: '901720045-3', correo: 'contacto@ruedasdeoccidente.demo.co', telefono: '+57 602 555 2020', deporte: 'Patinaje', depto: 'Valle del Cauca', ciudad: 'Palmira', estado: 'En revisión', fecha: '2026-07-14',
+    mk({ id: 'PRE-D2', tipo: 'entidad', subtipo: 'Club promotor', entTipo: 'club-promotor', orgTipo: 'club', parentId: 'LIG-001', nombre: 'Club Deportivo Ruedas de Occidente', nit: '901720045-3', correo: 'contacto@ruedasdeoccidente.demo.co', telefono: '+57 602 555 2020', deporte: 'Patinaje', sector: 'Olímpico', depto: 'Valle del Cauca', ciudad: 'Palmira', estado: 'En revisión', fecha: '2026-07-14',
       repLegal: { nombre: 'Ana María Torres', doc: '31567001', correo: 'ana.torres@correo.demo.co' },
-      documentos: { existencia: { name: 'certificado-existencia-representacion.pdf' } },
+      documentos: { existencia: { name: 'certificado-existencia-representacion.pdf' }, reconocimientoMunicipal: { name: 'reconocimiento-ente-municipal.pdf' } },
       historial: [_preHist('2026-07-14', 'Registro público recibido', '', 'En revisión', 'Ana María Torres', 'PÚBLICO', '')] }),
     mk({ id: 'PRE-D3', tipo: 'personal', subtipo: 'Juez / Árbitro', rol: 'Juez / Árbitro', nombre: 'Lucía Ramírez Peña', tipoDoc: 'CC', numDoc: '52889314', correo: 'lucia.ramirez@correo.demo.co', telefono: '+57 301 555 3030', profesion: 'Juez de natación', experiencia: '5', deporte: 'Natación', depto: 'Antioquia', ciudad: 'Medellín', estado: 'Activo', fecha: '2026-07-08', resueltaFecha: '2026-07-10', responsable: 'María F. Rojas',
       documentos: { cert: { name: 'licencia-juez-natacion.pdf' } },
       historial: [_preHist('2026-07-08', 'Registro público recibido', '', 'En revisión', 'Lucía Ramírez Peña', 'PÚBLICO', ''), _preHist('2026-07-10', 'Registro validado', 'En revisión', 'Activo', 'María F. Rojas', 'MINDEPORTE', '')] }),
-    mk({ id: 'PRE-D4', tipo: 'entidad', subtipo: 'Liga departamental', entTipo: 'liga', nombre: 'Liga de Triatlón de Bogotá', nit: '901720099-1', correo: 'contacto@ligatriatlonbogota.demo.co', telefono: '+57 601 555 4040', deporte: 'Triatlón', depto: 'Bogotá D.C.', ciudad: 'Bogotá', estado: 'En corrección', fecha: '2026-07-09', resueltaFecha: '2026-07-11', responsable: 'María F. Rojas', motivo: 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente',
+    mk({ id: 'PRE-D4', tipo: 'entidad', subtipo: 'Liga departamental', entTipo: 'liga', orgTipo: 'liga', parentId: 'FED-040', nombre: 'Liga de Patinaje de Cundinamarca', nit: '901720099-1', correo: 'contacto@ligapatinajecundinamarca.demo.co', telefono: '+57 601 555 4040', deporte: 'Patinaje', sector: 'Olímpico', depto: 'Cundinamarca', ciudad: 'Bogotá', estado: 'En corrección', fecha: '2026-07-09', resueltaFecha: '2026-07-11', responsable: 'Alberto Herrera', motivo: 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente',
       repLegal: { nombre: 'Jorge Beltrán', doc: '79990012', correo: 'jorge.beltran@correo.demo.co' },
-      documentos: { personeria: { name: 'personeria-juridica-liga.pdf' }, reconocimiento: { name: 'reconocimiento-deportivo-ivc.pdf' }, rut: { name: 'rut-liga-triatlon.pdf' } },
-      historial: [_preHist('2026-07-09', 'Registro público recibido', '', 'En revisión', 'Jorge Beltrán', 'PÚBLICO', ''), _preHist('2026-07-11', 'Corrección solicitada', 'En revisión', 'En corrección', 'María F. Rojas', 'MINDEPORTE', 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente')] })
+      documentos: { personeria: { name: 'personeria-juridica-liga.pdf' }, rut: { name: 'rut-liga-patinaje.pdf' } },
+      historial: [_preHist('2026-07-09', 'Registro público recibido', '', 'En revisión', 'Jorge Beltrán', 'PÚBLICO', ''), _preHist('2026-07-11', 'Corrección solicitada', 'En revisión', 'En corrección', 'Alberto Herrera', 'FEDERACION', 'Documento de la entidad incompleto — falta reconocimiento deportivo vigente')] }),
+    mk({ id: 'PRE-D5', tipo: 'entidad', subtipo: 'Federación', entTipo: 'federacion', orgTipo: 'federacion', parentId: 'COC', nombre: 'Federación Colombiana de Escalada', nit: '901720123-4', correo: 'contacto@fedescalada.demo.co', telefono: '+57 601 555 5050', deporte: 'Escalada', sector: 'Olímpico', depto: 'Bogotá D.C.', ciudad: 'Bogotá', estado: 'En revisión', fecha: '2026-07-15', validacion: { mindeporte: 'pendiente', comite: 'pendiente' },
+      repLegal: { nombre: 'Paula Nieto', doc: '52110033', correo: 'paula.nieto@correo.demo.co' },
+      documentos: { personeria: { name: 'personeria-juridica-fed.pdf' }, estatutos: { name: 'estatutos-fed-escalada.pdf' }, reconocimiento: { name: 'reconocimiento-deportivo-ivc.pdf' }, aval: { name: 'aval-comite-olimpico.pdf' }, rut: { name: 'rut-fed-escalada.pdf' } },
+      historial: [_preHist('2026-07-15', 'Registro público recibido', '', 'En revisión', 'Paula Nieto', 'PÚBLICO', '')] })
   ];
   seeds.forEach((s) => list.push(s));
   writeStore('preinscritos', list);

@@ -279,7 +279,32 @@ const MODULE_NAME = 'Organismos';
             (5) DEDUP por NIT (HURU-05): el registro público de entidad rechaza un NIT ya
                 registrado (en jerarquía o en la cola de preinscritos), como regla dura.
             Cache-busters ?v=1.2.4. */
-const MODULE_VERSION = 'v1.2.4';
+/* v1.2.5 — Enrutamiento DESCENDENTE de la validación del registro público (QA fase 2,
+            ORG-06/ORG-02): antes TODO preinscrito lo validaba Mindeporte; ahora cada uno
+            lo valida el rol del nivel superior, dentro de su jurisdicción.
+            · El FORM público de entidad captura el organismo SUPERIOR (dependiente del
+              tipo: federación→sector+deporte · liga→su federación Activa · club/escuela→
+              su liga Activa), del que se derivan deporte/sector/parentId. Re-render al
+              cambiar el tipo.
+            · La BANDEJA enruta: personal→Mindeporte (Registro Único) · club/escuela→su
+              Liga · liga→su Federación · federación→Ministerio+Comité (doble validación).
+              El switch «[nivel] | Registro público» aparece para Mindeporte/Comité/
+              Federación/Liga; cada rol ve solo lo de su scope. Aprobar aplica ORG-06
+              (superior Activo) y, para federación, la doble validación completa antes de
+              Activo. Nuevos helpers: registro-publico (superior + orgTipo/parentId),
+              organismos-data (updatePreinscrito + resolverPreinscrito con patch), seeds de
+              preinscritos con jerarquía + seed de federación pública.
+            · Al APROBAR una entidad pública se MATERIALIZA en la jerarquía (addOrganismo,
+              Activo) bajo su superior → queda seleccionable como superior del siguiente
+              nivel (cierra la cadena Comité→Federación→Liga→Club); Mindeporte (Registro
+              Único) es fallback para huérfanos sin validador de nivel; superior/sector
+              obligatorios (regla dura); el rechazo de federación marca su mitad.
+            · UX del form público: dropdowns con menú `position:fixed` anclado por JS
+              (escapan el overflow:hidden del card que los recortaba en desktop + z-index
+              correcto), «Ciudad/Municipio» dependiente del Departamento (carga por
+              selección), spacing de los section-labels corregido. El datepicker de fecha
+              de nacimiento sigue siendo el nativo (`type=date`). Cache-busters ?v=1.2.5. */
+const MODULE_VERSION = 'v1.2.5';
 
 (function () {
   function mount() {

@@ -11,7 +11,7 @@ import {
   allOrganismos, getOrganismo, subtreeOf, addOrganismo,
   updateOrganismo, setEstado, auditLog, allAudit,
   solicitudesDeClub, resolverAfiliacion, getDeportista, ancestorsOf, seedAfiliacionesDemo,
-  allPreinscritos, getPreinscrito, resolverPreinscrito, seedPreinscritosDemo
+  allPreinscritos, getPreinscrito, resolverPreinscrito, updatePreinscrito, seedPreinscritosDemo
 } from './organismos-data.js';
 import { can, scopeFor } from './permissions.js';
 import { estadoBadgeVariant, resolverFederacion, puedeTransicionar } from './estados.js';
@@ -69,8 +69,48 @@ const MOTIVOS_PRE = [
   'Registro duplicado',
   'Otro (ver comentario)'
 ];
-/* El validador del registro público es el Admin Mindeporte (Registro Único). */
-const puedePre = roleCode === 'MINDEPORTE';
+/* Enrutamiento DESCENDENTE del registro público (HURU-09 + ORG-06): cada preinscrito
+   lo valida el rol del nivel inmediatamente superior, dentro de su jurisdicción.
+   - personal → Admin Mindeporte (Registro Único central; no está en el árbol).
+   - entidad federación → Ministerio + Comité (doble validación).
+   - entidad liga → su Federación · entidad club/escuela → su Liga.
+   El rol ve un preinscrito si valida ese nivel Y el superior (parentId) está en su scope. */
+const tieneColaPublica = !!target;   // MINDEPORTE/COMITE/FEDERACION/LIGA tienen bandeja de organismos
+function orgTipoDe(p) {
+  if (!p || p.tipo === 'personal' || p.tipo === 'deportista') return 'personal';
+  return p.orgTipo || (p.entTipo === 'federacion' ? 'federacion' : p.entTipo === 'liga' ? 'liga' : 'club');
+}
+function enScope(parentId) {
+  if (scopeId === null) return true;            // Mindeporte: todo el SND
+  if (!parentId) return false;
+  return parentId === scopeId || subtreeOf(scopeId).some((o) => o.id === parentId);
+}
+function enScopeDe(anchorId, parentId) {
+  if (!anchorId || !parentId) return false;
+  return parentId === anchorId || subtreeOf(anchorId).some((o) => o.id === parentId);
+}
+/* ¿un rol ANCLADO del nivel (FEDERACION=FED-040, LIGA=LIG-001) alcanza este preinscrito? */
+function cubiertoPorRolAnclado(p) {
+  const ot = orgTipoDe(p);
+  if (ot === 'liga') return enScopeDe(scopeFor('FEDERACION'), p.parentId);
+  if (ot === 'club') return enScopeDe(scopeFor('LIGA'), p.parentId);
+  return true; // federación la cubren Ministerio+Comité; personal → Mindeporte
+}
+/* ¿este rol valida este preinscrito? */
+function validaPre(p) {
+  const ot = orgTipoDe(p);
+  if (ot === 'personal') return roleCode === 'MINDEPORTE';
+  // rol del nivel superior dentro de su jurisdicción
+  if (target && target.tipo === ot && enScope(p.parentId)) return true;
+  // Fallback: el Registro Único (Mindeporte, rectoría) valida lo que ningún rol
+  // anclado alcanza — sus federaciones + huérfanos sin validador de nivel (superior
+  // no anclado o parentId vacío) — para que nada quede sin poder aprobarse.
+  if (roleCode === 'MINDEPORTE') return ot === 'federacion' || !cubiertoPorRolAnclado(p);
+  return false;
+}
+/* Preinscritos que le corresponde ver/validar a este rol. */
+function preinscritosDeRol() { return allPreinscritos().filter(validaPre); }
+const capFirst = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 const root = document.getElementById('bandejaRoot');
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -133,7 +173,7 @@ const puedeAccionar = target && can(roleCode, 'A', target.recurso);
 /* ═══════════════ Render ═══════════════ */
 function render() {
   if (roleCode === 'CLUB') return renderAfiliaciones();
-  if (roleCode === 'MINDEPORTE' && vista === 'publico') return renderPreinscritos();
+  if (tieneColaPublica && vista === 'publico') return renderPreinscritos();
   if (!target) return renderNoBandeja();
   return renderOrgBandeja();
 }
@@ -141,10 +181,10 @@ function render() {
 /* Switch de sub-vista para el Admin Mindeporte: gestiona federaciones (doble
    validación) Y valida el registro público. Los demás roles no lo ven. */
 function vistaSwitch() {
-  if (roleCode !== 'MINDEPORTE') return '';
-  const pend = allPreinscritos().filter((p) => p.estado === 'En revisión').length;
+  if (!tieneColaPublica) return '';
+  const pend = preinscritosDeRol().filter((p) => p.estado === 'En revisión').length;
   return `<div class="naowee-tabs bj-tabs bj-vista" id="bjVista" style="margin-bottom:16px">
-    <button type="button" class="naowee-tab ${vista === 'federaciones' ? 'naowee-tab--selected' : ''}" data-vista="federaciones">Federaciones</button>
+    <button type="button" class="naowee-tab ${vista === 'federaciones' ? 'naowee-tab--selected' : ''}" data-vista="federaciones">${esc(capFirst(target.plural))}</button>
     <button type="button" class="naowee-tab ${vista === 'publico' ? 'naowee-tab--selected' : ''}" data-vista="publico">Registro público${pend ? ` · ${pend}` : ''}</button>
   </div>`;
 }
@@ -602,7 +642,7 @@ function doReject(id, tipoAccion, motivo) {
    Admin Mindeporte aprueba (→ Activo + notificación), rechaza o solicita
    corrección (motivo obligatorio). La traza vive en el propio registro. */
 function renderPreinscritos() {
-  const all = allPreinscritos();
+  const all = preinscritosDeRol();
   const pend = all.filter((p) => p.estado === 'En revisión').length;
   let view = all;
   if (preFiltro === 'Accionables') view = view.filter((p) => p.estado === 'En revisión');
@@ -612,7 +652,9 @@ function renderPreinscritos() {
 
   root.innerHTML = `
     ${vistaSwitch()}
-    ${msg('informative', I.info, `Validación del <strong>registro público</strong> del SUID: usuarios y entidades autoinscritos desde el formulario público. Aprueba, rechaza o solicita corrección (motivo obligatorio). Al aprobar quedan <strong>Activos</strong> en el Registro Único y se notifica por email/SMS.`)}
+    ${msg('informative', I.info, roleCode === 'MINDEPORTE'
+      ? `Validación del <strong>registro público</strong> del SUID: <strong>federaciones</strong> autoinscritas (doble validación Ministerio + Comité) y <strong>personal deportivo</strong> del Registro Único. Aprueba, rechaza o solicita corrección (motivo obligatorio); al aprobar quedan <strong>Activos</strong> y se notifica.`
+      : `Validación del <strong>registro público</strong> a tu cargo según la jerarquía del SND: <strong>${esc(target.plural)}</strong> autoinscritas dentro de tu jurisdicción. Aprueba, rechaza o solicita corrección (motivo obligatorio); requiere que su superior esté <strong>Activo</strong> (ORG-06).`)}
 
     <div class="naowee-card bj-panel">
       <div class="bj-panel__bar">
@@ -638,7 +680,7 @@ function renderPreinscritos() {
                   <td data-label="Tipo"><div class="bj-sol-cell"><span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">${esc(PRE_TIPO_SING[p.tipo] || 'Registro')}</span><span class="bj-org__sub">${esc(p.subtipo || '')}</span></div></td>
                   <td data-label="Estado">${badge(p.estado)}</td>
                   <td class="cg-table__nit" data-label="Fecha">${esc(p.fecha || '—')}</td>
-                  <td class="bj-row-action" data-label=""><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openpre="${esc(p.id)}">${puedePre && p.estado === 'En revisión' ? 'Revisar' : 'Ver'}</button></td>
+                  <td class="bj-row-action" data-label=""><button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" data-openpre="${esc(p.id)}">${p.estado === 'En revisión' ? 'Revisar' : 'Ver'}</button></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -661,7 +703,13 @@ function preDocsBlock(p) {
 function openPreDetail(id) {
   const p = getPreinscrito(id);
   if (!p) return;
-  const accionable = puedePre && p.estado === 'En revisión';
+  const esFed = orgTipoDe(p) === 'federacion';
+  const half = halfOf[roleCode];                                   // mindeporte|comite
+  const v = p.validacion || { mindeporte: 'pendiente', comite: 'pendiente' };
+  const yaVote = esFed && half && v[half] !== 'pendiente';
+  const superior = p.parentId ? getOrganismo(p.parentId) : null;
+  const supActivo = !superior || superior.estado === 'Activo';
+  const accionable = validaPre(p) && p.estado === 'En revisión' && supActivo && !(esFed && yaVote);
   const tipoBadge = `<span class="naowee-badge naowee-badge--informative naowee-badge--quiet naowee-badge--small">${esc(PRE_TIPO_SING[p.tipo] || 'Registro público')}</span>`;
   const hist = p.historial || [];
 
@@ -672,13 +720,15 @@ function openPreDetail(id) {
         <button type="button" class="reg-modal__close" id="prClose" aria-label="Cerrar">${I.x}</button>
       </div>
       <div class="reg-modal__body bj-detail">
-        <div class="bj-detail__badges">${badge(p.estado)}${tipoBadge}</div>
+        <div class="bj-detail__badges">${badge(p.estado)}${tipoBadge}${esFed ? valChips(p) : ''}</div>
         <dl class="bj-kv">
           ${kv('Tipo', PRE_TIPO_SING[p.tipo] || '—')}
           ${p.subtipo ? kv(p.tipo === 'entidad' ? 'Tipo de entidad' : 'Rol', p.subtipo) : ''}
           ${p.numDoc ? kv('Documento', `${p.tipoDoc || ''} ${p.numDoc}`) : ''}
           ${p.nit ? kv('NIT / RUT', p.nit) : ''}
           ${p.deporte ? kv('Deporte', p.deporte) : ''}
+          ${p.sector ? kv('Sector', p.sector) : ''}
+          ${superior ? kv('Superior', `${superior.nombre} · ${superior.estado}`) : ''}
           ${p.profesion ? kv('Profesión', p.profesion) : ''}
           ${p.experiencia ? kv('Experiencia', p.experiencia + ' años') : ''}
           ${p.repLegal && p.repLegal.nombre ? kv('Rep. legal', `${p.repLegal.nombre}${p.repLegal.doc ? ' · ' + p.repLegal.doc : ''}`) : ''}
@@ -690,6 +740,8 @@ function openPreDetail(id) {
         </dl>
         ${preDocsBlock(p)}
         ${msg('informative', I.info, `<strong>Integración externa (demo):</strong> el número de documento se validó contra la Registraduría / entidades externas vía API al procesar el registro.`)}
+        ${!supActivo ? msg('caution', I.info, `Su superior (<strong>${esc(superior.nombre)}</strong>) no está <strong>Activo</strong>: no puede validarse hasta que se habilite (ORG-06).`) : ''}
+        ${esFed && p.estado === 'En revisión' ? `<p class="bj-detail__note">Doble validación de federación: registras la mitad de <strong>${roleCode === 'MINDEPORTE' ? 'Ministerio' : 'Comité'}</strong>. Ambas aprobadas → Activo.</p>` : ''}
         ${p.estado === 'Rechazado' && p.motivo ? msg('negative', I.alert, `<strong>Motivo del rechazo:</strong> ${esc(p.motivo)}`) : ''}
         ${p.estado === 'En corrección' && p.motivo ? msg('caution', I.alert, `<strong>Corrección solicitada:</strong> ${esc(p.motivo)}`) : ''}
         ${p.estado === 'Activo' ? msg('positive', I.check, `Registro <strong>validado</strong>: quedó Activo en el Registro Único del SUID.`) : ''}
@@ -706,7 +758,7 @@ function openPreDetail(id) {
           <button type="button" class="naowee-btn naowee-btn--mute" id="prCorr">Solicitar corrección</button>
           <div class="bj-actions__main">
             <button type="button" class="naowee-btn bj-btn-danger" id="prRej">Rechazar</button>
-            <button type="button" class="naowee-btn bj-btn-success" id="prApr">Validar y activar</button>
+            <button type="button" class="naowee-btn bj-btn-success" id="prApr">${esFed ? 'Aprobar mi mitad' : 'Validar y activar'}</button>
           </div>`
           : `<button type="button" class="naowee-btn naowee-btn--mute" id="prCancel">Cerrar</button>`}
       </div>
@@ -726,10 +778,48 @@ function openPreDetail(id) {
   }
 }
 
+/* Al APROBAR una entidad del registro público se materializa como nodo REAL de la
+   jerarquía (addOrganismo, Activo), bajo su superior (parentId). Así queda operable y
+   seleccionable como superior del siguiente nivel — cierra la cadena descendente
+   (Comité→Federación→Liga→Club). El personal no es organismo (no se materializa). */
+function materializarEntidad(p) {
+  if (orgTipoDe(p) === 'personal') return;
+  addOrganismo({
+    tipo: orgTipoDe(p), nombre: p.nombre, nit: p.nit || '',
+    deporte: p.deporte || '—', sector: p.sector || '', parentId: p.parentId || null,
+    estado: 'Activo', origen: 'registro-publico',
+    repLegal: p.repLegal || {}, documentos: p.documentos || {},
+    contacto: { correo: p.correo || '', telefono: p.telefono || '' },
+    ubicacion: { depto: p.depto || '', ciudad: p.ciudad || '' }
+  });
+}
 function doApprovePre(id) {
   const p = getPreinscrito(id);
-  resolverPreinscrito(id, 'aprobado', { responsable: role.userName || roleCode, rol: roleCode });
-  toast(`Registro validado — ${p ? p.nombre + ' quedó Activo; se ' : 'se '}notificó por email y app`, 'success');
+  if (!p) return;
+  const resp = role.userName || roleCode;
+  // ORG-06: una entidad no se activa si su superior no está Activo.
+  if (orgTipoDe(p) !== 'personal' && p.parentId) {
+    const sup = getOrganismo(p.parentId);
+    if (sup && sup.estado !== 'Activo') { toast(`No se puede activar: su superior (${sup.nombre}) no está Activo`, 'error'); return; }
+  }
+  // Federación pública → doble validación Ministerio + Comité (ORG-02).
+  if (orgTipoDe(p) === 'federacion') {
+    const half = halfOf[roleCode];
+    const nv = { mindeporte: 'pendiente', comite: 'pendiente', ...(p.validacion || {}), [half]: 'aprobado' };
+    const lbl = roleCode === 'MINDEPORTE' ? 'Ministerio aprobó' : 'Comité aprobó';
+    if (nv.mindeporte === 'aprobado' && nv.comite === 'aprobado') {
+      resolverPreinscrito(id, 'aprobado', { responsable: resp, rol: roleCode, patch: { validacion: nv } });
+      materializarEntidad(p);
+      toast(`Doble validación completa — ${p.nombre} quedó Activa en la jerarquía; se notificó`, 'success');
+    } else {
+      updatePreinscrito(id, { validacion: nv }, { accion: lbl, responsable: resp, rol: roleCode });
+      toast(`${lbl} su mitad — falta la otra validación`, 'success');
+    }
+  } else {
+    resolverPreinscrito(id, 'aprobado', { responsable: resp, rol: roleCode });
+    materializarEntidad(p);
+    toast(`Registro validado — ${p.nombre} quedó Activo${orgTipoDe(p) !== 'personal' ? ' en la jerarquía' : ''}; se notificó por email y app`, 'success');
+  }
   render();
 }
 
@@ -766,7 +856,12 @@ function openPreMotivo(id, tipoAccion, detailOv) {
     const txt = ov.querySelector('#pmTxt').value.trim();
     const motivo = txt ? `${selMotivo} — ${txt}` : selMotivo;
     const resultado = tipoAccion === 'Corrección solicitada' ? 'correccion' : 'rechazado';
-    resolverPreinscrito(id, resultado, { motivo, responsable: role.userName || roleCode, rol: roleCode });
+    // Rechazar una federación registra su mitad como 'rechazado' (chips consistentes);
+    // la corrección NO (queda pendiente para reingreso), igual que la bandeja de orgs.
+    const pp = getPreinscrito(id);
+    const patch = (resultado === 'rechazado' && orgTipoDe(pp) === 'federacion' && halfOf[roleCode])
+      ? { validacion: { mindeporte: 'pendiente', comite: 'pendiente', ...(pp.validacion || {}), [halfOf[roleCode]]: 'rechazado' } } : {};
+    resolverPreinscrito(id, resultado, { motivo, responsable: role.userName || roleCode, rol: roleCode, patch });
     toast(`${tipoAccion} registrada${p ? ' — se notificó a ' + p.nombre + ' por email y app' : ''}`, 'success');
     closeModal(ov); render();
   });
