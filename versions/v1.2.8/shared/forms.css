@@ -1,0 +1,649 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAOWEE ORGANISMOS — Componentes de formulario / wizard (port local DS)
+   Registro de Organismos — Jerarquía SUID · v0.3.0 (T3)
+
+   Se carga DESPUÉS de components.css. Reutiliza de components.css:
+   .naowee-btn · .naowee-badge · .naowee-message · .naowee-card ·
+   .naowee-empty-state · .naowee-searchbox · el core de .naowee-dropdown
+   (trigger/menu/opt/--open). Aquí se AGREGA lo que el wizard necesita y el
+   DS trae pero el módulo aún no portaba: textfield, helper, checkbox, radio,
+   file-uploader, stepper + shake, y las extensiones de dropdown de formulario
+   (label + buscador en el menú + tamaño de campo). Más el layout del wizard,
+   el modal de dirección estructurada y la pantalla de éxito (scope .reg-*).
+   Port 1:1 de Eventos/demo/shared/forms.css + receta wizard-recipe v1.8.
+   Bordes de campo unificados con el dropdown del módulo (#d0d4e6 de tokens).
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --field-h: 48px;                 /* altura de input large (DS) */
+  --field-border-error: #ed314a;   /* feedback-border-negative-loud */
+}
+
+/* ───────────────────────── Textfield ─────────────────────────── */
+.naowee-textfield { display: flex; flex-direction: column; width: 100%; font-feature-settings: 'case' 1; }
+.naowee-textfield__label {
+  font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary);
+  padding-bottom: 7px; display: inline-flex; align-items: center; gap: 4px;
+}
+.naowee-textfield__label--required::after { content: '*'; color: var(--accent); font-weight: 700; }
+.naowee-textfield__input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  height: var(--field-h); padding: 0 12px;
+  background: var(--surface); border: 1px solid var(--field-border-idle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-normal) var(--easing-smoothout),
+              border-width var(--duration-fast) var(--easing-smoothout),
+              box-shadow var(--duration-normal) var(--easing-smoothout);
+}
+.naowee-textfield__input-wrap:hover { border-color: var(--field-border-hover); }
+.naowee-textfield__input-wrap:focus-within {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 64, 9, .15);
+}
+.naowee-textfield__input {
+  flex: 1; min-width: 0; height: 100%; border: none; background: transparent; outline: none;
+  font-family: inherit; font-size: 14px; font-weight: 400; color: var(--text-primary); padding: 0;
+}
+.naowee-textfield__input::placeholder { color: var(--text-muted); }
+.naowee-textfield__prefix { color: var(--text-muted); display: inline-flex; flex-shrink: 0; font-size: 14px; }
+.naowee-textfield__prefix svg { width: 18px; height: 18px; }
+
+/* Textarea */
+.naowee-textfield--textarea .naowee-textfield__input-wrap { align-items: flex-start; padding: 10px 12px; height: auto; }
+.naowee-textfield--textarea .naowee-textfield__input { height: auto; min-height: 84px; resize: vertical; line-height: 1.5; width: 100%; }
+
+/* Readonly (trigger de dirección estructurada) */
+.naowee-textfield--readonly .naowee-textfield__input-wrap { background: var(--bg-soft); cursor: pointer; }
+
+/* Error */
+.naowee-textfield--error .naowee-textfield__input-wrap { border-color: var(--field-border-error); }
+.naowee-textfield--error .naowee-textfield__input-wrap:focus-within {
+  border-color: var(--field-border-error); box-shadow: 0 0 0 3px rgba(237, 49, 74, .15);
+}
+
+/* ── Helper canónico (DS .naowee-helper) — error de campo (variante negative) ── */
+.naowee-helper { display: flex; align-items: flex-start; gap: 6px; width: 100%; padding-top: 5px; font-family: inherit; }
+.naowee-helper[hidden] { display: none; }
+.naowee-helper__text { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 5px; font-size: 12px; font-weight: 400; line-height: 16px; color: var(--text-secondary); }
+.naowee-helper__badge { width: 16px; height: 16px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: #ed314a; color: #fff; margin-top: 1px; }
+.naowee-helper__badge svg { width: 12px; height: 12px; }
+.naowee-helper--negative .naowee-helper__text { font-weight: 600; color: #c4031d; }
+.naowee-field-help { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.45; }
+
+/* ───────────── Dropdown de FORMULARIO (extiende components.css) ─────────────
+   El core (.naowee-dropdown / __trigger / __menu / __opt / --open) vive en
+   components.css. Aquí: label, altura de campo 48px en el wizard, buscador
+   sticky dentro del menú y estado de error. Toggle SIEMPRE --open en wrapper. */
+.naowee-dropdown__label {
+  font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary);
+  padding-bottom: 7px; display: inline-flex; align-items: center; gap: 4px;
+}
+.naowee-dropdown__label--required::after { content: '*'; color: var(--accent); font-weight: 700; }
+.reg-form .naowee-dropdown__trigger { min-height: var(--field-h); }
+.naowee-dropdown--error .naowee-dropdown__trigger { border-color: var(--field-border-error); }
+.naowee-dropdown--error.naowee-dropdown--open .naowee-dropdown__trigger { box-shadow: 0 0 0 3px rgba(237, 49, 74, .15); border-color: var(--field-border-error); }
+.naowee-dropdown__opt-emoji { font-size: 15px; flex-shrink: 0; }
+.naowee-dropdown__opt-sub { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-secondary); margin-top: 1px; }
+.naowee-dropdown__opt-main { min-width: 0; flex: 1; overflow: hidden; }
+.naowee-dropdown__opt-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Buscador sticky dentro del menú (acento-insensible; el filtro lo hace el JS) */
+.dd-search-wrap { padding: 8px 8px 6px; position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--border); z-index: 1; }
+.dd-search-input {
+  width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--field-border-idle);
+  border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--text-primary); outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+.dd-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 64, 9, .12); }
+.dd-empty { padding: 16px 12px; font-size: 12.5px; color: var(--text-muted); text-align: center; }
+
+/* ───────────────────── Checkbox (svg canónico) ───────────────── */
+.naowee-checkbox { display: inline-flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; }
+.naowee-checkbox input { position: absolute; opacity: 0; width: 0; height: 0; }
+.naowee-checkbox__box {
+  width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-dark); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+.naowee-checkbox__box svg { width: 13px; height: 13px; color: #fff; opacity: 0; transform: scale(.6);
+  transition: opacity var(--duration-fast), transform var(--duration-fast) var(--easing-bounce-soft); }
+.naowee-checkbox input:checked + .naowee-checkbox__box { background: var(--accent); border-color: var(--accent); }
+.naowee-checkbox input:checked + .naowee-checkbox__box svg { opacity: 1; transform: scale(1); }
+.naowee-checkbox input:focus-visible + .naowee-checkbox__box { box-shadow: 0 0 0 3px rgba(215, 64, 9, .2); }
+.naowee-checkbox__label { font-size: 13.5px; color: var(--text-primary); line-height: 1.4; }
+.naowee-checkbox--error .naowee-checkbox__box { border-color: var(--field-border-error); }
+
+/* ───────────────────── Radio choice (tipo de club / ámbito) ─────────────────
+   Tarjetas de selección única (DS §Tag choice / radio). Grid responsive. */
+.reg-choice-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.reg-choice {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: pointer;
+  border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface);
+  transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast);
+}
+.reg-choice:hover { border-color: var(--field-border-hover); }
+.reg-choice input { position: absolute; opacity: 0; width: 0; height: 0; }
+.reg-choice__dot { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; border-radius: 50%; border: 1.5px solid var(--border-dark); display: inline-flex; align-items: center; justify-content: center; transition: border-color var(--duration-fast); }
+.reg-choice__dot::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform var(--duration-fast) var(--easing-bounce-soft); }
+.reg-choice__body { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.reg-choice__title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.reg-choice__desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+.reg-choice.is-selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent); }
+.reg-choice.is-selected .reg-choice__dot { border-color: var(--accent); }
+.reg-choice.is-selected .reg-choice__dot::after { transform: scale(1); }
+.reg-choice-group.is-error .reg-choice { border-color: var(--field-border-error); }
+
+/* ───────────────── File uploader (mock, sin backend) ────────────── */
+.naowee-file-uploader { display: flex; flex-direction: column; width: 100%; font-feature-settings: 'case' 1; }
+.naowee-file-uploader__label { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary); padding-bottom: 7px; display: inline-flex; align-items: center; gap: 4px; }
+.naowee-file-uploader__label--required::after { content: '*'; color: var(--accent); font-weight: 700; }
+.naowee-file-uploader__drop-zone {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 22px 20px; border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--border-dark); background: var(--bg-soft);
+  text-align: center; cursor: pointer; min-height: 104px;
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+.naowee-file-uploader__drop-zone:hover,
+.naowee-file-uploader__drop-zone.is-drag-over { border-color: var(--accent); background: var(--accent-bg); }
+.naowee-file-uploader__drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.naowee-file-uploader__drop-icon { color: var(--text-secondary); transition: color var(--duration-fast); }
+.naowee-file-uploader__drop-zone:hover .naowee-file-uploader__drop-icon,
+.naowee-file-uploader__drop-zone.is-drag-over .naowee-file-uploader__drop-icon { color: var(--accent); }
+.naowee-file-uploader__drop-icon svg { width: 26px; height: 26px; }
+.naowee-file-uploader__drop-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.naowee-file-uploader__drop-hint { font-size: 11.5px; color: var(--text-secondary); line-height: 1.4; }
+/* Estado lleno: file tag verde */
+.naowee-file-uploader.has-file .naowee-file-uploader__drop-zone { border-style: solid; border-color: var(--green); background: var(--green-bg); cursor: default; }
+.naowee-file-uploader.has-file .naowee-file-uploader__drop-icon { color: var(--green); }
+.naowee-file-uploader__file-tag {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+  padding: 8px 8px 8px 12px; background: var(--surface);
+  border: 1.5px solid var(--green); border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px var(--green-bg); font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+}
+.naowee-file-uploader__file-tag svg.file-ico { width: 18px; height: 18px; flex-shrink: 0; color: var(--green); }
+.naowee-file-uploader__file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.naowee-file-uploader__file-size { font-size: 11.5px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.naowee-file-uploader__file-dismiss { width: 22px; height: 22px; flex-shrink: 0; border: none; background: transparent; cursor: pointer; color: var(--accent); display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: background var(--duration-fast); }
+.naowee-file-uploader__file-dismiss:hover { background: var(--accent-bg); }
+.naowee-file-uploader__file-dismiss svg { width: 15px; height: 15px; }
+.naowee-file-uploader--error .naowee-file-uploader__drop-zone { border-color: var(--field-border-error); }
+
+/* ── File-uploader · variante BOTÓN (input-wrap + placeholder + action) ──
+   Port del DS canónico §file-uploader (el que tiene botón "Subir", NO el
+   drop-zone punteado). Sub-clases nuevas → no chocan con el drop-zone de arriba. */
+.naowee-file-uploader__input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 46px; padding: 6px 8px 6px 14px;
+  border: 1px solid var(--border-dark); border-radius: var(--radius-md);
+  background: var(--surface); transition: border-color var(--duration-fast);
+}
+.naowee-file-uploader__input-wrap:hover { border-color: var(--field-border-hover, var(--accent)); }
+.naowee-file-uploader__placeholder {
+  flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.naowee-file-uploader__placeholder--filled { color: var(--text-primary); font-weight: 500; }
+.naowee-file-uploader__placeholder--filled svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--green); }
+.naowee-file-uploader__action {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+  padding: 7px 12px; border-radius: var(--radius-sm);
+  transition: background var(--duration-fast);
+}
+.naowee-file-uploader__action:hover { background: var(--accent-bg); }
+.naowee-file-uploader__action svg { width: 15px; height: 15px; }
+.naowee-file-uploader__action input[type="file"] { display: none; }
+.naowee-file-uploader--error .naowee-file-uploader__input-wrap { border-color: var(--field-border-error); }
+
+/* ── Shake / wiggle canónico (DS §Utility SHAKE). remove→reflow→add. ── */
+.naowee-shake { animation: naoweeShake .45s cubic-bezier(.36, .07, .19, .97); }
+@keyframes naoweeShake {
+  0%, 100% { transform: translateX(0); } 15% { transform: translateX(-6px); }
+  30% { transform: translateX(5px); }    45% { transform: translateX(-4px); }
+  60% { transform: translateX(3px); }    75% { transform: translateX(-2px); }
+  90% { transform: translateX(1px); }
+}
+
+/* ═══════════════════ Stepper (wizard-recipe v1.8) ═══════════════════
+   Port del DS §Stepper: base + --distributed + --pulse + skeleton dots. */
+.naowee-stepper { display: flex; align-items: flex-start; gap: 4px; }
+.naowee-stepper--distributed { width: 100%; }
+.naowee-stepper--distributed .naowee-stepper__step { flex: 0 0 auto; }
+.naowee-stepper--distributed .naowee-stepper__connector { flex: 1 1 auto; }
+.naowee-stepper__step { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.naowee-stepper__number {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text-secondary);
+  background: var(--surface); border: 1.5px solid var(--border-dark);
+  transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
+}
+.naowee-stepper__number svg { width: 15px; height: 15px; }
+.naowee-stepper__label { font-size: 11.5px; font-weight: 500; color: var(--text-secondary); max-width: 84px; line-height: 1.25; }
+.naowee-stepper__step--active .naowee-stepper__number { background: var(--accent); border-color: var(--accent); color: #fff; }
+.naowee-stepper__step--active .naowee-stepper__label { color: var(--text-primary); font-weight: 700; }
+.naowee-stepper__step--done .naowee-stepper__number { background: var(--green); border-color: var(--green); color: #fff; }
+.naowee-stepper__step--done { cursor: pointer; }
+.naowee-stepper__step--done:hover .naowee-stepper__label { color: var(--accent); }
+.naowee-stepper__connector { height: 2px; min-width: 16px; margin-top: 15px; background: var(--border-dark); border-radius: 2px; }
+.naowee-stepper__connector--done { background: var(--green); }
+/* --pulse: ring naranja pulsante en el paso activo */
+.naowee-stepper--pulse .naowee-stepper__step--active .naowee-stepper__number { animation: naoweeStepPulse 2s infinite; }
+@keyframes naoweeStepPulse {
+  0% { box-shadow: 0 0 0 0 rgba(215, 64, 9, .38); }
+  70% { box-shadow: 0 0 0 8px rgba(215, 64, 9, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(215, 64, 9, 0); }
+}
+/* Skeleton dots (antes de elegir tipo): "vienen más pasos" sin comprometer conteo */
+.naowee-stepper__step--skeleton .naowee-stepper__number { width: 11px; height: 11px; min-width: 11px; margin-top: 9px; background: var(--border); border: none; box-shadow: none; animation: none; }
+.naowee-stepper__connector--skeleton { background: var(--border); opacity: .65; }
+
+/* ═══════════════════ Layout del wizard (scope .reg-*) ═══════════════════ */
+.reg-wizard { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; }
+.reg-stepper-wrap { padding: 24px 28px 22px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.reg-stepper-mobile { display: none; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.reg-stepper-mobile strong { color: var(--accent); }
+.reg-pane { padding: 28px; animation: regPaneIn .35s var(--easing-smoothout) both; }
+/* opacity-only a propósito: un transform (aunque sea translateY(0)) con fill-mode:both deja
+   al pane como bloque contenedor del position:fixed → atrapaba el bottom-sheet de los dropdowns
+   en móvil (≤760px). NO reintroducir transform aquí. */
+@keyframes regPaneIn { from { opacity: 0; } to { opacity: 1; } }
+.reg-pane__title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -.2px; }
+.reg-pane__sub { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 22px; line-height: 1.5; max-width: 620px; }
+.reg-form { display: flex; flex-direction: column; gap: 18px; max-width: 560px; }
+/* align-items:start → las celdas NO se estiran a la altura de la fila; así el
+   .naowee-dropdown de una celda no crece cuando su vecina muestra un helper de
+   error, y su menú (top:100%) queda pegado al trigger (no al fondo estirado). */
+.reg-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; align-items: start; }
+.reg-grid-2--full { grid-column: 1 / -1; }
+.reg-section-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-secondary); margin: 6px 0 4px; }
+.reg-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; border-top: 1px solid var(--border); background: var(--bg-soft); }
+.reg-footer__spacer { flex: 1; }
+/* Aviso demo cuando se puede omitir la validación al 2º "Siguiente" (full-width, arriba de los botones). */
+.reg-footer__hint { order: -1; flex-basis: 100%; display: flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; font-weight: 500; color: var(--accent); }
+.reg-footer__hint svg { width: 14px; height: 14px; flex-shrink: 0; }
+.reg-footer__hint--hard { color: var(--field-border-error); }
+
+/* ── Selector de tipo (paso 0) — tarjetas con ícono en chip ── */
+.reg-tipo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.reg-tipo-card {
+  position: relative; display: flex; flex-direction: column; gap: 3px; padding: 18px 18px 16px; cursor: pointer;
+  max-width: 360px; /* con un solo tipo (Comité), la card no se estira a todo el ancho */
+  border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface); text-align: left;
+  transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-fast);
+}
+.reg-tipo-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+/* Ícono contenido en un chip tintado (los SVG no traen width/height → se acotan aquí). */
+.reg-tipo-card__emoji {
+  width: 44px; height: 44px; margin-bottom: 10px; border-radius: var(--radius-md);
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: var(--accent-bg); color: var(--accent);
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+.reg-tipo-card__emoji svg { width: 24px; height: 24px; }
+.reg-tipo-card__title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+.reg-tipo-card__desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
+.reg-tipo-card__check { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: none; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(215, 64, 9, .3); }
+.reg-tipo-card__check svg { width: 13px; height: 13px; }
+.reg-tipo-card.is-selected { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 1px var(--accent); }
+.reg-tipo-card.is-selected .reg-tipo-card__emoji { background: var(--accent); color: #fff; }
+.reg-tipo-card.is-selected .reg-tipo-card__check { display: inline-flex; }
+
+/* ── Resumen de confirmación ── */
+.reg-review { display: flex; flex-direction: column; gap: 18px; max-width: 620px; }
+.reg-review__group { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.reg-review__group-head { display: flex; align-items: center; justify-content: space-between; padding: 11px 16px; background: var(--bg-soft); border-bottom: 1px solid var(--border); }
+.reg-review__group-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.reg-review__edit { border: none; background: transparent; color: var(--accent); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+.reg-review__edit:hover { background: var(--accent-bg); }
+.reg-kv { display: grid; grid-template-columns: 180px 1fr; gap: 2px 14px; padding: 12px 16px; }
+.reg-kv__k { font-size: 12.5px; color: var(--text-secondary); padding: 4px 0; }
+.reg-kv__v { font-size: 13px; color: var(--text-primary); font-weight: 500; padding: 4px 0; word-break: break-word; }
+
+/* ═══════════════════ Modal de dirección estructurada ═══════════════════
+   REGLA DURA: una sola capa de backdrop. Sin botón "Cancelar" (X + click overlay). */
+.reg-modal-overlay {
+  position: fixed; inset: 0; z-index: 1100; display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(40, 40, 52, .5); opacity: 0; pointer-events: none;
+  transition: opacity var(--duration-normal) ease;
+}
+.reg-modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+.reg-modal {
+  background: var(--surface); border-radius: var(--radius-xl); width: 95vw; max-width: 560px; max-height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, .22);
+  transform: translateY(18px) scale(.98); opacity: 0;
+  transition: transform var(--duration-slow) var(--easing-bounce-soft), opacity var(--duration-normal) ease;
+}
+.reg-modal-overlay.is-open .reg-modal { transform: none; opacity: 1; }
+.reg-modal__head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.reg-modal__title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.reg-modal__close { width: 32px; height: 32px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; transition: background var(--duration-fast); }
+.reg-modal__close:hover { background: var(--bg-soft); }
+.reg-modal__close svg { width: 20px; height: 20px; }
+.reg-modal__body { padding: 22px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.reg-modal__foot { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+.reg-inline-check { display: flex; align-items: flex-end; padding-bottom: 12px; }
+
+/* ═══════════════════ Pantalla de éxito ═══════════════════ */
+.reg-success { position: relative; text-align: center; padding: 44px 24px 40px; overflow: hidden; }
+.reg-success__hero { position: relative; z-index: 1; }
+.reg-success__check {
+  width: 88px; height: 88px; margin: 0 auto 20px; border-radius: 50%;
+  background: linear-gradient(140deg, #25a12a, #1f8923); color: #fff;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(31, 137, 35, .34);
+  animation: regSuccessPop .5s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.reg-success__check svg { width: 44px; height: 44px; }
+@keyframes regSuccessPop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.reg-success__title { font-size: 22px; font-weight: 800; color: var(--azul); margin: 0 0 8px; letter-spacing: -.4px; }
+.reg-success__lead { font-size: 14px; color: var(--text-secondary); margin: 0 auto 20px; max-width: 480px; line-height: 1.55; }
+.reg-receipt { max-width: 460px; margin: 22px auto 0; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: left; overflow: hidden; }
+.reg-receipt__head { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-soft); border-bottom: 1px solid var(--border); }
+.reg-receipt__ava { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); background: var(--bg-soft); }
+.reg-receipt__ava svg { width: 22px; height: 22px; }
+.reg-receipt__name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.reg-receipt__meta { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.reg-receipt__rows { padding: 4px 16px 10px; }
+/* Fila del recibo: ícono acotado (los SVG no traen tamaño) + clave + valor a la derecha. */
+.reg-receipt__row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.reg-receipt__row:first-child { border-top: none; }
+.reg-receipt__ico { width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+.reg-receipt__ico svg { width: 16px; height: 16px; }
+.reg-receipt__k { font-size: 12.5px; color: var(--text-secondary); flex-shrink: 0; }
+.reg-receipt__v { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-left: auto; text-align: right; }
+.reg-kv-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.reg-kv-row:last-child { border-bottom: none; }
+.reg-kv-row__ico { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); }
+.reg-kv-row__ico svg { width: 18px; height: 18px; }
+.reg-kv-row__lbl { font-size: 12.5px; color: var(--text-secondary); flex: 1; }
+.reg-kv-row__val { font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: right; }
+.reg-success__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
+.reg-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.reg-confetti span { position: absolute; top: 0; width: 8px; height: 12px; opacity: 0; animation: regConfettiFall 2.4s linear forwards; }
+@keyframes regConfettiFall {
+  0% { transform: translateY(-30px) rotate(0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(340px) rotate(720deg); opacity: 0; }
+}
+
+/* ═══════════════════ Responsive ═══════════════════ */
+@media (max-width: 760px) {
+  .reg-stepper-wrap .naowee-stepper { display: none; }
+  .reg-stepper-mobile { display: block; }
+  .reg-pane { padding: 20px 16px; }
+  .reg-stepper-wrap { padding: 16px 18px; }
+  .reg-footer { padding: 14px 16px; }
+  .reg-grid-2 { grid-template-columns: 1fr; }
+  .reg-kv { grid-template-columns: 1fr; gap: 0; }
+  .reg-kv__k { padding-bottom: 0; }
+  .reg-kv__v { padding-top: 1px; padding-bottom: 8px; }
+}
+
+/* El menú del dropdown del wizard va en position:fixed anclado por JS al trigger
+   (mountDD): así ESCAPA el overflow:hidden del .reg-wizard (que redondea el card y
+   recortaba el menú en desktop) y queda por encima de todo. Solo aplica dentro del
+   wizard del registro público — los dropdowns de los modales de la bandeja usan su
+   propio posicionamiento. */
+.reg-wizard .naowee-dropdown--open .naowee-dropdown__menu {
+  position: fixed; z-index: 1200; margin: 0;
+}
+
+/* ───────────────── Datepicker canónico (port del DS · tokens locales) ─────────────
+   Reemplaza el <input type=date> nativo por el componente del DS: campo con ícono +
+   popover fijo (anclado por JS al campo) con navegación día/mes/año. */
+.naowee-datepicker-field { display: flex; flex-direction: column; width: 100%; }
+.naowee-datepicker-field__label { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary); padding-bottom: 7px; }
+.naowee-datepicker-field__label--required::after { content: '*'; color: var(--accent); font-weight: 700; margin-left: 3px; }
+.naowee-datepicker-field__input {
+  display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--field-border-idle); border-radius: var(--radius-md);
+  transition: border-color var(--duration-normal) var(--easing-smoothout), box-shadow var(--duration-normal);
+}
+.naowee-datepicker-field__input:hover { border-color: var(--field-border-hover); }
+.naowee-datepicker-field--active .naowee-datepicker-field__input { border-color: var(--accent); border-width: 2px; padding: 0 13px; box-shadow: 0 0 0 3px rgba(215, 64, 9, .12); }
+.naowee-datepicker-field.naowee-textfield--error .naowee-datepicker-field__input { border-color: var(--field-border-error); }
+.naowee-datepicker-field__icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); display: flex; }
+.naowee-datepicker-field__icon svg { width: 18px; height: 18px; }
+.naowee-datepicker-field__value { flex: 1; min-width: 0; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.naowee-datepicker-field__value.is-placeholder { color: var(--text-secondary); }
+.naowee-datepicker-field__chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); display: flex; transition: transform var(--duration-normal), color var(--duration-fast); }
+.naowee-datepicker-field--active .naowee-datepicker-field__chevron { transform: rotate(180deg); color: var(--accent); }
+
+.naowee-datepicker { display: flex; flex-direction: column; gap: 8px; padding: 14px; width: 290px; font-family: var(--font-family); }
+.naowee-datepicker--popover { position: fixed; z-index: 1300; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 12px 32px rgba(40, 40, 52, .16); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .16s, transform .16s; }
+.naowee-datepicker--popover.naowee-datepicker--open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.naowee-datepicker__calendar { display: flex; flex-direction: column; gap: 6px; }
+.naowee-datepicker__header { display: flex; align-items: center; justify-content: space-between; }
+.naowee-datepicker__month-selector { display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 10px; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-sm); font-family: var(--font-family); }
+.naowee-datepicker__month-selector:hover { background: var(--bg-soft); }
+.naowee-datepicker__month { font-size: 14px; font-weight: 700; color: var(--text-primary); white-space: nowrap; text-transform: capitalize; }
+.naowee-datepicker__month-chevron { width: 15px; height: 15px; color: var(--accent); display: flex; }
+.naowee-datepicker__month-chevron svg { width: 15px; height: 15px; }
+.naowee-datepicker__controls { display: flex; gap: 4px; }
+.naowee-datepicker__nav { width: 30px; height: 30px; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--accent); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.naowee-datepicker__nav:hover { background: var(--bg-soft); }
+.naowee-datepicker__nav svg { width: 17px; height: 17px; }
+.naowee-datepicker__grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.naowee-datepicker__weekday { height: 26px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: var(--text-secondary); }
+.naowee-datepicker__day { height: 34px; border: none; background: transparent; font-family: var(--font-family); font-size: 13px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: background var(--duration-fast); padding: 0; }
+.naowee-datepicker__day:hover { background: var(--bg-soft); }
+.naowee-datepicker__day--today { font-weight: 700; color: var(--accent); }
+.naowee-datepicker__day--selected, .naowee-datepicker__day--selected:hover { background: var(--accent); color: #fff; font-weight: 600; }
+.naowee-datepicker__day--other-month, .naowee-datepicker__day--disabled { color: var(--text-muted); pointer-events: none; }
+.naowee-datepicker__month-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 4px 0; }
+.naowee-datepicker__month-item { height: 40px; border: none; background: transparent; font-family: var(--font-family); font-size: 13px; color: var(--text-primary); cursor: pointer; border-radius: var(--radius-sm); text-transform: capitalize; transition: background var(--duration-fast); }
+.naowee-datepicker__month-item:hover { background: var(--bg-soft); }
+.naowee-datepicker__month-item--selected { border: 1.5px solid var(--accent); box-shadow: 0 0 0 1px var(--accent); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .naowee-shake, .reg-pane, .reg-success__check, .reg-confetti span,
+  .naowee-stepper--pulse .naowee-stepper__step--active .naowee-stepper__number { animation: none !important; }
+  .naowee-textfield__input-wrap, .naowee-dropdown__trigger, .reg-tipo-card, .reg-choice { transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Cargue masivo (T4) — layout local .cg-* (NO son componentes del DS;
+   usan tokens del DS y componen .naowee-* internamente).
+   ═══════════════════════════════════════════════════════════════ */
+.cg-template { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.cg-template__body { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.cg-template__ico { width: 36px; height: 36px; flex-shrink: 0; border-radius: var(--radius-md); background: var(--bg-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.cg-template__ico svg { width: 20px; height: 20px; }
+.cg-template__title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 2px; }
+.cg-template__sub { font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.45; max-width: 520px; }
+
+.cg-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 40px 24px; margin-bottom: 16px; cursor: pointer; }
+.cg-drop.is-over { border-color: var(--accent); background: var(--accent-bg); }
+.cg-drop.is-disabled { opacity: .55; pointer-events: none; }
+.cg-drop__ico { width: 40px; height: 40px; color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.cg-drop__ico svg { width: 26px; height: 26px; }
+.cg-drop__title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.cg-drop__sub { font-size: 12.5px; color: var(--text-secondary); }
+
+.cg-preview { padding: 0; margin-bottom: 16px; overflow: hidden; }
+.cg-preview__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.cg-preview__file { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.cg-preview__file svg { width: 18px; height: 18px; color: var(--text-secondary); flex-shrink: 0; }
+.cg-preview__size { font-weight: 400; color: var(--text-secondary); font-size: 12px; }
+.cg-preview__counts { display: flex; gap: 6px; }
+.cg-preview__foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); }
+
+.cg-table-wrap { overflow-x: auto; }
+/* header redondeado (gray bar) SIN divisor pegado; filas separadas por border-bottom.
+   border-collapse: separate para que el border-radius del thead th sea válido. */
+.cg-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.cg-table thead th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); padding: 9px 16px; background: var(--th-bg); white-space: nowrap; border: none; }
+.cg-table thead th:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+.cg-table thead th:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.cg-table tbody td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text-primary); vertical-align: top; }
+.cg-table tbody tr:last-child td { border-bottom: none; }
+.cg-table tbody tr.is-error { background: var(--red-bg); }
+.cg-table__row { font-variant-numeric: tabular-nums; color: var(--text-secondary); font-weight: 600; }
+.cg-table__nit { font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
+.cg-errs { display: block; font-size: 11.5px; color: var(--naowee-color-feedback-text-negative-quiet-on-fill); margin-top: 3px; }
+
+/* ── Visor de documentos (bandeja, HURU-09) — previsualización mock sin descarga ── */
+.bj-docview { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: #f6f7fb; }
+.bj-docview__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.bj-docview__file { font-weight: 700; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bj-docview__ro { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+.bj-docview__page { position: relative; margin: 18px; padding: 26px 24px; min-height: 210px; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(40, 40, 52, .12); overflow: hidden; }
+.bj-docview__wm { position: absolute; top: 14px; right: 16px; color: var(--border-dark); opacity: .5; }
+.bj-docview__wm svg { width: 42px; height: 42px; }
+.bj-docview__title { font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0 0 16px; max-width: 78%; }
+.bj-docview__line { display: block; height: 9px; border-radius: 4px; background: var(--border); margin-bottom: 10px; }
+.bj-docview__gap { display: block; height: 12px; }
+.bj-docview__note { margin: 18px 0 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5; font-style: italic; }
+
+/* ── Tabla → cards apiladas en móvil (patrón Naowee tabla→card) ── */
+@media (max-width: 760px) {
+  .cg-table-wrap { overflow-x: visible; }
+  .cg-table, .cg-table tbody, .cg-table tr, .cg-table td { display: block; }
+  .cg-table thead { display: none; }
+  .cg-table tbody tr { background: var(--surface); border: 1px solid var(--border-dark); border-radius: 14px; padding: 10px 14px 12px; margin-bottom: 10px; }
+  .cg-table tbody tr.is-error { background: var(--red-bg); }
+  .cg-table tbody td { border-bottom: 1px solid var(--border); padding: 8px 0; display: grid; grid-template-columns: minmax(88px, 40%) 1fr; gap: 10px; white-space: normal; vertical-align: initial; }
+  .cg-table tbody td::before { content: attr(data-label); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-secondary); align-self: center; }
+  .cg-table tbody td:last-child { border-bottom: none; padding-top: 12px; }
+  .cg-table tbody td[data-label=""] { grid-template-columns: 1fr; }
+  .cg-table tbody td[data-label=""]::before { display: none; }
+}
+
+.cg-success { text-align: center; padding: 36px 24px; margin-bottom: 16px; }
+.cg-success__check { width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 50%; background: var(--naowee-color-feedback-fill-positive-loud); color: #fff; display: flex; align-items: center; justify-content: center; }
+.cg-success__check svg { width: 30px; height: 30px; }
+.cg-success__title { font-size: 20px; font-weight: 800; color: var(--azul); margin: 0 0 6px; }
+.cg-success__lead { font-size: 14px; color: var(--text-secondary); margin: 0 auto 20px; max-width: 480px; line-height: 1.55; }
+.cg-success__actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.cg-hist__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.cg-hist__title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.cg-hist__empty { font-size: 13px; color: var(--text-secondary); margin: 0; }
+.cg-hist__rol { color: var(--text-secondary); font-weight: 500; }
+.oversight-badge { font-size: 11px; font-weight: 700; color: var(--text-secondary); background: var(--bg-soft); border: 1px solid var(--border); padding: 3px 10px; border-radius: var(--radius-full); }
+
+@media (max-width: 760px) {
+  .cg-template { align-items: flex-start; }
+  .cg-template__sub { font-size: 12px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Bandeja de aprobaciones (T5) — layout local .bj-* (tokens del DS;
+   reusa .cg-table, .reg-modal, .naowee-badge/-searchbox/-btn/-empty-state).
+   ═══════════════════════════════════════════════════════════════ */
+/* Tabs canónicos (.naowee-tabs / .naowee-tab / .naowee-tab--selected) — PORT FIEL del DS §Tabs.
+   Base transparente, hover fill orange-100 (caution-quiet), pipe full-width 3px accent, selected = texto accent. */
+.naowee-tabs { display: flex; width: 100%; border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.naowee-tabs::-webkit-scrollbar { display: none; }
+.naowee-tab {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  height: 48px; padding: 0 16px; flex-shrink: 0; white-space: nowrap; cursor: pointer;
+  background: transparent; border: none; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  position: relative; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 18px;
+  color: var(--text-primary); text-align: center; font-feature-settings: 'case' 1;
+  transition: background var(--duration-normal), color var(--duration-normal);
+}
+.naowee-tab:hover { background: var(--naowee-color-feedback-fill-caution-quiet); }
+.naowee-tab:not(.naowee-tab--selected):hover { color: var(--text-secondary); }
+.naowee-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: transparent;
+  transition: background var(--duration-normal);
+}
+.naowee-tab--selected { color: var(--accent); }
+.naowee-tab--selected::after { background: var(--accent); }
+
+/* Panel unificado: searchbox + count + tabs + tabla en una sola card. */
+.bj-panel { padding: 0; overflow: hidden; }
+.bj-panel__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px 12px; }
+.bj-search { flex: 1 1 240px; min-width: 200px; max-width: 420px; }
+.bj-count { font-size: 12.5px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; }
+.bj-tabs { padding: 0 8px; }
+/* La tabla dentro de un panel sin padding necesita aire: el header gris redondeado
+   debe respirar respecto al divisor de los tabs (patrón table-card establecido). */
+.bj-panel .cg-table-wrap, .cg-preview .cg-table-wrap { padding: 14px 12px 8px; }
+.bj-panel .naowee-empty-state { padding: 48px 24px; }
+
+.bj-org { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bj-org__emoji { font-size: 18px; flex-shrink: 0; }
+.bj-org__name { font-weight: 600; color: var(--text-primary); }
+.bj-org__sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
+.bj-vals { display: flex; gap: 4px; flex-wrap: wrap; }
+.bj-val { text-transform: none; letter-spacing: 0; }
+.bj-row-action { text-align: right; white-space: nowrap; }
+
+/* Botón destructivo local (loud pattern: hover = glow, no oscurece) */
+.bj-btn-danger { background: var(--naowee-color-feedback-fill-negative-loud); color: #fff; box-shadow: 0 2px 6px rgba(218, 22, 48, .16); }
+.bj-btn-danger:hover, .bj-btn-danger:focus-visible { background: var(--naowee-color-feedback-fill-negative-loud); box-shadow: 0 4px 12px rgba(218, 22, 48, .30); outline: none; transform: translateY(-1px); }
+.bj-btn-danger:active { transform: scale(.97); box-shadow: 0 2px 6px rgba(218, 22, 48, .16); }
+/* Botón de aprobación (verde/positive) — semántico: aprobar = positivo. */
+.bj-btn-success { background: var(--naowee-color-feedback-fill-positive-loud); color: #fff; box-shadow: 0 2px 6px rgba(31, 137, 35, .16); }
+.bj-btn-success:hover, .bj-btn-success:focus-visible { background: var(--naowee-color-feedback-fill-positive-loud); box-shadow: 0 4px 12px rgba(31, 137, 35, .30); outline: none; transform: translateY(-1px); }
+.bj-btn-success:active { transform: scale(.97); box-shadow: 0 2px 6px rgba(31, 137, 35, .16); }
+
+/* Documentos de soporte (detalle bandeja) — el revisor verifica el reconocimiento deportivo. */
+.bj-docs__title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); margin: 0 0 10px; }
+.bj-doc { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 8px; }
+.bj-doc:last-child { margin-bottom: 0; }
+.bj-doc__ico { width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius-sm); background: var(--bg-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.bj-doc__ico svg { width: 17px; height: 17px; }
+.bj-doc__name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.bj-doc__file { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; font-variant-numeric: tabular-nums; }
+.bj-doc__view { margin-left: auto; font-size: 12.5px; font-weight: 600; color: var(--accent); cursor: pointer; flex-shrink: 0; background: none; border: none; }
+
+/* Detalle (reusa .reg-modal) */
+.bj-modal { max-width: 560px; }
+.bj-modal--sm { max-width: 440px; }
+.bj-modal__foot { flex-wrap: wrap; gap: 10px; }
+/* Footer con jerarquía: secundaria (corrección) a la izquierda; destructiva + primaria agrupadas a la derecha. */
+.bj-actions { justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bj-actions__main { display: flex; gap: 10px; margin-left: auto; }
+.bj-detail__badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bj-sol-cell { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bj-detail__note { font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+/* Resumen: grid limpio label/valor sobre panel suave (sin divisores por fila). */
+.bj-kv { margin: 0; display: grid; grid-template-columns: 118px 1fr; gap: 9px 14px; padding: 14px 16px; background: var(--bg-soft); border-radius: var(--radius-lg); }
+.bj-kv__row { display: contents; }
+.bj-kv__row dt { font-size: 12px; color: var(--text-secondary); margin: 0; }
+.bj-kv__row dd { font-size: 13px; color: var(--text-primary); margin: 0; word-break: break-word; font-variant-numeric: tabular-nums; }
+
+.bj-timeline { border-top: 1px solid var(--border); padding-top: 14px; }
+.bj-timeline__title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); margin: 0 0 10px; }
+.bj-tl-row { display: flex; gap: 10px; padding: 0 0 12px; position: relative; }
+.bj-tl-row:not(:last-child)::before { content: ''; position: absolute; left: 4px; top: 14px; bottom: 0; width: 1.5px; background: var(--border); }
+.bj-tl-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
+.bj-tl-head { font-size: 13px; color: var(--text-primary); }
+.bj-tl-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
+.bj-tl-empty { font-size: 12.5px; color: var(--text-secondary); margin: 0; }
+
+.bj-label { font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 6px; }
+.bj-req { color: var(--accent); }
+.bj-select, .bj-textarea { width: 100%; font-family: inherit; font-size: 14px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--field-border-idle); border-radius: var(--radius-md); padding: 10px 12px; transition: border-color var(--duration-fast), box-shadow var(--duration-fast); }
+.bj-select:focus, .bj-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 64, 9, .12); }
+.bj-select--err { border-color: var(--field-border-error); box-shadow: 0 0 0 3px rgba(237, 49, 74, .15); }
+.bj-textarea { resize: vertical; min-height: 68px; }
+.bj-err { font-size: 12px; color: var(--naowee-color-feedback-text-negative-quiet-on-fill); margin: 8px 0 0; }
+/* Textarea sobre el input-wrap CANÓNICO del textfield (borde + focus-within del DS). */
+.bj-ta-wrap { height: auto; align-items: stretch; padding: 0; }
+.bj-ta-wrap textarea { width: 100%; border: none; background: transparent; outline: none; resize: vertical; min-height: 76px; font-family: inherit; font-size: 14px; line-height: 1.5; color: var(--text-primary); padding: 10px 12px; }
+.bj-ta-wrap textarea::placeholder { color: var(--text-muted); }
+/* Modal del motivo: permite que el menú del dropdown canónico escape del recorte del modal
+   (el border-radius del .reg-modal se mantiene porque el bg lo respeta igual). */
+.bj-modal--overflow { overflow: visible; }
+.bj-modal--overflow .reg-modal__body { overflow: visible; }
+
+@media (max-width: 760px) {
+  .bj-panel__bar { align-items: stretch; }
+  .bj-count { margin-left: 0; }
+  .bj-kv { grid-template-columns: 1fr; gap: 2px 0; }
+  .bj-kv__row dt { margin-top: 8px; }
+  .bj-actions { justify-content: stretch; }
+  .bj-actions__main { width: 100%; }
+  .bj-actions__main .naowee-btn { flex: 1; }
+}
+
+/* Afiliación del deportista (T7): los estilos af-* viven ahora en perfil.css
+   (perfil del deportista clon 1:1). Movidos aquí para evitar colisión. */
