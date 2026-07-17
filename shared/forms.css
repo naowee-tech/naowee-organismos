@@ -391,6 +391,53 @@
   position: fixed; z-index: 1200; margin: 0;
 }
 
+/* ───────────────── Datepicker canónico (port del DS · tokens locales) ─────────────
+   Reemplaza el <input type=date> nativo por el componente del DS: campo con ícono +
+   popover fijo (anclado por JS al campo) con navegación día/mes/año. */
+.naowee-datepicker-field { display: flex; flex-direction: column; width: 100%; }
+.naowee-datepicker-field__label { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary); padding-bottom: 7px; }
+.naowee-datepicker-field__label--required::after { content: '*'; color: var(--accent); font-weight: 700; margin-left: 3px; }
+.naowee-datepicker-field__input {
+  display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--field-border-idle); border-radius: var(--radius-md);
+  transition: border-color var(--duration-normal) var(--easing-smoothout), box-shadow var(--duration-normal);
+}
+.naowee-datepicker-field__input:hover { border-color: var(--field-border-hover); }
+.naowee-datepicker-field--active .naowee-datepicker-field__input { border-color: var(--accent); border-width: 2px; padding: 0 13px; box-shadow: 0 0 0 3px rgba(215, 64, 9, .12); }
+.naowee-datepicker-field.naowee-textfield--error .naowee-datepicker-field__input { border-color: var(--field-border-error); }
+.naowee-datepicker-field__icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); display: flex; }
+.naowee-datepicker-field__icon svg { width: 18px; height: 18px; }
+.naowee-datepicker-field__value { flex: 1; min-width: 0; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.naowee-datepicker-field__value.is-placeholder { color: var(--text-secondary); }
+.naowee-datepicker-field__chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); display: flex; transition: transform var(--duration-normal), color var(--duration-fast); }
+.naowee-datepicker-field--active .naowee-datepicker-field__chevron { transform: rotate(180deg); color: var(--accent); }
+
+.naowee-datepicker { display: flex; flex-direction: column; gap: 8px; padding: 14px; width: 290px; font-family: var(--font-family); }
+.naowee-datepicker--popover { position: fixed; z-index: 1300; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 12px 32px rgba(40, 40, 52, .16); opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .16s, transform .16s; }
+.naowee-datepicker--popover.naowee-datepicker--open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.naowee-datepicker__calendar { display: flex; flex-direction: column; gap: 6px; }
+.naowee-datepicker__header { display: flex; align-items: center; justify-content: space-between; }
+.naowee-datepicker__month-selector { display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 10px; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-sm); font-family: var(--font-family); }
+.naowee-datepicker__month-selector:hover { background: var(--bg-soft); }
+.naowee-datepicker__month { font-size: 14px; font-weight: 700; color: var(--text-primary); white-space: nowrap; text-transform: capitalize; }
+.naowee-datepicker__month-chevron { width: 15px; height: 15px; color: var(--accent); display: flex; }
+.naowee-datepicker__month-chevron svg { width: 15px; height: 15px; }
+.naowee-datepicker__controls { display: flex; gap: 4px; }
+.naowee-datepicker__nav { width: 30px; height: 30px; border-radius: var(--radius-sm); border: none; background: transparent; color: var(--accent); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.naowee-datepicker__nav:hover { background: var(--bg-soft); }
+.naowee-datepicker__nav svg { width: 17px; height: 17px; }
+.naowee-datepicker__grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.naowee-datepicker__weekday { height: 26px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: var(--text-secondary); }
+.naowee-datepicker__day { height: 34px; border: none; background: transparent; font-family: var(--font-family); font-size: 13px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); transition: background var(--duration-fast); padding: 0; }
+.naowee-datepicker__day:hover { background: var(--bg-soft); }
+.naowee-datepicker__day--today { font-weight: 700; color: var(--accent); }
+.naowee-datepicker__day--selected, .naowee-datepicker__day--selected:hover { background: var(--accent); color: #fff; font-weight: 600; }
+.naowee-datepicker__day--other-month, .naowee-datepicker__day--disabled { color: var(--text-muted); pointer-events: none; }
+.naowee-datepicker__month-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 4px 0; }
+.naowee-datepicker__month-item { height: 40px; border: none; background: transparent; font-family: var(--font-family); font-size: 13px; color: var(--text-primary); cursor: pointer; border-radius: var(--radius-sm); text-transform: capitalize; transition: background var(--duration-fast); }
+.naowee-datepicker__month-item:hover { background: var(--bg-soft); }
+.naowee-datepicker__month-item--selected { border: 1.5px solid var(--accent); box-shadow: 0 0 0 1px var(--accent); font-weight: 600; }
+
 @media (prefers-reduced-motion: reduce) {
   .naowee-shake, .reg-pane, .reg-success__check, .reg-confetti span,
   .naowee-stepper--pulse .naowee-stepper__step--active .naowee-stepper__number { animation: none !important; }

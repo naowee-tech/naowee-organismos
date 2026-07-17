@@ -304,7 +304,14 @@ const MODULE_NAME = 'Organismos';
               correcto), «Ciudad/Municipio» dependiente del Departamento (carga por
               selección), spacing de los section-labels corregido. El datepicker de fecha
               de nacimiento sigue siendo el nativo (`type=date`). Cache-busters ?v=1.2.5. */
-const MODULE_VERSION = 'v1.2.5';
+/* v1.2.6 — Datepicker CANÓNICO del DS (feedback Doug): la fecha de nacimiento del
+            registro público deja de usar el `<input type=date>` nativo y usa el
+            componente `.naowee-datepicker` portado del Design System (tokens locales):
+            campo con ícono + popover fijo anclado al campo (escapa el overflow del card)
+            con navegación en 3 vistas — días → meses → años — para elegir fechas de
+            nacimiento rápido; deshabilita fechas futuras; valor en 'YYYY-MM-DD'
+            (compatible con edadDe/validación de edad). Cache-busters ?v=1.2.6. */
+const MODULE_VERSION = 'v1.2.6';
 
 (function () {
   function mount() {

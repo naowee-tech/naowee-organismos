@@ -42,7 +42,10 @@ const I = {
   api: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
   athlete: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M4 17l4-1 2-4 4 2 1 4"/><path d="M10 12l-2 5"/></svg>',
   staff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M17 11l2 2 4-4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/></svg>',
-  entity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>'
+  entity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg>',
+  chevL: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  chevR: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
 };
 
 /* ─── catálogos ─── */
@@ -196,7 +199,7 @@ function paneDatos() {
           ${tf({ id: 'f-numDoc', label: 'Número de documento del menor', required: true, path: 'numDoc', value: d.numDoc, mask: 'numeric', maxLength: 12, placeholder: '1099887766' })}
           ${tf({ id: 'f-nombres', label: 'Nombres', required: true, path: 'nombres', value: d.nombres, placeholder: 'Ej: Juan David' })}
           ${tf({ id: 'f-apellidos', label: 'Apellidos', required: true, path: 'apellidos', value: d.apellidos, placeholder: 'Ej: Marín' })}
-          ${tf({ id: 'f-fechaNac', label: 'Fecha de nacimiento', required: true, path: 'fechaNac', value: d.fechaNac, type: 'date' })}
+          ${dateField({ id: 'f-fechaNac', label: 'Fecha de nacimiento', required: true, path: 'fechaNac' })}
           ${dd('deporte', 'Deporte', DEPORTES.map((v) => ({ v, t: v })), d.deporte, false, true)}
         </div>
         <div class="rp-agehint" id="rpAgeHint"></div>
@@ -212,7 +215,7 @@ function paneDatos() {
           ${tf({ id: 'f-numDoc', label: 'Número de documento', required: true, path: 'numDoc', value: d.numDoc, mask: 'numeric', maxLength: 12, placeholder: '1099887766' })}
           ${tf({ id: 'f-nombres', label: 'Nombres', required: true, path: 'nombres', value: d.nombres, placeholder: 'Ej: Laura' })}
           ${tf({ id: 'f-apellidos', label: 'Apellidos', required: true, path: 'apellidos', value: d.apellidos, placeholder: 'Ej: Gómez' })}
-          ${tf({ id: 'f-fechaNac', label: 'Fecha de nacimiento', required: true, path: 'fechaNac', value: d.fechaNac, type: 'date' })}
+          ${dateField({ id: 'f-fechaNac', label: 'Fecha de nacimiento', required: true, path: 'fechaNac' })}
           ${dd('deporte', 'Deporte', DEPORTES.map((v) => ({ v, t: v })), d.deporte, false, true)}
           ${tf({ id: 'f-correo', label: 'Correo electrónico', required: true, path: 'correo', value: d.correo, mask: 'email', type: 'email', placeholder: 'correo@correo.co' })}
           ${tf({ id: 'f-telefono', label: 'Teléfono', required: true, path: 'telefono', value: d.telefono, mask: 'tel', maxLength: 18, type: 'tel', placeholder: '+57 300 123 4567' })}
@@ -289,6 +292,115 @@ function entSuperiorSection() {
     ? dd('superiorId', supLabel, opts, d.superiorId, true, true)
     : `<div class="naowee-message naowee-message--caution" style="margin:0"><span class="naowee-message__icon">${I.bang}</span><div class="naowee-message__body"><p class="naowee-message__text">Aún no hay ${supTipo === 'federacion' ? 'federaciones' : 'ligas'} Activas para asociar. En modo demo, aprueba una desde la bandeja primero.</p></div></div>`;
   return `<div class="reg-section-label">Organismo superior</div>${inner}`;
+}
+
+/* ═══════════════ Datepicker canónico (componente del DS) ═══════════════
+   Reemplaza el <input type=date> nativo. El valor vive en STATE.d[path] como
+   'YYYY-MM-DD' (compatible con edadDe/validate). Popover fijo anclado al campo,
+   con vistas día → mes → año para elegir fechas de nacimiento rápidamente. */
+const DP_MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const DP_DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const DP_HOY = new Date(2026, 6, 16);   // "hoy" del demo (constructor LOCAL para evitar corrimiento de zona horaria; coincide con edadDe)
+const dpISO = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+const dpParse = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+const dpFmt = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; };
+
+function dateField(o) {
+  const val = STATE.d[o.path];
+  return `<div class="naowee-datepicker-field" data-datefield="${o.path}" data-field="${o.id}" id="${o.id}">
+    <label class="naowee-datepicker-field__label${o.required ? ' naowee-datepicker-field__label--required' : ''}">${esc(o.label)}</label>
+    <div class="naowee-datepicker-field__input" role="button" tabindex="0" aria-haspopup="dialog">
+      <span class="naowee-datepicker-field__icon">${I.cal}</span>
+      <span class="naowee-datepicker-field__value${val ? '' : ' is-placeholder'}">${val ? esc(dpFmt(val)) : 'dd/mm/aaaa'}</span>
+      <span class="naowee-datepicker-field__chevron">${I.chevron}</span>
+    </div>
+  </div>`;
+}
+
+let _dpCleanup = null;
+function closeDatePicker() {
+  document.getElementById('rpDatePop')?.remove();
+  document.querySelectorAll('.naowee-datepicker-field--active').forEach((f) => f.classList.remove('naowee-datepicker-field--active'));
+  if (_dpCleanup) { _dpCleanup(); _dpCleanup = null; }
+}
+function openDatePicker(fieldEl) {
+  closeDatePicker();
+  const path = fieldEl.dataset.datefield;
+  const sel = dpParse(STATE.d[path]);
+  const maxY = DP_HOY.getFullYear();
+  const view = { y: (sel || DP_HOY).getFullYear(), m: (sel || DP_HOY).getMonth(), mode: 'days' };
+  const pop = document.createElement('div');
+  pop.className = 'naowee-datepicker naowee-datepicker--popover naowee-datepicker--compact';
+  pop.id = 'rpDatePop';
+  document.body.appendChild(pop);
+  fieldEl.classList.add('naowee-datepicker-field--active');
+  const trigger = fieldEl.querySelector('.naowee-datepicker-field__input');
+
+  function anchor() {
+    const r = trigger.getBoundingClientRect();
+    const w = pop.offsetWidth || 290, h = pop.offsetHeight || 330;
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+    const below = window.innerHeight - r.bottom;
+    if (below < h + 12 && r.top > below) { pop.style.top = 'auto'; pop.style.bottom = (window.innerHeight - r.top + 6) + 'px'; }
+    else { pop.style.bottom = 'auto'; pop.style.top = (r.bottom + 6) + 'px'; }
+  }
+  function pick(iso) {
+    STATE.d[path] = iso; closeDatePicker(); renderPane(); bindPane(); ageHint();
+    const f = document.getElementById(fieldEl.id); if (f) clearFieldError(f);
+  }
+  function days() {
+    const startDow = (new Date(view.y, view.m, 1).getDay() + 6) % 7;
+    const dim = new Date(view.y, view.m + 1, 0).getDate();
+    let cells = '';
+    for (let i = 0; i < startDow; i++) cells += `<span class="naowee-datepicker__day naowee-datepicker__day--other-month"></span>`;
+    for (let d = 1; d <= dim; d++) {
+      const dt = new Date(view.y, view.m, d), iso = dpISO(dt);
+      const isSel = sel && dpISO(sel) === iso, isToday = dpISO(DP_HOY) === iso, dis = dt > DP_HOY;
+      cells += `<button type="button" class="naowee-datepicker__day${isSel ? ' naowee-datepicker__day--selected' : ''}${isToday && !isSel ? ' naowee-datepicker__day--today' : ''}${dis ? ' naowee-datepicker__day--disabled' : ''}" data-day="${iso}"${dis ? ' disabled' : ''}>${d}</button>`;
+    }
+    return `<div class="naowee-datepicker__calendar"><div class="naowee-datepicker__header">
+      <button type="button" class="naowee-datepicker__month-selector" data-view="months"><span class="naowee-datepicker__month">${DP_MESES[view.m]} ${view.y}</span><span class="naowee-datepicker__month-chevron">${I.chevron}</span></button>
+      <div class="naowee-datepicker__controls"><button type="button" class="naowee-datepicker__nav" data-mo="-1" aria-label="Mes anterior">${I.chevL}</button><button type="button" class="naowee-datepicker__nav" data-mo="1" aria-label="Mes siguiente">${I.chevR}</button></div>
+      </div>
+      <div class="naowee-datepicker__grid">${DP_DIAS.map((d) => `<span class="naowee-datepicker__weekday">${d}</span>`).join('')}</div>
+      <div class="naowee-datepicker__grid">${cells}</div></div>`;
+  }
+  function months() {
+    return `<div class="naowee-datepicker__calendar"><div class="naowee-datepicker__header">
+      <button type="button" class="naowee-datepicker__month-selector" data-view="years"><span class="naowee-datepicker__month">${view.y}</span><span class="naowee-datepicker__month-chevron">${I.chevron}</span></button>
+      <div class="naowee-datepicker__controls"><button type="button" class="naowee-datepicker__nav" data-yr="-1" aria-label="Año anterior">${I.chevL}</button><button type="button" class="naowee-datepicker__nav" data-yr="1" aria-label="Año siguiente">${I.chevR}</button></div>
+      </div>
+      <div class="naowee-datepicker__month-grid">${DP_MESES.map((mm, i) => `<button type="button" class="naowee-datepicker__month-item${i === view.m ? ' naowee-datepicker__month-item--selected' : ''}" data-month="${i}">${mm.slice(0, 3)}</button>`).join('')}</div></div>`;
+  }
+  function years() {
+    const base = view.y - (view.y % 12); let items = '';
+    for (let i = 0; i < 12; i++) { const yy = base + i, dis = yy > maxY; items += `<button type="button" class="naowee-datepicker__month-item${yy === view.y ? ' naowee-datepicker__month-item--selected' : ''}${dis ? ' naowee-datepicker__month-item--disabled' : ''}" data-year="${yy}"${dis ? ' disabled' : ''}>${yy}</button>`; }
+    return `<div class="naowee-datepicker__calendar"><div class="naowee-datepicker__header">
+      <span class="naowee-datepicker__month" style="padding:0 10px">${base} – ${base + 11}</span>
+      <div class="naowee-datepicker__controls"><button type="button" class="naowee-datepicker__nav" data-yp="-12" aria-label="Anterior">${I.chevL}</button><button type="button" class="naowee-datepicker__nav" data-yp="12" aria-label="Siguiente">${I.chevR}</button></div>
+      </div>
+      <div class="naowee-datepicker__month-grid">${items}</div></div>`;
+  }
+  function draw() {
+    pop.innerHTML = view.mode === 'years' ? years() : view.mode === 'months' ? months() : days();
+    pop.querySelectorAll('[data-day]').forEach((b) => b.addEventListener('click', () => pick(b.dataset.day)));
+    pop.querySelectorAll('[data-mo]').forEach((b) => b.addEventListener('click', () => { view.m += +b.dataset.mo; if (view.m < 0) { view.m = 11; view.y--; } if (view.m > 11) { view.m = 0; view.y++; } draw(); }));
+    pop.querySelectorAll('[data-yr]').forEach((b) => b.addEventListener('click', () => { view.y += +b.dataset.yr; draw(); }));
+    pop.querySelectorAll('[data-yp]').forEach((b) => b.addEventListener('click', () => { view.y += +b.dataset.yp; draw(); }));
+    pop.querySelectorAll('[data-month]').forEach((b) => b.addEventListener('click', () => { view.m = +b.dataset.month; view.mode = 'days'; draw(); }));
+    pop.querySelectorAll('[data-year]').forEach((b) => b.addEventListener('click', () => { view.y = +b.dataset.year; view.mode = 'months'; draw(); }));
+    pop.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => { view.mode = b.dataset.view; draw(); }));
+    anchor();
+  }
+  draw();
+  requestAnimationFrame(() => pop.classList.add('naowee-datepicker--open'));
+  const onDoc = (e) => { if (!pop.contains(e.target) && !fieldEl.contains(e.target)) closeDatePicker(); };
+  const onKey = (e) => { if (e.key === 'Escape') closeDatePicker(); };
+  setTimeout(() => document.addEventListener('click', onDoc), 0);
+  document.addEventListener('keydown', onKey);
+  window.addEventListener('scroll', anchor, true);
+  window.addEventListener('resize', anchor);
+  _dpCleanup = () => { document.removeEventListener('click', onDoc); document.removeEventListener('keydown', onKey); window.removeEventListener('scroll', anchor, true); window.removeEventListener('resize', anchor); };
 }
 
 /* ── Paso 2 — documentos (adaptativo) + políticas ── */
@@ -429,6 +541,7 @@ function renderFooter() {
 
 /* ═══════════════ Bind ═══════════════ */
 function bindPane() {
+  closeDatePicker();   // limpia cualquier popover de fecha huérfano en re-render
   root().querySelectorAll('input[data-model]').forEach((inp) => {
     inp.addEventListener('input', () => {
       if (inp.dataset.mask) { const p = inp.selectionStart; inp.value = applyMask(inp.dataset.mask, inp.value); try { inp.setSelectionRange(p, p); } catch (_) {} }
@@ -452,6 +565,11 @@ function bindPane() {
     const cb = ch.querySelector('input'); if (cb) cb.checked = true;
   }));
   root().querySelectorAll('[data-dd]').forEach(mountDD);
+  root().querySelectorAll('[data-datefield]').forEach((f) => {
+    const trig = f.querySelector('.naowee-datepicker-field__input');
+    trig.addEventListener('click', () => openDatePicker(f));
+    trig.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDatePicker(f); } });
+  });
   root().querySelectorAll('[data-doc-input]').forEach((inp) => inp.addEventListener('change', () => onFilePick(inp)));
   root().querySelectorAll('[data-doc-remove]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); delete STATE.d.docs[b.dataset.docRemove]; renderPane(); bindPane(); }));
   ageHint();
