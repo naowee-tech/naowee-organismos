@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi perfil — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.15">
+<link rel="stylesheet" href="shared/shell.css?v=1.2.15">
+<link rel="stylesheet" href="shared/components.css?v=1.2.15">
+<link rel="stylesheet" href="shared/forms.css?v=1.2.15">
+<link rel="stylesheet" href="shared/perfil.css?v=1.2.15">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.15">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner pf-wrap" id="pfRoot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar datos -->
+<div class="pf-modal-ov" id="editOv" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="pf-modal">
+    <header class="pf-modal__head">
+      <h2 id="editTitle">Editar datos</h2>
+      <button class="pf-modal__close" id="editClose" type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </header>
+    <div class="pf-mtabs"><div class="naowee-tabs" id="editTabs" role="tablist"></div></div>
+    <div class="pf-modal__body" id="editBody"></div>
+    <footer class="pf-modal__foot">
+      <button type="button" class="naowee-btn naowee-btn--mute" id="editCancel">Cancelar</button>
+      <button type="button" class="naowee-btn naowee-btn--loud" id="editSave" disabled>Guardar cambios</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Modal: Asociar a club (registro corto §5.2) -->
+<div class="pf-modal-ov" id="afOv" role="dialog" aria-modal="true" aria-labelledby="afTitle">
+  <div class="pf-modal">
+    <header class="pf-modal__head">
+      <div>
+        <h2 id="afTitle">Asociar a un club</h2>
+        <p>Envía tu solicitud de afiliación. Al aprobarla el club, heredarás su liga y federación.</p>
+      </div>
+      <button class="pf-modal__close" id="afClose" type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </header>
+    <div class="pf-modal__body" id="afBody"></div>
+    <footer class="pf-modal__foot">
+      <button type="button" class="naowee-btn naowee-btn--mute" id="afCancel">Cancelar</button>
+      <button type="button" class="naowee-btn naowee-btn--loud" id="afSend" disabled>Enviar solicitud</button>
+    </footer>
+  </div>
+</div>
+
+<script type="module" src="shared/afiliacion.js?v=1.2.15"></script>
+<script src="shared/naowee-footer.js?v=1.2.15"></script>
+<script src="shared/tour.js?v=1.2.15"></script>
+
+</body>
+</html>
