@@ -584,6 +584,61 @@
 .bj-panel .cg-table-wrap, .cg-preview .cg-table-wrap { padding: 14px 12px 8px; }
 .bj-panel .naowee-empty-state { padding: 48px 24px; }
 
+/* ── Segmented control (.naowee-segment) — PORT del DS §Segment (pill estática, tokens locales).
+   Reemplaza al doble tab de sub-vista; centrado vía .bj-vista-wrap. ── */
+.bj-vista-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+.naowee-segment { display: inline-flex; background: var(--bg-soft); border: 1px solid var(--border-dark); border-radius: var(--radius-lg); padding: 4px; gap: 4px; }
+.naowee-segment__item {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 0 18px; height: 34px; border-radius: var(--radius-md);
+  border: 2px solid transparent; background: transparent;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap; transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
+}
+.naowee-segment__item:hover { color: var(--text-primary); }
+.naowee-segment__item svg { width: 17px; height: 17px; flex-shrink: 0; opacity: .8; }
+.naowee-segment__item--active { color: var(--accent); background: var(--surface); border-color: var(--accent); box-shadow: 0 1px 3px rgba(20,22,38,.12); }
+.naowee-segment__item--active svg { opacity: 1; }
+
+/* ── Iconos en los tabs de estado de la bandeja ── */
+.bj-tabs .naowee-tab { gap: 6px; }
+.bj-tabs .naowee-tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ── Filtro (select nativo estilizado) del bar de la bandeja ── */
+.bj-filter { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.bj-filter__lbl { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.bj-filter__select {
+  height: 38px; padding: 0 34px 0 12px; border: 1px solid var(--border-dark); border-radius: var(--radius-md);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23646587' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+  font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer; -webkit-appearance: none; appearance: none;
+}
+.bj-filter__select:hover { border-color: var(--field-border-hover); }
+.bj-filter__select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+
+/* ── Paginación (.naowee-pagination) — PORT del DS §Pagination (small), tokens locales.
+   §A5: el variant --small del DS pone gap:0 entre pages y controls → lo separamos. ── */
+.bj-panel__foot { display: flex; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--border); }
+.naowee-pagination { display: flex; align-items: center; gap: 24px; font-family: inherit; }
+.naowee-pagination__pages { display: flex; align-items: center; gap: 12px; }
+.naowee-pagination__label { font-size: 14px; color: var(--text-secondary); white-space: nowrap; }
+.naowee-pagination__total { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-secondary); white-space: nowrap; }
+.naowee-pagination__total strong { font-weight: 700; color: var(--text-primary); }
+.naowee-pagination__input { width: 56px; height: 40px; border: 1px solid var(--border-dark); border-radius: var(--radius-md); background: var(--surface); font-family: inherit; font-size: 14px; color: var(--text-primary); text-align: center; padding: 0 6px; transition: border-color var(--duration-fast); }
+.naowee-pagination__input:hover { border-color: var(--field-border-hover); }
+.naowee-pagination__input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.naowee-pagination__controls { display: flex; align-items: center; gap: 6px; }
+.naowee-pagination__btn { width: 40px; height: 40px; border-radius: var(--radius-md); border: none; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background var(--duration-fast); }
+.naowee-pagination__btn:hover { background: var(--accent-bg-warm); }
+.naowee-pagination__btn:disabled { opacity: .35; cursor: not-allowed; }
+.naowee-pagination__btn svg { width: 20px; height: 20px; }
+.naowee-pagination--small { gap: 12px; }
+.naowee-pagination--small .naowee-pagination__pages { gap: 6px; }
+.naowee-pagination--small .naowee-pagination__label,
+.naowee-pagination--small .naowee-pagination__total { font-size: 12px; }
+.naowee-pagination--small .naowee-pagination__input { width: 48px; height: 32px; border-radius: var(--radius-sm); font-size: 12px; }
+.naowee-pagination--small .naowee-pagination__btn { width: 32px; height: 32px; border-radius: var(--radius-sm); }
+.naowee-pagination--small .naowee-pagination__btn svg { width: 16px; height: 16px; }
+
 .bj-org { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .bj-org__emoji { font-size: 18px; flex-shrink: 0; }
 .bj-org__name { font-weight: 600; color: var(--text-primary); }

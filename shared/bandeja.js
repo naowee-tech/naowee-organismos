@@ -125,7 +125,13 @@ const I = {
   info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
   chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
-  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  bldg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4M9 10h.01M15 10h.01M9 13.5h.01M15 13.5h.01"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+  chevL: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  chevR: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
 };
 
 /* State (UI) */
@@ -133,6 +139,9 @@ let query = '';
 let estadoFiltro = 'Accionables';
 let vista = 'federaciones';      // MINDEPORTE: 'federaciones' | 'publico' (registro público)
 let preFiltro = 'Accionables';   // filtro de la cola de registro público
+let sectorFiltro = 'Todos';      // filtro por sector (solo se muestra si hay >1 sector visible)
+let page = 1;                    // página actual de la tabla de organismos
+const PAGE_SIZE = 10;
 
 /* ── Datos demo: federaciones En revisión con doble validación a medias ── */
 function seedBandejaDemo() {
@@ -163,6 +172,7 @@ function filtered(orgs) {
   let out = orgs.filter((o) => VISIBLES.includes(o.estado));
   if (estadoFiltro === 'Accionables') out = out.filter((o) => o.estado === 'En revisión');
   else if (estadoFiltro !== 'Todos') out = out.filter((o) => o.estado === estadoFiltro);
+  if (sectorFiltro !== 'Todos') out = out.filter((o) => (o.sector || '') === sectorFiltro);
   if (query) { const q = norm(query); out = out.filter((o) => norm(o.nombre).includes(q) || norm(o.nit).includes(q)); }
   return out.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
@@ -183,17 +193,25 @@ function render() {
 function vistaSwitch() {
   if (!tieneColaPublica) return '';
   const pend = preinscritosDeRol().filter((p) => p.estado === 'En revisión').length;
-  return `<div class="naowee-tabs bj-tabs bj-vista" id="bjVista" style="margin-bottom:16px">
-    <button type="button" class="naowee-tab ${vista === 'federaciones' ? 'naowee-tab--selected' : ''}" data-vista="federaciones">${esc(capFirst(target.plural))}</button>
-    <button type="button" class="naowee-tab ${vista === 'publico' ? 'naowee-tab--selected' : ''}" data-vista="publico">Registro público${pend ? ` · ${pend}` : ''}</button>
+  return `<div class="bj-vista-wrap">
+    <div class="naowee-segment naowee-segment--small" id="bjVista" role="tablist" aria-label="Sub-vista de la bandeja">
+      <button type="button" class="naowee-segment__item ${vista === 'federaciones' ? 'naowee-segment__item--active' : ''}" data-vista="federaciones" role="tab" aria-selected="${vista === 'federaciones'}">${I.bldg}${esc(capFirst(target.plural))}</button>
+      <button type="button" class="naowee-segment__item ${vista === 'publico' ? 'naowee-segment__item--active' : ''}" data-vista="publico" role="tab" aria-selected="${vista === 'publico'}">${I.inbox}Registro público${pend ? ` · ${pend}` : ''}</button>
+    </div>
   </div>`;
 }
 
 function renderOrgBandeja() {
   const all = bandejaOrgs();
-  const rows = filtered(all);
+  const allRows = filtered(all);
   const pend = all.filter((o) => o.estado === 'En revisión').length;
   const anchor = scopeId ? getOrganismo(scopeId) : null;
+  // Filtro de sector: solo si hay >1 sector visible (en COMITE=COC todo es Olímpico → no se muestra).
+  const sectores = [...new Set(all.map((o) => o.sector).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const totalPages = Math.max(1, Math.ceil(allRows.length / PAGE_SIZE));
+  page = Math.min(Math.max(1, page), totalPages);
+  const rows = allRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const FILTER_ICO = { 'Accionables': I.bolt, 'En revisión': I.clock, 'En corrección': I.edit, 'Rechazado': I.x, 'Activo': I.check, 'Todos': I.list };
 
   root.innerHTML = `
     ${vistaSwitch()}
@@ -209,10 +227,11 @@ function renderOrgBandeja() {
             <input class="naowee-searchbox__input" id="bjSearch" placeholder="Buscar por nombre o NIT…" value="${esc(query)}">
           </div>
         </div>
-        <span class="bj-count">${rows.length} de ${all.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
+        ${sectores.length > 1 ? `<label class="bj-filter"><span class="bj-filter__lbl">Sector</span><select class="bj-filter__select" id="bjSector"><option value="Todos"${sectorFiltro === 'Todos' ? ' selected' : ''}>Todos los sectores</option>${sectores.map((s) => `<option value="${esc(s)}"${sectorFiltro === s ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select></label>` : ''}
+        <span class="bj-count">${allRows.length} de ${all.length}${pend ? ` · <strong>${pend}</strong> pendientes` : ''}</span>
       </div>
       <div class="naowee-tabs bj-tabs" id="bjFilters">
-        ${['Accionables', 'En revisión', 'En corrección', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--selected' : ''}" data-f="${f}">${f}</button>`).join('')}
+        ${['Accionables', 'En revisión', 'En corrección', 'Rechazado', 'Activo', 'Todos'].map((f) => `<button type="button" class="naowee-tab ${estadoFiltro === f ? 'naowee-tab--selected' : ''}" data-f="${f}">${FILTER_ICO[f] || ''}${f}</button>`).join('')}
       </div>
       ${rows.length ? `
         <div class="cg-table-wrap">
@@ -229,7 +248,7 @@ function renderOrgBandeja() {
                 </tr>`).join('')}
             </tbody>
           </table>
-        </div>` : emptyState('Sin organismos', `No hay ${target.plural} ${estadoFiltro === 'Accionables' ? 'pendientes de tu revisión' : 'que coincidan con el filtro'} por ahora.`)}
+        </div>${totalPages > 1 ? `<div class="bj-panel__foot"><div class="naowee-pagination naowee-pagination--small" id="bjPager"><div class="naowee-pagination__pages"><span class="naowee-pagination__label">Página</span><input class="naowee-pagination__input" id="bjPageInput" type="number" min="1" max="${totalPages}" value="${page}" aria-label="Número de página"><span class="naowee-pagination__total">de <strong>${totalPages}</strong></span></div><div class="naowee-pagination__controls"><button type="button" class="naowee-pagination__btn" data-pg="prev"${page <= 1 ? ' disabled' : ''} aria-label="Página anterior">${I.chevL}</button><button type="button" class="naowee-pagination__btn" data-pg="next"${page >= totalPages ? ' disabled' : ''} aria-label="Página siguiente">${I.chevR}</button></div></div></div>` : ''}` : emptyState('Sin organismos', `No hay ${target.plural} ${estadoFiltro === 'Accionables' ? 'pendientes de tu revisión' : 'que coincidan con el filtro'} por ahora.`)}
     </div>`;
   wire();
 }
@@ -870,14 +889,20 @@ function openPreMotivo(id, tipoAccion, detailOv) {
 /* ── Wiring ── */
 function wire() {
   const s = document.getElementById('bjSearch');
-  if (s) s.addEventListener('input', (e) => { query = e.target.value; const p = s.selectionStart; render(); const n = document.getElementById('bjSearch'); if (n) { n.focus(); try { n.setSelectionRange(p, p); } catch (_) {} } });
+  if (s) s.addEventListener('input', (e) => { query = e.target.value; page = 1; const p = s.selectionStart; render(); const n = document.getElementById('bjSearch'); if (n) { n.focus(); try { n.setSelectionRange(p, p); } catch (_) {} } });
   const f = document.getElementById('bjFilters');
   if (f) {
-    f.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { estadoFiltro = b.dataset.f; render(); }));
+    f.querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { estadoFiltro = b.dataset.f; page = 1; render(); }));
     f.querySelectorAll('[data-af]').forEach((b) => b.addEventListener('click', () => { afilFiltro = b.dataset.af; render(); }));
     f.querySelectorAll('[data-pf]').forEach((b) => b.addEventListener('click', () => { preFiltro = b.dataset.pf; render(); }));
   }
-  root.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => { vista = b.dataset.vista; render(); }));
+  // Filtro de sector (native select) + paginación de la tabla de organismos.
+  const sec = document.getElementById('bjSector');
+  if (sec) sec.addEventListener('change', (e) => { sectorFiltro = e.target.value; page = 1; render(); });
+  root.querySelectorAll('[data-pg]').forEach((b) => b.addEventListener('click', () => { page = b.dataset.pg === 'prev' ? page - 1 : page + 1; render(); }));
+  const pi = document.getElementById('bjPageInput');
+  if (pi) pi.addEventListener('change', (e) => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) { page = v; render(); } });
+  root.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => { vista = b.dataset.vista; page = 1; render(); }));
   root.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openDetail(b.dataset.open)));
   root.querySelectorAll('[data-openafil]').forEach((b) => b.addEventListener('click', () => openAfilDetail(b.dataset.openafil)));
   root.querySelectorAll('[data-openpre]').forEach((b) => b.addEventListener('click', () => openPreDetail(b.dataset.openpre)));

@@ -368,7 +368,19 @@ const MODULE_NAME = 'Organismos';
              (3+2 sin hueco); las filas incompletas se centran en vez de estirar una
              tarjeta sola. Aplica también a modo (2→llena) y vínculo (3→llena); en
              móvil (≤560px) se apilan full-width. Cache-busters ?v=1.2.12. */
-const MODULE_VERSION = 'v1.2.12';
+/* v1.2.13 — Bandeja del validador (feedback Doug): (1) el switch superior de
+             sub-vista (Federaciones | Registro público) deja de ser un doble
+             tab y pasa al SEGMENTED CONTROL canónico del DS (`.naowee-segment`,
+             pill estática) CENTRADO. (2) Los tabs de estado de la tabla
+             (Accionables/En revisión/En corrección/Rechazado/Activo/Todos) ganan
+             ICONO acorde a su label. (3) PAGINACIÓN canónica (`.naowee-pagination
+             --small`, 10 por página, Página X de N + prev/next + input) para la
+             tabla extensa. (4) FILTRO de sector (native select estilizado) que
+             solo aparece cuando hay >1 sector visible (útil para Mindeporte que
+             ve Olímpico/Paralímpico/Sordolímpico; oculto en Comité=COC, todo
+             Olímpico) — sin filtros innecesarios; la búsqueda por nombre/NIT
+             sigue siendo el buscador principal. Cache-busters ?v=1.2.13. */
+const MODULE_VERSION = 'v1.2.13';
 
 (function () {
   function mount() {
