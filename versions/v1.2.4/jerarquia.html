@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jerarquía SND — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.4">
+<link rel="stylesheet" href="shared/shell.css?v=1.2.4">
+<link rel="stylesheet" href="shared/components.css?v=1.2.4">
+<link rel="stylesheet" href="shared/jerarquia.css?v=1.2.4">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.4">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-head__title">Jerarquía del Sistema Nacional del Deporte</h1>
+          <p class="page-head__sub">Explora el árbol de organismos deportivos encadenados jerárquicamente. Cada rol ve únicamente su jurisdicción (subárbol).</p>
+        </div>
+
+        <!-- Nota de guía (solo lectura) — .naowee-message canónico -->
+        <div class="naowee-message naowee-message--informative" id="scopeNote" style="margin-bottom:16px">
+          <span class="naowee-message__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <div class="naowee-message__body">
+            <p class="naowee-message__text" id="scopeNoteText">Haz clic en cualquier organismo para abrir su detalle. Las acciones de aprobación (aprobar / rechazar / corrección) se realizan desde la Bandeja.</p>
+          </div>
+        </div>
+
+        <!-- Panel de resumen (jurisdicción + stats del subárbol) -->
+        <div class="naowee-card jq-summary" id="summary"></div>
+
+        <!-- Toolbar: buscador + filtro por estado + contador + expandir/colapsar -->
+        <div class="jq-toolbar">
+          <div class="naowee-searchbox" id="searchBox">
+            <div class="naowee-searchbox__input-wrap">
+              <span class="naowee-searchbox__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+              <input type="text" class="naowee-searchbox__input" id="searchInput" placeholder="Buscar por nombre o NIT…" autocomplete="off" aria-label="Buscar organismo por nombre o NIT">
+              <button type="button" class="naowee-searchbox__clear" id="searchClear" aria-label="Limpiar búsqueda">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="naowee-dropdown" id="estadoDd">
+            <button type="button" class="naowee-dropdown__trigger" id="estadoTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="naowee-dropdown__value" id="estadoValue">Todos los estados</span>
+              <span class="naowee-dropdown__chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </button>
+            <div class="naowee-dropdown__menu" id="estadoMenu" role="listbox"></div>
+          </div>
+
+          <span class="jq-toolbar__count" id="resultCount"></span>
+          <span class="jq-toolbar__spacer"></span>
+          <div class="jq-toolbar__actions">
+            <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="expandAll">Expandir todo</button>
+            <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="collapseAll">Colapsar todo</button>
+          </div>
+        </div>
+
+        <!-- Árbol -->
+        <div class="naowee-card jq-tree-card">
+          <div class="jq-tree" id="tree"></div>
+          <div class="naowee-empty-state jq-empty" id="emptyState">
+            <span class="naowee-empty-state__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <p class="naowee-empty-state__title">Sin resultados</p>
+            <p class="naowee-empty-state__description">Ningún organismo de tu jurisdicción coincide con la búsqueda o el filtro seleccionado.</p>
+            <div class="naowee-empty-state__action">
+              <button type="button" class="naowee-btn naowee-btn--mute naowee-btn--small" id="clearFilters">Limpiar filtros</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    getRoleFromQuery, ROLES,
+    mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher
+  } from './shared/sidebar.js';
+  import {
+    seedDemoData, getOrganismo, childrenOf, allDeportistas,
+    ancestorsOf, countDescendants, deportistasOf, estadoBadgeVariant
+  } from './shared/organismos-data.js';
+  import { ESTADOS } from './shared/estados.js';
+  import { scopeFor } from './shared/permissions.js';
+
+  seedDemoData();
+  const roleCode = getRoleFromQuery();
+  const role = ROLES[roleCode];
+
+  mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: 'jerarquia' });
+  mountHeader({ headerEl: document.getElementById('topHeader'), role });
+  mountBackdrop();
+  mountDemoSwitcher({ roleCode });
+
+  /* ─── Utilidades ─── */
+  const EMOJI = { comite: '🏛️', federacion: '🏅', liga: '🚩', club: '🛡️', deportista: '🏃' };
+  const TYPE_LABEL = { comite: 'Comité', federacion: 'Federación', liga: 'Liga', club: 'Club', deportista: 'Deportista' };
+  const CHAIN = ['COC', 'FED-040', 'LIG-001', 'CLU-001'];   // hilo conductor de la demo
+
+  const norm = (s) => [...String(s == null ? '' : s)]
+    .map((c) => c.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()).join('');
+  const esc = (s) => String(s).replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+  const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
+
+  function badgeHtml(variant, text) {
+    return `<span class="naowee-badge naowee-badge--${variant} naowee-badge--quiet naowee-badge--small">${esc(text)}</span>`;
+  }
+  function depBadge(estado) {
+    return estado === 'vinculado'
+      ? badgeHtml('positive', 'Vinculado')
+      : badgeHtml('informative', 'Autodeclarado');
+  }
+
+  /* ─── Modelo de nodos según rol (jurisdicción) ─── */
+  const scope = scopeFor(roleCode);
+
+  function orgNode(org) {
+    const children = childrenOf(org.id).map(orgNode);
+    if (org.tipo === 'club') deportistasOf(org.id).forEach((d) => children.push(depNode(d)));
+    return {
+      kind: 'org', id: org.id, tipo: org.tipo, org,
+      name: org.nombre, nit: org.nit, deporte: org.deporte, estado: org.estado, children
+    };
+  }
+  function depNode(d) {
+    return { kind: 'dep', id: d.id, tipo: 'deportista', dep: d, name: d.nombre, nit: d.numDoc, deporte: d.deporte, estado: d.estado, children: [] };
+  }
+
+  let roots = [];
+  let minimalChain = false;   // deportista: vista mínima sin contadores heredados
+  if (roleCode === 'DEPORTISTA') {
+    minimalChain = true;
+    const dep = allDeportistas().find((d) => d.id === scope);
+    if (dep && dep.clubId) {
+      const club = getOrganismo(dep.clubId);
+      const chain = [...ancestorsOf(club.id)].reverse();   // [COC, FED-040, LIG-001]
+      chain.push(club);                                    // + CLU-001
+      let level = [depNode(dep)];
+      for (let i = chain.length - 1; i >= 0; i--) {
+        const o = chain[i];
+        level = [{ kind: 'org', id: o.id, tipo: o.tipo, org: o, name: o.nombre, nit: o.nit, deporte: o.deporte, estado: o.estado, children: level }];
+      }
+      roots = level;
+    } else if (dep) {
+      roots = [depNode(dep)];   // autodeclarado — sin cadena
+    }
+  } else if (scope === null) {
+    roots = childrenOf(null).map(orgNode);   // Mindeporte → los 3 comités
+  } else {
+    const own = getOrganismo(scope);
+    roots = own ? [orgNode(own)] : [];
+  }
+
+  /* Expansión por defecto: raíz(es) + hilo conductor. Para Mindeporte
+     (multi-raíz) los comités quedan colapsados (evita volcar 60 federaciones
+     al cargar), pero el hilo queda pre-expandido debajo. */
+  const expandedSet = new Set(CHAIN);
+  if (roleCode === 'DEPORTISTA') { roots.forEach((r) => markChainExpanded(r)); }
+  else if (roots.length === 1) { expandedSet.add(roots[0].id); }
+  else { roots.forEach((r) => expandedSet.delete(r.id)); }   // Mindeporte: comités colapsados
+
+  function markChainExpanded(node) { expandedSet.add(node.id); node.children.forEach(markChainExpanded); }
+
+  /* ─── Render del árbol (HTML) ─── */
+  let orgCountInView = 0;
+
+  function countsHtml(node) {
+    if (minimalChain || node.kind !== 'org') return '';
+    const c = countDescendants(node.id);
+    const parts = [];
+    if (node.tipo === 'comite') parts.push(seg(c.federaciones, 'federación', 'federaciones'));
+    if (node.tipo === 'comite' || node.tipo === 'federacion') parts.push(seg(c.ligas, 'liga', 'ligas'));
+    if (node.tipo !== 'club') parts.push(seg(c.clubes, 'club', 'clubes'));
+    parts.push(seg(c.deportistas, 'deportista', 'deportistas'));
+    if (!parts.length) return '';
+    return `<span class="jq-node__counts">${parts.join('<span aria-hidden="true">·</span>')}</span>`;
+  }
+  const seg = (n, s, p) => `<span class="jq-node__count"><b>${n}</b> ${n === 1 ? s : p}</span>`;
+
+  function subHtml(node) {
+    const type = `<span class="jq-node__type">${TYPE_LABEL[node.tipo]}</span>`;
+    if (node.kind === 'dep') {
+      const d = node.dep;
+      return `${type} · ${esc(d.deporte)}${d.modalidad ? ' — ' + esc(d.modalidad) : ''} · ${esc(d.tipoDoc)} ${esc(d.numDoc)}`;
+    }
+    const o = node.org;
+    const extra = o.tipo === 'club' && o.tipoClub ? ` ${esc(o.tipoClub)}` : '';
+    const deporte = o.deporte && o.deporte !== '—' ? ` · ${esc(o.deporte)}` : (o.sector ? ` · ${esc(o.sector)}` : '');
+    return `<span class="jq-node__type">${TYPE_LABEL[node.tipo]}${extra}</span>${deporte} · NIT ${esc(o.nit)}`;
+  }
+
+  function nodeHtml(node) {
+    if (node.kind === 'org') orgCountInView++;
+    const hasKids = node.children.length > 0;
+    const isExp = expandedSet.has(node.id) && hasKids;
+    const nav = node.kind === 'org';
+    const hay = norm([node.name, node.nit, node.deporte].filter(Boolean).join(' '));
+    const badge = node.kind === 'dep' ? depBadge(node.estado) : badgeHtml(estadoBadgeVariant(node.estado), node.estado);
+
+    const toggle = hasKids
+      ? `<button class="jq-node__toggle" type="button" aria-label="Expandir/colapsar" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>`
+      : `<button class="jq-node__toggle jq-node__toggle--leaf" type="button" tabindex="-1" aria-hidden="true"></button>`;
+
+    const arrow = nav
+      ? `<span class="jq-node__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>`
+      : '';
+
+    const rowAttrs = nav
+      ? ` role="button" tabindex="0" data-nav="1" title="Ver detalle de ${esc(node.name)}"`
+      : '';
+
+    const childrenHtml = hasKids
+      ? `<div class="jq-node__children"${isExp ? '' : ' hidden'}>${node.children.map(nodeHtml).join('')}</div>`
+      : '';
+
+    return `
+      <div class="jq-node jq-node--${node.tipo} ${isExp ? 'is-expanded' : ''}"
+           data-id="${esc(node.id)}" data-kind="${node.kind}" data-tipo="${node.tipo}"
+           data-estado="${esc(node.estado)}" data-hay="${esc(hay)}" data-hayname="${esc(norm(node.name))}"
+           data-name="${esc(node.name)}">
+        <div class="jq-node__row"${rowAttrs}>
+          ${toggle}
+          <span class="jq-node__emoji">${EMOJI[node.tipo]}</span>
+          <span class="jq-node__main">
+            <span class="jq-node__name">${esc(node.name)}</span>
+            <span class="jq-node__sub">${subHtml(node)}</span>
+          </span>
+          ${countsHtml(node)}
+          <span class="jq-node__badge">${badge}</span>
+          ${arrow}
+        </div>
+        ${childrenHtml}
+      </div>`;
+  }
+
+  const tree = document.getElementById('tree');
+  tree.innerHTML = roots.map(nodeHtml).join('');
+
+  /* ─── Panel de resumen ─── */
+  renderSummary();
+  function renderSummary() {
+    const box = document.getElementById('summary');
+    const info = scopeInfo();
+    const stats = statsFor();
+    box.innerHTML = `
+      <div class="jq-summary__scope">
+        <span class="jq-summary__scope-emoji">${info.emoji}</span>
+        <div class="jq-summary__scope-text">
+          <p class="jq-summary__scope-label">${esc(info.label)}</p>
+          <p class="jq-summary__scope-name">${esc(info.name)}</p>
+        </div>
+        <span class="jq-summary__ro" title="Explorador de solo lectura (las acciones viven en la Bandeja)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          Solo lectura
+        </span>
+      </div>
+      <div class="jq-stats">
+        ${stats.map((s) => `<div class="jq-stat ${s.accent ? 'jq-stat--accent' : ''}"><div class="jq-stat__val">${s.val}</div><div class="jq-stat__lbl">${esc(s.lbl)}</div></div>`).join('')}
+      </div>`;
+  }
+
+  function scopeInfo() {
+    if (roleCode === 'MINDEPORTE') return { emoji: '🇨🇴', label: 'Jurisdicción · rectoría del SND', name: 'Sistema Nacional del Deporte' };
+    if (roleCode === 'DEPORTISTA') {
+      const dep = allDeportistas().find((d) => d.id === scope);
+      const club = dep && dep.clubId ? getOrganismo(dep.clubId) : null;
+      return { emoji: '🏃', label: 'Deportista · tu cadena heredada', name: dep ? `${dep.nombre}${club ? ' · ' + club.nombre : ' · Sin club (autodeclarado)'}` : '—' };
+    }
+    const org = getOrganismo(scope);
+    return { emoji: EMOJI[org.tipo], label: `${TYPE_LABEL[org.tipo]} · tu jurisdicción`, name: org.nombre };
+  }
+
+  function statsFor() {
+    if (roleCode === 'DEPORTISTA') {
+      const dep = allDeportistas().find((d) => d.id === scope);
+      const club = dep && dep.clubId ? getOrganismo(dep.clubId) : null;
+      const n = club ? 1 : 0;
+      return [
+        { val: n, lbl: 'Comité', accent: true }, { val: n, lbl: 'Federación' },
+        { val: n, lbl: 'Liga' }, { val: n, lbl: 'Club' }
+      ];
+    }
+    const c = countDescendants(scope);
+    if (roleCode === 'MINDEPORTE') {
+      return [
+        { val: childrenOf(null).length, lbl: 'Comités', accent: true },
+        { val: c.federaciones, lbl: 'Federaciones' }, { val: c.ligas, lbl: 'Ligas' },
+        { val: c.clubes, lbl: 'Clubes' }, { val: c.deportistas, lbl: 'Deportistas' }
+      ];
+    }
+    if (roleCode === 'COMITE') return [{ val: c.federaciones, lbl: 'Federaciones', accent: true }, { val: c.ligas, lbl: 'Ligas' }, { val: c.clubes, lbl: 'Clubes' }, { val: c.deportistas, lbl: 'Deportistas' }];
+    if (roleCode === 'FEDERACION') return [{ val: c.ligas, lbl: 'Ligas', accent: true }, { val: c.clubes, lbl: 'Clubes' }, { val: c.deportistas, lbl: 'Deportistas' }];
+    if (roleCode === 'LIGA') return [{ val: c.clubes, lbl: 'Clubes', accent: true }, { val: c.deportistas, lbl: 'Deportistas' }];
+    return [{ val: c.deportistas, lbl: 'Deportistas afiliados', accent: true }];   // CLUB
+  }
+
+  /* ─── Estado del filtro (dropdown por estado) ─── */
+  let currentEstado = 'todos';
+  const ESTADO_VARIANT = { Preinscrito: 'neutral', 'En revisión': 'caution', Activo: 'positive', Rechazado: 'negative', Suspendido: 'caution', Inactivo: 'neutral', Cancelado: 'negative' };
+  const DOT_COLOR = { positive: 'var(--green)', caution: '#d98a00', negative: 'var(--red)', neutral: 'var(--text-secondary)', informative: 'var(--blue-info)' };
+
+  const estadoMenu = document.getElementById('estadoMenu');
+  const estadoOpts = [{ v: 'todos', label: 'Todos los estados' }, ...ESTADOS.map((e) => ({ v: e, label: e }))];
+  estadoMenu.innerHTML = estadoOpts.map((o) => {
+    const dot = o.v === 'todos' ? '' : `<span class="jq-dd-dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${DOT_COLOR[ESTADO_VARIANT[o.v]]}"></span>`;
+    return `<div class="naowee-dropdown__opt ${o.v === 'todos' ? 'is-selected' : ''}" role="option" data-value="${o.v}">
+        ${dot}<span class="jq-dd-label">${o.label}</span>
+        <span class="naowee-dropdown__opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+      </div>`;
+  }).join('');
+
+  const estadoDd = document.getElementById('estadoDd');
+  const estadoTrigger = document.getElementById('estadoTrigger');
+  const estadoValue = document.getElementById('estadoValue');
+  estadoTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = estadoDd.classList.toggle('naowee-dropdown--open');
+    estadoTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', (e) => { if (!estadoDd.contains(e.target)) { estadoDd.classList.remove('naowee-dropdown--open'); estadoTrigger.setAttribute('aria-expanded', 'false'); } });
+  estadoMenu.addEventListener('click', (e) => {
+    const opt = e.target.closest('.naowee-dropdown__opt');
+    if (!opt) return;
+    currentEstado = opt.dataset.value;
+    estadoMenu.querySelectorAll('.naowee-dropdown__opt').forEach((o) => o.classList.toggle('is-selected', o === opt));
+    estadoValue.textContent = opt.querySelector('.jq-dd-label').textContent;
+    estadoDd.classList.remove('naowee-dropdown--open');
+    estadoTrigger.setAttribute('aria-expanded', 'false');
+    applyView();
+  });
+
+  /* ─── Buscador ─── */
+  const searchBox = document.getElementById('searchBox');
+  const searchInput = document.getElementById('searchInput');
+  const searchClear = document.getElementById('searchClear');
+  searchInput.addEventListener('input', () => {
+    searchBox.classList.toggle('naowee-searchbox--has-value', searchInput.value.length > 0);
+    applyView();
+  });
+  searchClear.addEventListener('click', () => { searchInput.value = ''; searchBox.classList.remove('naowee-searchbox--has-value'); applyView(); searchInput.focus(); });
+
+  /* ─── Expandir / colapsar / limpiar ─── */
+  document.getElementById('expandAll').addEventListener('click', () => setAllExpanded(true));
+  document.getElementById('collapseAll').addEventListener('click', () => setAllExpanded(false));
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    searchInput.value = ''; searchBox.classList.remove('naowee-searchbox--has-value');
+    currentEstado = 'todos'; estadoValue.textContent = 'Todos los estados';
+    estadoMenu.querySelectorAll('.naowee-dropdown__opt').forEach((o) => o.classList.toggle('is-selected', o.dataset.value === 'todos'));
+    applyView();
+  });
+
+  function setAllExpanded(exp) {
+    tree.querySelectorAll('.jq-node').forEach((n) => setExpanded(n, exp, true));
+  }
+  function setExpanded(node, exp, persist) {
+    const kids = node.querySelector(':scope > .jq-node__children');
+    if (!kids) return;
+    node.classList.toggle('is-expanded', exp);
+    kids.hidden = !exp;
+    if (persist) { if (exp) expandedSet.add(node.dataset.id); else expandedSet.delete(node.dataset.id); }
+  }
+
+  /* ─── Interacción del árbol (delegación) ─── */
+  tree.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.jq-node__toggle');
+    if (toggleBtn && !toggleBtn.classList.contains('jq-node__toggle--leaf')) {
+      e.stopPropagation();
+      const node = toggleBtn.closest('.jq-node');
+      setExpanded(node, !node.classList.contains('is-expanded'), true);
+      return;
+    }
+    const row = e.target.closest('.jq-node__row[data-nav]');
+    if (row) navigate(row.closest('.jq-node').dataset.id);
+  });
+  tree.addEventListener('keydown', (e) => {
+    const row = e.target.closest('.jq-node__row[data-nav]');
+    if (!row) return;
+    if (e.key === 'Enter') { e.preventDefault(); navigate(row.closest('.jq-node').dataset.id); }
+    else if (e.key === ' ') {
+      e.preventDefault();
+      const node = row.closest('.jq-node');
+      if (node.querySelector(':scope > .jq-node__children')) setExpanded(node, !node.classList.contains('is-expanded'), true);
+    }
+  });
+  function navigate(id) { window.location.href = `organismo-detalle.html?id=${encodeURIComponent(id)}&role=${roleCode}`; }
+
+  /* ─── Filtrado + búsqueda (vista) ─── */
+  const resultCount = document.getElementById('resultCount');
+  const emptyState = document.getElementById('emptyState');
+  const treeCard = tree; // el árbol se oculta con vacío
+
+  function applyView() {
+    const q = norm(searchInput.value.trim());
+    const est = currentEstado;
+    const active = q !== '' || est !== 'todos';
+    const nodes = [...tree.querySelectorAll('.jq-node')];
+
+    // reset
+    nodes.forEach((n) => {
+      n.classList.remove('jq-hidden');
+      const nameEl = n.querySelector(':scope > .jq-node__row .jq-node__name');
+      if (nameEl) nameEl.textContent = n.dataset.name;
+      n.querySelector(':scope > .jq-node__row')?.classList.remove('jq-node__row--match');
+    });
+
+    if (!active) {
+      nodes.forEach((n) => setExpanded(n, expandedSet.has(n.dataset.id), false));
+      resultCount.innerHTML = `Mostrando <strong>${orgCountInView}</strong> ${orgCountInView === 1 ? 'organismo' : 'organismos'}`;
+      emptyState.classList.remove('is-shown');
+      tree.style.display = '';
+      return;
+    }
+
+    const matches = nodes.filter((n) => {
+      if (q && !n.dataset.hay.includes(q)) return false;
+      if (est !== 'todos') {
+        if (n.dataset.kind !== 'org') return false;
+        if (n.dataset.estado !== est) return false;
+      }
+      return true;
+    });
+
+    nodes.forEach((n) => n.classList.add('jq-hidden'));
+    const toExpand = new Set();
+    matches.forEach((m) => {
+      m.classList.remove('jq-hidden');
+      m.querySelector(':scope > .jq-node__row')?.classList.add('jq-node__row--match');
+      if (q) highlight(m, q);
+      let p = m.parentElement.closest('.jq-node');
+      while (p) { p.classList.remove('jq-hidden'); toExpand.add(p); p = p.parentElement.closest('.jq-node'); }
+    });
+    nodes.forEach((n) => { if (toExpand.has(n)) setExpanded(n, true, false); });
+
+    resultCount.innerHTML = `<strong>${matches.length}</strong> ${matches.length === 1 ? 'resultado' : 'resultados'}`;
+    emptyState.classList.toggle('is-shown', matches.length === 0);
+    tree.style.display = matches.length === 0 ? 'none' : '';
+  }
+
+  function highlight(node, q) {
+    const el = node.querySelector(':scope > .jq-node__row .jq-node__name');
+    if (!el) return;
+    const hayName = node.dataset.hayname;
+    const i = hayName.indexOf(q);
+    if (i < 0) { el.textContent = node.dataset.name; return; }   // coincidió por NIT, no por nombre
+    const o = node.dataset.name;
+    el.innerHTML = `${esc(o.slice(0, i))}<mark>${esc(o.slice(i, i + q.length))}</mark>${esc(o.slice(i + q.length))}`;
+  }
+
+  applyView();   // estado inicial (contador)
+</script>
+<script src="shared/naowee-footer.js?v=1.2.4"></script>
+<script src="shared/tour.js?v=1.2.4"></script>
+
+</body>
+</html>
