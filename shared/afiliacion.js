@@ -17,6 +17,7 @@ import {
   solicitudDeDeportista, allSolicitudes, getOrganismo
 } from './organismos-data.js';
 import { buildDeportistaDetalle } from './deportista-detalle.js';
+import { qrSvg, qrMatrix } from './qr.js';
 
 /* ── Iconos (stroke currentColor) ── */
 const I = {
@@ -48,11 +49,15 @@ const I = {
   comite:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V10l8-5 8 5v11M9 21v-6h6v6"/></svg>',
   federacion:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a1 1 0 0 1 1-1h13l-2.5 4L18 11H5"/></svg>',
   liga:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17.5" cy="9.5" r="2.6"/><path d="M15 20a5 5 0 0 1 7-4.6"/></svg>',
-  club:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/></svg>'
+  club:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/></svg>',
+  carne:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8" cy="11" r="2.2"/><path d="M4.5 16.5c.7-1.6 2-2.5 3.5-2.5s2.8.9 3.5 2.5"/><line x1="15" y1="10" x2="19" y2="10"/><line x1="15" y1="13.5" x2="19" y2="13.5"/></svg>',
+  download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  cert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><polyline points="15 3 15 7 19 7"/><circle cx="12" cy="12" r="2.4"/><path d="M10.4 13.8 9.5 18l2.5-1.4 2.5 1.4-.9-4.2"/></svg>'
 };
 
 const TIER = { olimpico:{label:'Olímpico',ico:I.olimpico}, profesional:{label:'Profesional',ico:I.medal}, juvenil:{label:'Juvenil',ico:I.user}, amateur:{label:'Amateur',ico:I.shield} };
 const MEDAL_EMOJI = { Oro:'🥇', Plata:'🥈', Bronce:'🥉' };
+const DEPORTE_EMOJI = { Patinaje:'🛼', Natación:'🏊', Fútbol:'⚽', Ciclismo:'🚴', Atletismo:'🏃', Baloncesto:'🏀' };
 const SOL_EMOJI = { Enviada:I.send, Aprobada:I.check, Rechazada:I.x, Retirada:I.refresh };
 const CLUB_EMOJI = '🛡️';
 
@@ -108,7 +113,7 @@ function navGroups() {
   const sol = { id:'solicitudes', label:'Solicitudes', icon:I.link };
   if (solCount) sol.badge = String(solCount);
   return [
-    { label:'Perfil', items:[ { id:'resumen', label:'Resumen', icon:I.id }, { id:'documentos', label:'Documentos', icon:I.doc, badge:'1' } ] },
+    { label:'Perfil', items:[ { id:'resumen', label:'Resumen', icon:I.id }, { id:'documentos', label:'Documentos', icon:I.doc, badge:'1' }, { id:'carne', label:'Carné digital', icon:I.carne } ] },
     { label:'Afiliación', items:[ miclub, sol ] },
     { label:'Deportivo', items:[ { id:'eventos', label:'Eventos', icon:I.cal }, { id:'historial', label:'Historial', icon:I.award } ] },
     { label:'Cuenta', items:[ { id:'config', label:'Configuraciones', icon:I.gear }, { id:'notif', label:'Notificaciones', icon:I.bell }, { id:'seguridad', label:'Seguridad', icon:I.shield, alert:true } ] }
@@ -206,7 +211,7 @@ function bioTile(ico, l, v, c) { return `<div class="pf-bio-tile pf-bio-tile--${
 /* ── Panel central por sección ── */
 function renderPanel() {
   const p = document.getElementById('pfPanel');
-  const dispatch = { resumen: resumenHTML, documentos: documentosHTML, miclub: miclubHTML, solicitudes: solicitudesHTML, eventos: eventosHTML, historial: historialHTML, config: configHTML, notif: notifHTML, seguridad: seguridadHTML };
+  const dispatch = { resumen: resumenHTML, documentos: documentosHTML, carne: carneHTML, miclub: miclubHTML, solicitudes: solicitudesHTML, eventos: eventosHTML, historial: historialHTML, config: configHTML, notif: notifHTML, seguridad: seguridadHTML };
   p.innerHTML = (dispatch[activeSec] || resumenHTML)();
   bindPanel();
 }
@@ -233,6 +238,16 @@ function bindPanel() {
     }
   });
   if (activeSec === 'resumen') document.querySelector('#pfPanel .pf-edit')?.addEventListener('click', openEditModal);
+  // Carné digital (HURU-10): descarga del carné (SVG vectorial) y del certificado (HTML imprimible).
+  document.getElementById('dlCarne')?.addEventListener('click', () => {
+    const slug = ATLETA.nombreCompleto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    downloadBlob(`carne-suid-${ATLETA.id}-${slug}.svg`, carneSvg(), 'image/svg+xml');
+    toast('Carné descargado (SVG).', 'success');
+  });
+  document.getElementById('dlCert')?.addEventListener('click', () => {
+    downloadBlob(`certificado-registro-${ATLETA.id}.html`, certificadoHtml(), 'text/html');
+    toast('Certificado de registro descargado.', 'success');
+  });
   // Todos los CTA "asociar/buscar/reintentar" comparten data-asociar (evita ids duplicados).
   document.querySelectorAll('#pfPanel [data-asociar]').forEach((b) => b.addEventListener('click', openAsociarModal));
   // Retirar / cambiar = solicitar BAJA (el club debe confirmar) → modal de advertencia intermedio.
@@ -303,6 +318,154 @@ function documentosHTML() {
     </div>`;
   }).join('');
   return `${head('Documentos', 'Soportes de tu registro único de persona en el SUID.')}<div class="pf-body">${rows}</div>`;
+}
+
+/* ══════════ Carné digital + QR verificable + certificado (HURU-10) ══════════ */
+const VERIFY_BASE = 'https://suid.demo.co/v/';
+function estadoTxt(st) {
+  return ({ vinculado: 'Vinculado', baja: 'Baja en trámite', pendiente: 'Solicitud enviada', rechazada: 'Autodeclarado', autodeclarado: 'Autodeclarado' })[st.key] || 'Autodeclarado';
+}
+/* Payload del QR: datos básicos + contacto de emergencia + enlace de verificación
+   (compacto y delimitado por | para que quepa en una versión de QR legible). */
+function carnePayload(st) {
+  const a = ATLETA;
+  return [
+    'SUID', a.id, a.nombreCompleto, `${a.doc.tipoCorto} ${a.doc.numero}`,
+    a.deporte, estadoTxt(st), a.clubNombre || 'Sin afiliación', 'Sangre ' + a.sangre,
+    `SOS ${a.contacto.emergenciaNombre} ${a.contacto.emergenciaTel}`,
+    VERIFY_BASE + a.id
+  ].join('|');
+}
+function carneHTML() {
+  const st = affState();
+  const afiliado = st.key === 'vinculado' || st.key === 'baja';
+  const qr = qrSvg(carnePayload(st), { size: 118, margin: 2, dark: '#0f1e3d' });
+  const row = (l, v) => `<div class="pf-carne__row"><span class="pf-carne__row-l">${l}</span><span class="pf-carne__row-v">${v}</span></div>`;
+  const cadena = afiliado
+    ? [ATLETA.ligaNombre, ATLETA.federacionNombre].filter(Boolean).join(' · ') || '—'
+    : null;
+  return `${head('Carné digital', 'Tu credencial del Registro Único del Deporte, con código QR verificable.')}
+    <div class="pf-body">
+      <div class="pf-carne" id="pfCarne">
+        <div class="pf-carne__band">
+          <span class="pf-carne__brand">SUID · Registro Único del Deporte</span>
+          <span class="pf-carne__id">${esc(ATLETA.id)}</span>
+        </div>
+        <div class="pf-carne__main">
+          <div class="pf-carne__left">
+            <div class="pf-carne__ava pf-ava--${ATLETA.tier}">${esc(ATLETA.avatar)}</div>
+            <span class="pf-carne__tier">${TIER[ATLETA.tier].label}</span>
+          </div>
+          <div class="pf-carne__info">
+            <div class="pf-carne__name">${esc(ATLETA.nombreCompleto)}</div>
+            <div class="pf-carne__doc">${esc(ATLETA.doc.tipoCorto)} ${esc(ATLETA.doc.numero)}</div>
+            <div class="pf-carne__rows">
+              ${row('Deporte', `${ATLETA.deporteEmoji} ${esc(ATLETA.deporte)}`)}
+              ${row('Estado', esc(estadoTxt(st)))}
+              ${row('Club', esc(ATLETA.clubNombre || 'Sin afiliación'))}
+              ${cadena ? row('Cadena', esc(cadena)) : ''}
+              ${row('Sangre', esc(ATLETA.sangre))}
+            </div>
+            <div class="pf-carne__sos">
+              <span class="pf-carne__sos-l">Contacto de emergencia</span>
+              <span class="pf-carne__sos-v">${esc(ATLETA.contacto.emergenciaNombre)} · ${esc(ATLETA.contacto.emergenciaTel)}</span>
+            </div>
+          </div>
+          <div class="pf-carne__qr">${qr}<span class="pf-carne__qr-cap">Escanea para verificar</span></div>
+        </div>
+      </div>
+      <div class="pf-carne-actions">
+        <button type="button" class="naowee-btn naowee-btn--loud" id="dlCarne">${I.download} Descargar carné</button>
+        <button type="button" class="naowee-btn naowee-btn--outline" id="dlCert">${I.cert} Descargar certificado de registro</button>
+      </div>
+      <p class="pf-carne-note">${I.shieldCheck}<span>El código QR contiene tus <strong>datos básicos</strong> y <strong>contacto de emergencia</strong>, más un enlace de verificación del SUID (${esc(VERIFY_BASE + ATLETA.id)}). En esta demo la verificación es simulada.</span></p>
+    </div>`;
+}
+
+/* QR como rectángulos SVG (para el carné/certificado descargables). */
+function qrRectsSvg(payload, x, y, px, dark) {
+  const m = qrMatrix(payload, 'M');
+  let s = '';
+  for (let r = 0; r < m.size; r++) for (let c = 0; c < m.size; c++) if (m.modules[r][c]) s += `<rect x="${(x + c * px).toFixed(1)}" y="${(y + r * px).toFixed(1)}" width="${px}" height="${px}"/>`;
+  return { svg: `<g fill="${dark}">${s}</g>`, modules: m.size };
+}
+/* Carné como SVG autocontenido y descargable (vector, sin dependencias). */
+function carneSvg() {
+  const st = affState();
+  const a = ATLETA, W = 620, H = 360;
+  const q = qrRectsSvg(carnePayload(st), 0, 0, 3, '#0f1e3d');
+  const qpx = q.modules * 3, qScale = 132 / qpx, qx = 448, qy = 150;
+  const line = (x, y, l, v) => `<text x="${x}" y="${y}" font-size="12.5" fill="#646587">${esc(l)}</text><text x="${x + 78}" y="${y}" font-size="12.5" font-weight="600" fill="#282834">${esc(v)}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Inter, Arial, sans-serif">
+    <rect width="${W}" height="${H}" rx="18" fill="#ffffff" stroke="#e7e9f3"/>
+    <path d="M0 18 A18 18 0 0 1 18 0 H${W - 18} A18 18 0 0 1 ${W} 18 V64 H0 Z" fill="#002b5b"/>
+    <text x="24" y="40" font-size="14" font-weight="700" fill="#ffffff">SUID · Registro Único del Deporte</text>
+    <text x="${W - 24}" y="40" font-size="13" font-weight="700" fill="#cfe0f5" text-anchor="end">${esc(a.id)}</text>
+    <circle cx="70" cy="128" r="30" fill="#d74009"/>
+    <text x="70" y="135" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle">${esc(a.avatar)}</text>
+    <text x="24" y="185" font-size="18" font-weight="800" fill="#282834">${esc(a.nombreCompleto)}</text>
+    <text x="24" y="205" font-size="12.5" fill="#646587">${esc(a.doc.tipoCorto)} ${esc(a.doc.numero)} · ${esc(TIER[a.tier].label)}</text>
+    ${line(24, 240, 'Deporte', a.deporte)}
+    ${line(24, 262, 'Estado', estadoTxt(st))}
+    ${line(24, 284, 'Club', a.clubNombre || 'Sin afiliación')}
+    ${line(24, 306, 'Sangre', a.sangre)}
+    <rect x="24" y="320" width="392" height="26" rx="6" fill="#fff0ee" stroke="#ffc4bb"/>
+    <text x="34" y="337" font-size="11.5" fill="#b3261e" font-weight="700">SOS</text>
+    <text x="66" y="337" font-size="11.5" fill="#282834">${esc(a.contacto.emergenciaNombre)} · ${esc(a.contacto.emergenciaTel)}</text>
+    <rect x="${qx - 8}" y="${qy - 8}" width="148" height="148" rx="8" fill="#ffffff" stroke="#e7e9f3"/>
+    <g transform="translate(${qx}, ${qy}) scale(${qScale.toFixed(4)})">${q.svg}</g>
+    <text x="${qx + 66}" y="${qy + 156}" font-size="10.5" fill="#9ca0b8" text-anchor="middle">Escanea para verificar</text>
+  </svg>`;
+}
+/* Certificado de registro descargable (HTML autocontenido, imprimible a PDF). */
+function certificadoHtml() {
+  const st = affState();
+  const a = ATLETA;
+  const qr = qrSvg(carnePayload(st), { size: 132, margin: 2, dark: '#002b5b' });
+  const fecha = new Date(2026, 6, 17).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+  const rows = [
+    ['Identificación', `${a.doc.tipo} ${a.doc.numero}`], ['Deporte', a.deporte],
+    ['Categoría', TIER[a.tier].label], ['Estado de afiliación', estadoTxt(st)],
+    ['Club', a.clubNombre || 'Sin afiliación'], ['Liga', a.ligaNombre || '—'],
+    ['Federación', a.federacionNombre || '—'], ['Contacto de emergencia', `${a.contacto.emergenciaNombre} · ${a.contacto.emergenciaTel}`]
+  ].map(([l, v]) => `<tr><td class="l">${esc(l)}</td><td class="v">${esc(v)}</td></tr>`).join('');
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Certificado de registro — ${esc(a.nombreCompleto)}</title>
+<style>
+  *{box-sizing:border-box} body{font-family:Inter,Arial,sans-serif;color:#282834;margin:0;background:#f5f6fa;padding:32px}
+  .cert{max-width:760px;margin:0 auto;background:#fff;border:1px solid #e7e9f3;border-radius:16px;overflow:hidden}
+  .band{background:linear-gradient(120deg,#002b5b,#0d3b73);color:#fff;padding:22px 32px;display:flex;justify-content:space-between;align-items:center}
+  .band h1{font-size:18px;margin:0} .band span{font-size:12px;opacity:.85}
+  .body{padding:32px;display:flex;gap:28px} .main{flex:1}
+  .lead{font-size:13px;color:#646587;line-height:1.6;margin:0 0 20px}
+  .name{font-size:24px;font-weight:800;margin:0 0 4px} .sub{color:#646587;font-size:13px;margin:0 0 20px}
+  table{width:100%;border-collapse:collapse} td{padding:8px 0;border-top:1px solid #eef0f6;font-size:13px;vertical-align:top}
+  td.l{color:#9ca0b8;width:180px} td.v{font-weight:600}
+  .qr{text-align:center;flex-shrink:0} .qr svg{border:1px solid #e7e9f3;border-radius:8px} .qr small{display:block;color:#9ca0b8;font-size:11px;margin-top:6px}
+  .foot{padding:18px 32px;border-top:1px solid #eef0f6;color:#9ca0b8;font-size:11.5px;line-height:1.6}
+  @media print{body{background:#fff;padding:0}.cert{border:none}}
+</style></head><body>
+<div class="cert">
+  <div class="band"><h1>Certificado de registro · SUID</h1><span>Sistema Único de Información del Deporte</span></div>
+  <div class="body">
+    <div class="main">
+      <p class="lead">El Sistema Único de Información del Deporte certifica que la siguiente persona se encuentra registrada en el Registro Único del Deporte:</p>
+      <p class="name">${esc(a.nombreCompleto)}</p>
+      <p class="sub">Radicado: ${esc(a.id)} · Fecha de emisión: ${esc(fecha)}</p>
+      <table>${rows}</table>
+    </div>
+    <div class="qr">${qr}<small>Verificación<br>${esc(VERIFY_BASE + a.id)}</small></div>
+  </div>
+  <div class="foot">Documento generado en modo demostración. La verificación por QR es simulada. El presente certificado no constituye un acto administrativo oficial.</div>
+</div>
+</body></html>`;
+}
+function downloadBlob(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
 /* ══════════ Mi club — sección estrella (T7) ══════════ */
@@ -468,6 +631,37 @@ function trayectoriaHTML() {
     </div>`).join('')}</div>`;
 }
 
+/* Medallería HURU-10: suma por tipo (Oro/Plata/Bronce) + agrupada por deporte
+   (tallero), además del listado de detalle. */
+function medalTally(meds) {
+  const t = { Oro: 0, Plata: 0, Bronce: 0 };
+  meds.forEach((m) => { if (t[m.medalla] != null) t[m.medalla]++; });
+  return t;
+}
+function medalPorDeporte(meds) {
+  const map = {};
+  meds.forEach((m) => {
+    const dep = m.deporte || ATLETA.deporte || '—';
+    const c = map[dep] || (map[dep] = { Oro: 0, Plata: 0, Bronce: 0, total: 0 });
+    if (c[m.medalla] != null) c[m.medalla]++;
+    c.total++;
+  });
+  return map;
+}
+function talleroHTML() {
+  const meds = ATLETA.medalleria;
+  if (!meds.length) return '';
+  const t = medalTally(meds);
+  const tile = (tipo, n) => `<div class="pf-tally__item pf-tally__item--${tipo.toLowerCase()}"><span class="pf-tally__medal">${MEDAL_EMOJI[tipo]}</span><span class="pf-tally__n">${n}</span><span class="pf-tally__l">${tipo}</span></div>`;
+  const porDep = medalPorDeporte(meds);
+  const depRows = Object.keys(porDep).map((dep) => {
+    const c = porDep[dep];
+    return `<div class="pf-tally-row"><span class="pf-tally-row__dep">${DEPORTE_EMOJI[dep] || '🏅'} ${esc(dep)}</span><span class="pf-tally-row__meds"><span class="m-oro">${MEDAL_EMOJI.Oro} ${c.Oro}</span><span class="m-plata">${MEDAL_EMOJI.Plata} ${c.Plata}</span><span class="m-bronce">${MEDAL_EMOJI.Bronce} ${c.Bronce}</span></span><span class="pf-tally-row__total">${c.total}</span></div>`;
+  }).join('');
+  return `<div class="pf-tally">${tile('Oro', t.Oro)}${tile('Plata', t.Plata)}${tile('Bronce', t.Bronce)}<div class="pf-tally__item pf-tally__item--total"><span class="pf-tally__n">${meds.length}</span><span class="pf-tally__l">Total</span></div></div>
+    <div class="pf-tally-bydep"><div class="pf-tally-bydep__h">Por deporte</div>${depRows}</div>`;
+}
+
 function historialHTML() {
   const RANK_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';
   const TABS = [['trayectoria', 'Trayectoria', I.clock], ['medalleria', 'Medallería', I.medal], ['resultados', 'Resultados', RANK_ICO]];
@@ -476,7 +670,9 @@ function historialHTML() {
   if (activeHist === 'trayectoria') {
     body = trayectoriaHTML();
   } else if (activeHist === 'medalleria') {
-    body = ATLETA.medalleria.length ? ATLETA.medalleria.map((m) => `<div class="pf-tr"><span class="pf-tr__medal m-${m.medalla.toLowerCase()}">${MEDAL_EMOJI[m.medalla]}</span><span><span class="pf-tr__nm">${esc(m.evento)}</span><span class="pf-tr__sub">${esc(m.prueba)} · ${esc(m.fecha)}</span></span><span class="pf-tr__rk is-podio">${m.medalla}</span></div>`).join('') : `<div class="pf-empty">Sin medallas registradas.</div>`;
+    body = ATLETA.medalleria.length
+      ? talleroHTML() + '<div class="pf-tally-list">' + ATLETA.medalleria.map((m) => `<div class="pf-tr"><span class="pf-tr__medal m-${m.medalla.toLowerCase()}">${MEDAL_EMOJI[m.medalla]}</span><span><span class="pf-tr__nm">${esc(m.evento)}</span><span class="pf-tr__sub">${esc(m.prueba)} · ${esc(m.fecha)}</span></span><span class="pf-tr__rk is-podio">${m.medalla}</span></div>`).join('') + '</div>'
+      : `<div class="pf-empty">Sin medallas registradas.</div>`;
   } else {
     body = ATLETA.resultados.length ? ATLETA.resultados.map((r) => { const cls = r.ranking <= 3 ? r.ranking : 'n'; const tag = r.ranking <= 3 ? '<span class="pf-res__tag">Podio</span>' : ''; return `<div class="pf-res"><span class="pf-res__pos pf-res__pos--${cls}">${r.ranking}°</span><span class="pf-res__body"><span class="pf-res__nm">${esc(r.evento)}</span><span class="pf-res__sub">${esc(r.prueba)} · ${esc(r.fecha)}</span></span>${tag}</div>`; }).join('') : `<div class="pf-empty">Sin resultados registrados.</div>`;
   }

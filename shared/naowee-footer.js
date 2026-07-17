@@ -321,7 +321,17 @@ const MODULE_NAME = 'Organismos';
             consentimiento, edad <18 y aceptación de políticas no se omiten.
             El flujo estándar (deportista propio · personal · entidad) queda igual
             (Tipo · Datos · Documentos · Listo). Cache-busters ?v=1.2.7. */
-const MODULE_VERSION = 'v1.2.7';
+/* v1.2.8 — Carné digital + QR verificable + certificado + medallería tallero
+            (HURU-10, QA fase 3). El perfil del deportista gana la sección
+            "Carné digital": credencial del Registro Único con datos básicos,
+            cadena heredada, contacto de emergencia y CÓDIGO QR REAL escaneable
+            (codificador propio sin dependencias, port fiel de Nayuki MIT en
+            shared/qr.js) que porta esos datos + enlace de verificación. Dos
+            descargas cliente-side: carné (SVG vectorial) y certificado de
+            registro (HTML imprimible con QR). La pestaña Medallería suma un
+            TALLERO por tipo (Oro/Plata/Bronce + total) y un desglose por
+            deporte, sobre el listado de detalle. Cache-busters ?v=1.2.8. */
+const MODULE_VERSION = 'v1.2.8';
 
 (function () {
   function mount() {
