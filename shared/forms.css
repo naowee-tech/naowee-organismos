@@ -340,18 +340,26 @@
 @keyframes regSuccessPop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .reg-success__title { font-size: 22px; font-weight: 800; color: var(--azul); margin: 0 0 8px; letter-spacing: -.4px; }
 .reg-success__lead { font-size: 14px; color: var(--text-secondary); margin: 0 auto 20px; max-width: 480px; line-height: 1.55; }
-.reg-receipt { max-width: 460px; margin: 22px auto 0; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: left; overflow: hidden; }
-.reg-receipt__head { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-soft); border-bottom: 1px solid var(--border); }
-.reg-receipt__ava { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); background: var(--bg-soft); }
-.reg-receipt__ava svg { width: 22px; height: 22px; }
+.reg-receipt { max-width: 460px; margin: 22px auto 0; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: left; overflow: hidden; background: #fff; }
+.reg-receipt__head { display: flex; align-items: center; gap: 13px; padding: 15px 16px; background: linear-gradient(180deg, var(--bg-soft), #fbfcfe); border-bottom: 1px solid var(--border); }
+/* Avatar de identidad = chip FUERTE con gradiente por tipo + ícono blanco (foco visual del recibo). */
+.reg-receipt__ava { width: 48px; height: 48px; border-radius: var(--radius-lg); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: linear-gradient(135deg, #7b8194, #545a6e); box-shadow: 0 6px 16px -7px rgba(20,22,38,.5), inset 0 1px 0 rgba(255,255,255,.22); }
+.reg-receipt__ava svg { width: 25px; height: 25px; }
+.reg-receipt__ava--deportista { background: linear-gradient(135deg, #ff8a3d, #d74009); box-shadow: 0 6px 16px -7px rgba(215,64,9,.55), inset 0 1px 0 rgba(255,255,255,.25); }
+.reg-receipt__ava--personal { background: linear-gradient(135deg, #4f9bff, #1f78d1); box-shadow: 0 6px 16px -7px rgba(31,120,209,.5), inset 0 1px 0 rgba(255,255,255,.25); }
+.reg-receipt__ava--entidad { background: linear-gradient(135deg, #0d3b73, #002b5b); box-shadow: 0 6px 16px -7px rgba(0,43,91,.5), inset 0 1px 0 rgba(255,255,255,.2); }
 .reg-receipt__name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
 .reg-receipt__meta { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
 .reg-receipt__rows { padding: 4px 16px 10px; }
 /* Fila del recibo: ícono acotado (los SVG no traen tamaño) + clave + valor a la derecha. */
-.reg-receipt__row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.reg-receipt__row { display: flex; align-items: center; gap: 11px; padding: 11px 0; border-top: 1px solid var(--border); }
 .reg-receipt__row:first-child { border-top: none; }
-.reg-receipt__ico { width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+/* Ícono de fila = chip TINTADO semántico (presencia + significado, no línea gris suelta). */
+.reg-receipt__ico { width: 30px; height: 30px; border-radius: var(--radius-md); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-soft); color: var(--text-secondary); }
 .reg-receipt__ico svg { width: 16px; height: 16px; }
+.reg-receipt__ico--info { background: var(--blue-bg); color: var(--blue-info); }
+.reg-receipt__ico--ok { background: var(--green-bg); color: var(--green); }
+.reg-receipt__ico--warn { background: var(--orange-bg); color: var(--accent); }
 .reg-receipt__k { font-size: 12.5px; color: var(--text-secondary); flex-shrink: 0; }
 .reg-receipt__v { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-left: auto; text-align: right; }
 .reg-kv-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }

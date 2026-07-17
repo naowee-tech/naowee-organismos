@@ -893,12 +893,12 @@ function renderSuccess() {
             <div class="naowee-message__body"><p class="naowee-message__text">Enviamos una <strong>notificación por email/SMS</strong> a ${esc(correo)} confirmando el registro y los siguientes pasos.</p></div>
           </div>
           <div class="reg-receipt">
-            <div class="reg-receipt__head"><span class="reg-receipt__ava">${STATE.tipo === 'entidad' ? I.entity : STATE.tipo === 'personal' ? I.staff : I.athlete}</span>
+            <div class="reg-receipt__head"><span class="reg-receipt__ava reg-receipt__ava--${STATE.tipo}">${STATE.tipo === 'entidad' ? I.entity : STATE.tipo === 'personal' ? I.staff : I.athlete}</span>
               <div><div class="reg-receipt__name">${esc(r.nombre)}</div><div class="reg-receipt__meta">${esc(r.meta)}</div></div></div>
             <div class="reg-receipt__rows">
-              ${receiptRow(I.check, 'Tipo', TIPO_TXT[STATE.tipo])}
-              ${receiptRow(I.bang, 'Estado', r.estado)}
-              ${receiptRow(I.mail, 'Notificación', 'Email / SMS enviada')}
+              ${receiptRow(I.check, 'Tipo', TIPO_TXT[STATE.tipo], 'info')}
+              ${receiptRow(I.bang, 'Estado', r.estado, /activo/i.test(r.estado) ? 'ok' : 'warn')}
+              ${receiptRow(I.mail, 'Notificación', 'Email / SMS enviada', 'ok')}
             </div>
           </div>
           <div class="reg-success__actions">
@@ -914,7 +914,7 @@ function renderSuccess() {
   document.getElementById('rpAnother').addEventListener('click', () => { location.reload(); });
   fireConfetti();
 }
-function receiptRow(ico, k, v) { return `<div class="reg-receipt__row"><span class="reg-receipt__ico">${ico}</span><span class="reg-receipt__k">${esc(k)}</span><span class="reg-receipt__v">${esc(v)}</span></div>`; }
+function receiptRow(ico, k, v, tone) { return `<div class="reg-receipt__row"><span class="reg-receipt__ico${tone ? ' reg-receipt__ico--' + tone : ''}">${ico}</span><span class="reg-receipt__k">${esc(k)}</span><span class="reg-receipt__v">${esc(v)}</span></div>`; }
 function fireConfetti() {
   const c = document.getElementById('rpConfetti'); if (!c) return;
   const cols = ['#FF7500', '#d74009', '#1f8923', '#1f78d1', '#7c3aed'];

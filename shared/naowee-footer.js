@@ -341,7 +341,15 @@ const MODULE_NAME = 'Organismos';
             Fallback defensivo: si un paso no encuentra target, se muestra un
             backdrop atenuado para que el coach siempre lea como modal, nunca como
             caja flotante suelta. Cache-busters ?v=1.2.9. */
-const MODULE_VERSION = 'v1.2.9';
+/* v1.2.10 — Refinamiento visual del recibo del paso "Listo" (feedback Doug: los
+             iconos no tenían fuerza, sobre todo el de tipo de entidad). El avatar
+             de identidad deja de ser un círculo gris débil y pasa a un CHIP con
+             gradiente por tipo + ícono blanco + sombra tintada (foco visual):
+             Entidad = azul institucional, Deportista = naranja marca, Personal =
+             azul. Los iconos de fila pasan de líneas grises sueltas a CHIPS
+             tintados semánticos: Tipo = azul info, Estado = ámbar (Preinscrito) /
+             verde (Activo), Notificación = verde (enviada). Cache-busters ?v=1.2.10. */
+const MODULE_VERSION = 'v1.2.10';
 
 (function () {
   function mount() {
