@@ -114,8 +114,13 @@
 
 /* ───────────────────── Radio choice (tipo de club / ámbito) ─────────────────
    Tarjetas de selección única (DS §Tag choice / radio). Grid responsive. */
-.reg-choice-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+/* Flexbox con grow: cada renglón LLENA su ancho (sin hueco en el último). Con 5
+   opciones (tipo de entidad) → 3 + 2 con ambos renglones completos; con 2 (modo)
+   o 3 (vínculo) → una fila que llena. flex-basis 220px fija ~3 por fila en desktop
+   y degrada a 2/1 por fila en tablet/móvil. */
+.reg-choice-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .reg-choice {
+  flex: 1 1 30%; min-width: 0; max-width: 380px;
   display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: pointer;
   border: 1.5px solid var(--border-dark); border-radius: var(--radius-lg); background: var(--surface);
   transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast);
@@ -388,6 +393,10 @@
   .reg-kv { grid-template-columns: 1fr; gap: 0; }
   .reg-kv__k { padding-bottom: 0; }
   .reg-kv__v { padding-top: 1px; padding-bottom: 8px; }
+}
+/* En móvil las tarjetas de selección se apilan full-width (el 30% quedaría muy angosto). */
+@media (max-width: 560px) {
+  .reg-choice { flex-basis: 100%; max-width: none; }
 }
 
 /* El menú del dropdown del wizard va en position:fixed anclado por JS al trigger

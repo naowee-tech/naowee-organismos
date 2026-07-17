@@ -359,7 +359,16 @@ const MODULE_NAME = 'Organismos';
              custom arriba-derecha y pasa al botón canónico `.naowee-btn--mute
              --small` (patrón backBtnHtml del módulo) arriba-IZQUIERDA (ubicación
              convencional de "volver"). Cache-busters ?v=1.2.11. */
-const MODULE_VERSION = 'v1.2.11';
+/* v1.2.12 — Mejor distribución de las tarjetas de selección (`.reg-choice-group`,
+             feedback Doug sobre "Tipo de entidad"): el grid `auto-fit minmax(150px)`
+             dejaba el último renglón incompleto con un hueco a la derecha (5 tipos
+             → 3+2 con gap). Ahora flexbox con `flex: 1 1 30%` + `justify-content:
+             center` + `max-width: 380px`: fuerza ~3 por fila (indep. del ancho del
+             contenedor, que está topado ~560px) y ambos renglones LLENAN su ancho
+             (3+2 sin hueco); las filas incompletas se centran en vez de estirar una
+             tarjeta sola. Aplica también a modo (2→llena) y vínculo (3→llena); en
+             móvil (≤560px) se apilan full-width. Cache-busters ?v=1.2.12. */
+const MODULE_VERSION = 'v1.2.12';
 
 (function () {
   function mount() {
