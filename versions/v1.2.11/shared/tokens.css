@@ -1,0 +1,113 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAOWEE ORGANISMOS — Tokens semánticos (puente al DS oficial @naowee-*)
+   Módulo Registro de Organismos — Jerarquía SUID · v0.1.0
+   Ministerio del Deporte / SUID.
+   Port 1:1 aprobado de Eventos/demo/shared/tokens.css (mismos valores,
+   mismo puente al Design System v1.9.0). No re-derivar.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Marca ─── */
+  --naranja: #FF7500;          /* imagotipo Naowee */
+  --azul: #002B5B;             /* institucional Ministerio */
+  --accent: #d74009;           /* acción, links, focus, CTA, estado activo */
+
+  /* ─── Texto ─── */
+  --text-primary: #282834;
+  --text-secondary: #646587;
+  --text-muted: #9ca0b8;       /* placeholders, deshabilitado, "—" */
+
+  /* ─── Superficies ─── */
+  --surface: #ffffff;
+  --bg: #ffffff;
+  --bg-soft: #f5f6fa;
+  --th-bg: #f4f5f9;              /* fondo de encabezados de tabla / pills gris (DS gray-100) */
+
+  /* ─── Bordes ─── */
+  --border: #e7e9f3;
+  --border-dark: #d0d4e6;
+
+  /* ─── Bordes de campo (inputs / searchbox / dropdown) ─── */
+  --field-border-idle: #d0d4e6;
+  --field-border-hover: #b9bdd4;
+
+  /* ─── Fondos accent (estados activos / hover de opciones) ─── */
+  --accent-bg: #fff3e6;
+  --accent-bg-warm: #ffe4cf;
+
+  /* ─── Semánticos / estados ─── */
+  --green: #1f8923;            --green-bg: #e6f4e7;   --green-border: #b7dfb9;
+  --blue-info: #1f78d1;        --blue-bg: #eef5ff;     --blue-border: #c0d8f8;
+  --orange-bg: #fff3e6;        --orange-border: #ffbf75;
+  --red: #c0392b;              --red-bg: #fff0ee;     --red-border: #ffc4bb;
+  --purple: #7c3aed;           --purple-bg: #f3eeff;
+
+  /* ─── Feedback fills (Message — valores CANÓNICOS del DS §feedback v1.9.0) ─── */
+  --naowee-color-feedback-fill-informative-quiet: #cef4ff; --naowee-color-feedback-fill-informative-loud: #006aff;
+  --naowee-color-feedback-fill-positive-quiet: #defade;    --naowee-color-feedback-fill-positive-loud: #1f8923;
+  --naowee-color-feedback-fill-caution-quiet: #ffedc7;     --naowee-color-feedback-fill-caution-loud: #d74009;
+  --naowee-color-feedback-fill-negative-quiet: #ffe5e9;    --naowee-color-feedback-fill-negative-loud: #da1630;
+  --naowee-color-feedback-fill-neutral-quiet: #f4f5f9;     --naowee-color-feedback-fill-neutral-loud: #646587;
+  /* texto quiet-on-fill (badges) — loud-on-fill = #fff */
+  --naowee-color-feedback-text-informative-quiet-on-fill: #002b5b;
+  --naowee-color-feedback-text-positive-quiet-on-fill: #17641a;
+  --naowee-color-feedback-text-caution-quiet-on-fill: #942700;
+  --naowee-color-feedback-text-negative-quiet-on-fill: #c4031d;
+  --naowee-color-feedback-text-neutral-quiet-on-fill: #282834;
+
+  /* ─── Etiqueta de sección (sidebar) ─── */
+  --section-label-color: #b5b9d4;
+
+  /* ─── Layout ─── */
+  --sidebar-w: 274px;
+  --sidebar-w-collapsed: 72px;
+  --header-h: 88px;
+
+  /* ─── Radius ─── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ─── Sombras ─── */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 0 2px rgba(145, 158, 171, 0.2), 0 12px 24px -4px rgba(145, 158, 171, 0.12);
+  --shadow-sheet: 0 -8px 40px rgba(40, 40, 52, 0.22);
+
+  /* ─── Easing — Apple-style smooth-out ─── */
+  --easing-smoothout: cubic-bezier(0.32, 0.72, 0, 1);
+  --easing-bounce-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ─── Durations ─── */
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
+  --duration-slow: 360ms;
+
+  /* ─── Tipografía ─── */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
