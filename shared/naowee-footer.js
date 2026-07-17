@@ -389,7 +389,13 @@ const MODULE_NAME = 'Organismos';
              rAF que un re-render clobbereaba). Verificado por SCREENSHOT (la pill
              calza bajo el ítem activo en ambas vistas; el eval de getBoundingRect
              era poco fiable). Cache-busters ?v=1.2.14. */
-const MODULE_VERSION = 'v1.2.14';
+/* v1.2.15 — Spacing lateral de los tabs del perfil (feedback Doug): en el card
+             "Datos personales" (afiliacion) los tabs (Datos/Ubicación/Adicionales/
+             Contacto) pegaban a los bordes. `.pf-tabs-wrap .naowee-tabs` gana
+             `padding: 0 18px` → los botones se insentan (alineados con el header
+             del card) mientras el divisor (border-bottom del wrap) queda
+             edge-to-edge. Aplica también a los tabs del Historial. ?v=1.2.15. */
+const MODULE_VERSION = 'v1.2.15';
 
 (function () {
   function mount() {
