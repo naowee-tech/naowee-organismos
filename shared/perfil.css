@@ -430,7 +430,11 @@
 .pf-carne__row { display: flex; gap: 8px; font-size: 12.5px; }
 .pf-carne__row-l { color: var(--text-muted); min-width: 74px; }
 .pf-carne__row-v { color: var(--text-primary); font-weight: 600; }
-.pf-carne__sos { margin-top: 12px; padding: 9px 12px; border-radius: var(--radius-md); background: var(--red-bg, #fff0ee); border: 1px solid var(--red-border, #ffc4bb); }
+.pf-carne__sos { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 9px 12px; border-radius: var(--radius-md); background: var(--red-bg, #fff0ee); border: 1px solid var(--red-border, #ffc4bb); }
+/* Chip cruz roja (emblema tipo Cruz Roja: cruz roja sobre blanco) */
+.pf-carne__sos-ico { flex-shrink: 0; width: 30px; height: 30px; border-radius: var(--radius-sm); background: #fff; color: #da1630; border: 1.5px solid var(--red-border, #ffc4bb); display: inline-flex; align-items: center; justify-content: center; }
+.pf-carne__sos-ico svg { width: 18px; height: 18px; }
+.pf-carne__sos-body { min-width: 0; }
 .pf-carne__sos-l { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: #b3261e; }
 .pf-carne__sos-v { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin-top: 1px; }
 .pf-carne__qr { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }

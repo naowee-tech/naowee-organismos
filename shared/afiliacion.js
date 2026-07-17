@@ -51,6 +51,7 @@ const I = {
   liga:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17.5" cy="9.5" r="2.6"/><path d="M15 20a5 5 0 0 1 7-4.6"/></svg>',
   club:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/></svg>',
   carne:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8" cy="11" r="2.2"/><path d="M4.5 16.5c.7-1.6 2-2.5 3.5-2.5s2.8.9 3.5 2.5"/><line x1="15" y1="10" x2="19" y2="10"/><line x1="15" y1="13.5" x2="19" y2="13.5"/></svg>',
+  cross:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 3h5.2v6.4H21v5.2h-6.4V21H9.4v-6.4H3V9.4h6.4z"/></svg>',
   download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
   cert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><polyline points="15 3 15 7 19 7"/><circle cx="12" cy="12" r="2.4"/><path d="M10.4 13.8 9.5 18l2.5-1.4 2.5 1.4-.9-4.2"/></svg>'
 };
@@ -360,15 +361,18 @@ function carneHTML() {
             <div class="pf-carne__name">${esc(ATLETA.nombreCompleto)}</div>
             <div class="pf-carne__doc">${esc(ATLETA.doc.tipoCorto)} ${esc(ATLETA.doc.numero)}</div>
             <div class="pf-carne__rows">
-              ${row('Deporte', `${ATLETA.deporteEmoji} ${esc(ATLETA.deporte)}`)}
+              ${row('Deporte', esc(ATLETA.deporte))}
               ${row('Estado', esc(estadoTxt(st)))}
               ${row('Club', esc(ATLETA.clubNombre || 'Sin afiliación'))}
               ${cadena ? row('Cadena', esc(cadena)) : ''}
               ${row('Sangre', esc(ATLETA.sangre))}
             </div>
             <div class="pf-carne__sos">
-              <span class="pf-carne__sos-l">Contacto de emergencia</span>
-              <span class="pf-carne__sos-v">${esc(ATLETA.contacto.emergenciaNombre)} · ${esc(ATLETA.contacto.emergenciaTel)}</span>
+              <span class="pf-carne__sos-ico">${I.cross}</span>
+              <div class="pf-carne__sos-body">
+                <span class="pf-carne__sos-l">Contacto de emergencia</span>
+                <span class="pf-carne__sos-v">${esc(ATLETA.contacto.emergenciaNombre)} · ${esc(ATLETA.contacto.emergenciaTel)}</span>
+              </div>
             </div>
           </div>
           <div class="pf-carne__qr">${qr}<span class="pf-carne__qr-cap">Escanea para verificar</span></div>
@@ -376,7 +380,7 @@ function carneHTML() {
       </div>
       <div class="pf-carne-actions">
         <button type="button" class="naowee-btn naowee-btn--loud" id="dlCarne">${I.download} Descargar carné</button>
-        <button type="button" class="naowee-btn naowee-btn--outline" id="dlCert">${I.cert} Descargar certificado de registro</button>
+        <button type="button" class="naowee-btn naowee-btn--quiet" id="dlCert">${I.cert} Descargar certificado de registro</button>
       </div>
       <p class="pf-carne-note">${I.shieldCheck}<span>El código QR contiene tus <strong>datos básicos</strong> y <strong>contacto de emergencia</strong>, más un enlace de verificación del SUID (${esc(VERIFY_BASE + ATLETA.id)}). En esta demo la verificación es simulada.</span></p>
     </div>`;

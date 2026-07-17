@@ -401,7 +401,15 @@ const MODULE_NAME = 'Organismos';
              transparente idle + hover accent-bg, sin subrayado); se ELIMINA el CSS
              custom de `.pf-edit` (le ganaba por orden de cascada), queda solo como
              hook de JS. Cache-busters ?v=1.2.16. */
-const MODULE_VERSION = 'v1.2.16';
+/* v1.2.17 — Refinamientos del carné digital (feedback Doug): (1) "Descargar
+             certificado de registro" pasa de `.naowee-btn--outline` al botón
+             QUIET canónico (`.naowee-btn--quiet`, relleno accent-bg suave) en
+             jerarquía con el loud "Descargar carné". (2) Se quita el emoji del
+             deporte en el carné (credencial formal → "Patinaje", no "🛼 Patinaje").
+             (3) Contacto de emergencia rediseñado estilo CRUZ ROJA: chip con cruz
+             (emblema cruz roja sobre blanco, `I.cross`) + label + valor, en flex.
+             Cache-busters ?v=1.2.17. */
+const MODULE_VERSION = 'v1.2.17';
 
 (function () {
   function mount() {
