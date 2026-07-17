@@ -105,7 +105,17 @@ function nitRegistrado(nit) {
 }
 
 /* ─── estado ─── */
-const STEP_LABELS = ['Tipo', 'Datos', 'Documentos', 'Listo'];
+/* Pasos del wizard (dinámicos por tipo). El flujo por TUTOR (HURU-02) usa la
+   secuencia EXIGIDA tutor → parentesco → menor (3 pasos de datos separados);
+   el resto de tipos usa Datos → Documentos. El último par ['listo',…] es la
+   pantalla de éxito (no tiene pane interactivo). */
+function stepDefs() {
+  return (STATE.tipo === 'deportista' && STATE.modo === 'tutor')
+    ? [['tipo', 'Tipo'], ['tutor', 'Padre/tutor'], ['parentesco', 'Parentesco'], ['menor', 'Menor'], ['listo', 'Listo']]
+    : [['tipo', 'Tipo'], ['datos', 'Datos'], ['docs', 'Documentos'], ['listo', 'Listo']];
+}
+const stepKey = () => (stepDefs()[STATE.step] || ['listo'])[0];
+const lastStep = () => stepDefs().length - 2;   // índice del último paso interactivo (antes de 'Listo')
 const STATE = {
   step: 0, created: false, _armedStep: null,
   tipo: null, modo: null, rol: '', entTipo: null,
@@ -141,21 +151,26 @@ function render() {
 
 function renderStepper() {
   const wrap = document.getElementById('rpStepper');
+  const defs = stepDefs();
   let html = '';
-  STEP_LABELS.forEach((lbl, i) => {
+  defs.forEach(([, lbl], i) => {
     if (i > 0) html += `<div class="naowee-stepper__connector ${i <= STATE.step ? 'naowee-stepper__connector--done' : ''}"></div>`;
     const cls = i < STATE.step ? 'naowee-stepper__step--done' : (i === STATE.step ? 'naowee-stepper__step--active' : '');
     html += `<div class="naowee-stepper__step ${cls}"><span class="naowee-stepper__number">${i < STATE.step ? I.check : (i + 1)}</span><span class="naowee-stepper__label">${lbl}</span></div>`;
   });
   wrap.innerHTML = html;
-  document.getElementById('rpStepperMobile').innerHTML = `Paso <strong>${STATE.step + 1}</strong> de ${STEP_LABELS.length} · ${STEP_LABELS[STATE.step]}`;
+  document.getElementById('rpStepperMobile').innerHTML = `Paso <strong>${STATE.step + 1}</strong> de ${defs.length} · ${(defs[STATE.step] || ['', ''])[1]}`;
 }
 
 function renderPane() {
   const p = document.getElementById('rpPane');
-  if (STATE.step === 0) p.innerHTML = paneTipo();
-  else if (STATE.step === 1) p.innerHTML = paneDatos();
-  else if (STATE.step === 2) p.innerHTML = paneDocs();
+  const k = stepKey();
+  if (k === 'tipo') p.innerHTML = paneTipo();
+  else if (k === 'datos') p.innerHTML = paneDatos();
+  else if (k === 'docs') p.innerHTML = paneDocs();
+  else if (k === 'tutor') p.innerHTML = paneTutor();
+  else if (k === 'parentesco') p.innerHTML = paneParentesco();
+  else if (k === 'menor') p.innerHTML = paneMenor();
 }
 
 /* ── Paso 0 — tipo de usuario ── */
@@ -177,34 +192,61 @@ function paneTipo() {
 }
 
 /* ── Paso 1 — datos (adaptativo) ── */
+/* ── Flujo por TUTOR (HURU-02): tutor → parentesco → menor, en 3 pasos ── */
+function paneTutor() {
+  const d = STATE.d;
+  return `
+    <h2 class="reg-pane__title">Datos del padre / tutor</h2>
+    <p class="reg-pane__sub">Un menor de edad no puede registrarse de forma autónoma: lo registra su padre, madre o tutor legal. Empecemos por tus datos.</p>
+    <form class="reg-form" id="rpForm">
+      ${choiceGroup('vinculo', 'Vínculo con el menor', VINCULOS, d.vinculo, true)}
+      <div class="reg-grid-2">
+        ${dd('tutorTipoDoc', 'Tipo de documento', TIPOS_DOC.map((v) => ({ v, t: TIPODOC_LABEL[v] })), d.tutorTipoDoc, true)}
+        ${tf({ id: 'f-tutorDoc', label: 'Número de documento del tutor', required: true, path: 'tutorDoc', value: d.tutorDoc, mask: 'numeric', maxLength: 12, placeholder: '10000123' })}
+        ${tf({ id: 'f-tutorNombres', label: 'Nombres y apellidos del tutor', required: true, path: 'tutorNombres', value: d.tutorNombres, placeholder: 'Ej: María Rojas' })}
+        ${tf({ id: 'f-tutorTel', label: 'Teléfono', required: true, path: 'tutorTel', value: d.tutorTel, mask: 'tel', maxLength: 18, type: 'tel', placeholder: '+57 300 123 4567' })}
+      </div>
+      ${tf({ id: 'f-tutorCorreo', label: 'Correo electrónico', required: true, path: 'tutorCorreo', value: d.tutorCorreo, mask: 'email', type: 'email', placeholder: 'tutor@correo.co' })}
+    </form>`;
+}
+function paneParentesco() {
+  const d = STATE.d;
+  const vinculoTxt = (VINCULOS.find((v) => v.v === d.vinculo) || {}).t || 'tutor legal';
+  return `
+    <h2 class="reg-pane__title">Documentación de parentesco</h2>
+    <p class="reg-pane__sub">Acredita tu vínculo (<strong>${esc(vinculoTxt)}</strong>) con el menor y firma el consentimiento. Formatos: PDF, JPG o PNG (simulado — no se sube ningún archivo).</p>
+    <div class="reg-form">
+      ${uploader({ id: 'parentesco', label: 'Documento de parentesco (registro civil / custodia)' })}
+      <div class="reg-section-label">Consentimiento</div>
+      <label class="naowee-checkbox" data-field="f-firma" id="f-firma"><input type="checkbox" ${d.firma ? 'checked' : ''} data-check="firma"><span class="naowee-checkbox__box">${I.check}</span><span class="naowee-checkbox__label">Firmo digitalmente el <strong>consentimiento</strong> como padre/tutor para el registro del menor. <strong>(Obligatorio)</strong></span></label>
+    </div>`;
+}
+function paneMenor() {
+  const d = STATE.d;
+  return `
+    <h2 class="reg-pane__title">Datos del menor de edad</h2>
+    <p class="reg-pane__sub">Registra al menor. El sistema valida que el documento no esté registrado y que la edad sea menor de 18 años.</p>
+    <form class="reg-form" id="rpForm">
+      <div class="reg-grid-2">
+        ${dd('tipoDoc', 'Tipo de documento', TIPOS_DOC.map((v) => ({ v, t: TIPODOC_LABEL[v] })), d.tipoDoc, true)}
+        ${tf({ id: 'f-numDoc', label: 'Número de documento del menor', required: true, path: 'numDoc', value: d.numDoc, mask: 'numeric', maxLength: 12, placeholder: '1099887766' })}
+        ${tf({ id: 'f-nombres', label: 'Nombres', required: true, path: 'nombres', value: d.nombres, placeholder: 'Ej: Juan David' })}
+        ${tf({ id: 'f-apellidos', label: 'Apellidos', required: true, path: 'apellidos', value: d.apellidos, placeholder: 'Ej: Marín' })}
+        ${dateField({ id: 'f-fechaNac', label: 'Fecha de nacimiento', required: true, path: 'fechaNac' })}
+        ${dd('deporte', 'Deporte', DEPORTES.map((v) => ({ v, t: v })), d.deporte, false, true)}
+      </div>
+      <div class="rp-agehint" id="rpAgeHint"></div>
+    </form>
+    <div class="reg-form">
+      <div class="naowee-message naowee-message--informative"><span class="naowee-message__icon">${I.api}</span><div class="naowee-message__body"><p class="naowee-message__text"><strong>Integración externa (demo):</strong> el número de documento se validará contra la Registraduría / entidades externas vía API al procesar el registro.</p></div></div>
+      <div class="reg-section-label">Aceptación</div>
+      ${privacyCheck()}
+    </div>`;
+}
+
+/* ── Paso "Datos" (deportista propio · personal · entidad) ── */
 function paneDatos() {
   const d = STATE.d;
-  if (STATE.tipo === 'deportista' && STATE.modo === 'tutor') {
-    return `
-      <h2 class="reg-pane__title">Datos del padre/tutor y del menor</h2>
-      <p class="reg-pane__sub">Un menor de edad no puede registrarse de forma autónoma: lo registra su padre, madre o tutor legal.</p>
-      <div class="reg-section-label">Padre / tutor</div>
-      <form class="reg-form" id="rpForm">
-        ${choiceGroup('vinculo', 'Vínculo con el menor', VINCULOS, d.vinculo, true)}
-        <div class="reg-grid-2">
-          ${dd('tutorTipoDoc', 'Tipo de documento', TIPOS_DOC.map((v) => ({ v, t: TIPODOC_LABEL[v] })), d.tutorTipoDoc, true)}
-          ${tf({ id: 'f-tutorDoc', label: 'Número de documento del tutor', required: true, path: 'tutorDoc', value: d.tutorDoc, mask: 'numeric', maxLength: 12, placeholder: '10000123' })}
-          ${tf({ id: 'f-tutorNombres', label: 'Nombres y apellidos del tutor', required: true, path: 'tutorNombres', value: d.tutorNombres, placeholder: 'Ej: María Rojas' })}
-          ${tf({ id: 'f-tutorTel', label: 'Teléfono', required: true, path: 'tutorTel', value: d.tutorTel, mask: 'tel', maxLength: 18, type: 'tel', placeholder: '+57 300 123 4567' })}
-        </div>
-        ${tf({ id: 'f-tutorCorreo', label: 'Correo electrónico', required: true, path: 'tutorCorreo', value: d.tutorCorreo, mask: 'email', type: 'email', placeholder: 'tutor@correo.co' })}
-        <div class="reg-section-label">Menor de edad</div>
-        <div class="reg-grid-2">
-          ${dd('tipoDoc', 'Tipo de documento', TIPOS_DOC.map((v) => ({ v, t: TIPODOC_LABEL[v] })), d.tipoDoc, true)}
-          ${tf({ id: 'f-numDoc', label: 'Número de documento del menor', required: true, path: 'numDoc', value: d.numDoc, mask: 'numeric', maxLength: 12, placeholder: '1099887766' })}
-          ${tf({ id: 'f-nombres', label: 'Nombres', required: true, path: 'nombres', value: d.nombres, placeholder: 'Ej: Juan David' })}
-          ${tf({ id: 'f-apellidos', label: 'Apellidos', required: true, path: 'apellidos', value: d.apellidos, placeholder: 'Ej: Marín' })}
-          ${dateField({ id: 'f-fechaNac', label: 'Fecha de nacimiento', required: true, path: 'fechaNac' })}
-          ${dd('deporte', 'Deporte', DEPORTES.map((v) => ({ v, t: v })), d.deporte, false, true)}
-        </div>
-        <div class="rp-agehint" id="rpAgeHint"></div>
-      </form>`;
-  }
   if (STATE.tipo === 'deportista') {
     return `
       <h2 class="reg-pane__title">Tus datos de deportista</h2>
@@ -455,8 +497,6 @@ function paneDocs() {
   const uploaders = docs.length
     ? `<div class="reg-form">${docs.map(uploader).join('')}</div>`
     : `<div class="naowee-message naowee-message--informative" style="margin:0 0 4px"><span class="naowee-message__icon">${I.bang}</span><div class="naowee-message__body"><p class="naowee-message__text">Tu registro como deportista no requiere documentos de soporte. Revisa el resumen y acepta las políticas para finalizar.</p></div></div>`;
-  const firma = (STATE.tipo === 'deportista' && STATE.modo === 'tutor')
-    ? `<label class="naowee-checkbox" data-field="f-firma" id="f-firma"><input type="checkbox" ${d.firma ? 'checked' : ''} data-check="firma"><span class="naowee-checkbox__box">${I.check}</span><span class="naowee-checkbox__label">Firmo digitalmente el <strong>consentimiento</strong> como padre/tutor para el registro del menor. <strong>(Obligatorio)</strong></span></label>` : '';
   const api = `<div class="naowee-message naowee-message--informative"><span class="naowee-message__icon">${I.api}</span><div class="naowee-message__body"><p class="naowee-message__text"><strong>Integración externa (demo):</strong> el número de documento se validará contra la Registraduría / entidades externas vía API al procesar el registro.</p></div></div>`;
   return `
     <h2 class="reg-pane__title">${docs.length ? 'Documentos de soporte' : 'Confirmación'}</h2>
@@ -464,7 +504,6 @@ function paneDocs() {
     <div class="reg-form">
       ${extra}
       ${uploaders}
-      ${firma}
       ${api}
       <div class="reg-section-label">Aceptación</div>
       ${privacyCheck()}
@@ -532,7 +571,7 @@ function privacyCheck() {
 function renderFooter() {
   const f = document.getElementById('rpFooter');
   const back = STATE.step > 0 ? `<button type="button" class="naowee-btn naowee-btn--quiet" id="rpBack">Atrás</button>` : '<span></span>';
-  const last = STATE.step === 2;
+  const last = STATE.step === lastStep();
   f.innerHTML = `${back}<span class="reg-footer__spacer"></span>
     <button type="button" class="naowee-btn naowee-btn--loud" id="rpNext">${STATE.step === 0 ? 'Comenzar' : (last ? 'Enviar registro' : 'Siguiente')}</button>`;
   document.getElementById('rpNext').addEventListener('click', next);
@@ -668,25 +707,39 @@ function validate() {
   const d = STATE.d, errs = [];
   const reqTf = (id, ok, msg, hard) => { if (!ok) errs.push({ field: id, kind: 'tf', msg, hard: !!hard }); };
   const reqDd = (key, hard) => errs.push({ field: 'dd-' + key, kind: 'dd', hard: !!hard });
-  if (STATE.step === 0) {
+  const k = stepKey();
+  if (k === 'tipo') {
     if (!STATE.tipo) return [{ field: null, kind: 'grid' }];
     if (STATE.tipo === 'deportista' && !STATE.modo) errs.push({ field: 'dd-modo', kind: 'choice' });
     return errs;
   }
-  if (STATE.step === 1) {
-    if (STATE.tipo === 'deportista' && STATE.modo === 'tutor') {
-      if (!d.vinculo) errs.push({ field: 'dd-vinculo', kind: 'choice' });
-      if (!d.tutorTipoDoc) reqDd('tutorTipoDoc');
-      reqTf('f-tutorDoc', d.tutorDoc.trim()); reqTf('f-tutorNombres', d.tutorNombres.trim());
-      reqTf('f-tutorTel', d.tutorTel.trim());
-      reqTf('f-tutorCorreo', EMAIL_RE.test(d.tutorCorreo), 'Ingresa un correo válido');
-      if (!d.tipoDoc) reqDd('tipoDoc');
-      reqTf('f-numDoc', d.numDoc.trim());
-      if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.', true);
-      reqTf('f-nombres', d.nombres.trim()); reqTf('f-apellidos', d.apellidos.trim());
-      reqTf('f-fechaNac', d.fechaNac.trim());
-      const e = edadDe(d.fechaNac); if (e != null && e >= 18) reqTf('f-fechaNac', false, 'El menor debe ser menor de 18 años.', true);
-    } else if (STATE.tipo === 'deportista') {
+  // ── Flujo por TUTOR (HURU-02): tutor → parentesco → menor ──
+  if (k === 'tutor') {
+    if (!d.vinculo) errs.push({ field: 'dd-vinculo', kind: 'choice' });
+    if (!d.tutorTipoDoc) reqDd('tutorTipoDoc');
+    reqTf('f-tutorDoc', d.tutorDoc.trim()); reqTf('f-tutorNombres', d.tutorNombres.trim());
+    reqTf('f-tutorTel', d.tutorTel.trim());
+    reqTf('f-tutorCorreo', EMAIL_RE.test(d.tutorCorreo), 'Ingresa un correo válido');
+    return errs;
+  }
+  if (k === 'parentesco') {
+    if (!d.docs['parentesco']) errs.push({ field: 'doc-parentesco', kind: 'file' });
+    if (!d.firma) errs.push({ field: 'f-firma', kind: 'check', hard: true });   // consentimiento = regla dura
+    return errs;
+  }
+  if (k === 'menor') {
+    if (!d.tipoDoc) reqDd('tipoDoc');
+    reqTf('f-numDoc', d.numDoc.trim());
+    if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.', true);
+    reqTf('f-nombres', d.nombres.trim()); reqTf('f-apellidos', d.apellidos.trim());
+    reqTf('f-fechaNac', d.fechaNac.trim());
+    const e = edadDe(d.fechaNac); if (e != null && e >= 18) reqTf('f-fechaNac', false, 'El menor debe ser menor de 18 años.', true);
+    if (!d.aceptaPoliticas) errs.push({ field: 'f-politicas', kind: 'check', hard: true });
+    return errs;
+  }
+  // ── Flujo estándar (deportista propio · personal · entidad) ──
+  if (k === 'datos') {
+    if (STATE.tipo === 'deportista') {
       if (!d.tipoDoc) reqDd('tipoDoc');
       reqTf('f-numDoc', d.numDoc.trim());
       if (d.numDoc.trim() && docRegistrado(d.numDoc)) reqTf('f-numDoc', false, 'Este documento ya está registrado en el SUID.', true);
@@ -714,10 +767,9 @@ function validate() {
     }
     return errs;
   }
-  if (STATE.step === 2) {
+  if (k === 'docs') {
     if (STATE.tipo === 'personal') reqTf('f-profesion', d.profesion.trim());
     docsDelTipo().forEach((doc) => { if (!d.docs[doc.id]) errs.push({ field: 'doc-' + doc.id, kind: 'file' }); });
-    if (STATE.tipo === 'deportista' && STATE.modo === 'tutor' && !d.firma) errs.push({ field: 'f-firma', kind: 'check', hard: true });
     if (!d.aceptaPoliticas) errs.push({ field: 'f-politicas', kind: 'check', hard: true });
     return errs;
   }
@@ -756,7 +808,7 @@ function next() {
   advance();
 }
 function advance() {
-  if (STATE.step < 2) { STATE.step++; render(); return; }
+  if (STATE.step < lastStep()) { STATE.step++; render(); return; }
   submit();
 }
 function setFooterHint(html, hard) {
@@ -857,7 +909,7 @@ function renderSuccess() {
       </div>
     </div>`;
   const wrap = document.getElementById('rpStepper');
-  wrap.innerHTML = STEP_LABELS.map((lbl, i) => `${i > 0 ? '<div class="naowee-stepper__connector naowee-stepper__connector--done"></div>' : ''}<div class="naowee-stepper__step naowee-stepper__step--done"><span class="naowee-stepper__number">${I.check}</span><span class="naowee-stepper__label">${lbl}</span></div>`).join('');
+  wrap.innerHTML = stepDefs().map(([, lbl], i) => `${i > 0 ? '<div class="naowee-stepper__connector naowee-stepper__connector--done"></div>' : ''}<div class="naowee-stepper__step naowee-stepper__step--done"><span class="naowee-stepper__number">${I.check}</span><span class="naowee-stepper__label">${lbl}</span></div>`).join('');
   document.getElementById('rpStepperMobile').innerHTML = 'Registro completado';
   document.getElementById('rpAnother').addEventListener('click', () => { location.reload(); });
   fireConfetti();

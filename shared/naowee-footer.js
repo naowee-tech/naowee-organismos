@@ -311,7 +311,17 @@ const MODULE_NAME = 'Organismos';
             con navegación en 3 vistas — días → meses → años — para elegir fechas de
             nacimiento rápido; deshabilita fechas futuras; valor en 'YYYY-MM-DD'
             (compatible con edadDe/validación de edad). Cache-busters ?v=1.2.6. */
-const MODULE_VERSION = 'v1.2.6';
+/* v1.2.7 — Reorden del flujo por TUTOR (HURU-02, QA fase 3): el registro de un
+            menor deja de fundir "datos del tutor" y "datos del menor" en un solo
+            paso. Ahora sigue la secuencia EXIGIDA en 3 pasos separados —
+            (1) Padre/tutor → (2) Parentesco (documento + firma de consentimiento)
+            → (3) Menor — con stepper dinámico (Tipo · Padre/tutor · Parentesco ·
+            Menor · Listo). La documentación de parentesco queda ENTRE el tutor y
+            el menor (antes iba al final). Reglas duras intactas: firma de
+            consentimiento, edad <18 y aceptación de políticas no se omiten.
+            El flujo estándar (deportista propio · personal · entidad) queda igual
+            (Tipo · Datos · Documentos · Listo). Cache-busters ?v=1.2.7. */
+const MODULE_VERSION = 'v1.2.7';
 
 (function () {
   function mount() {
