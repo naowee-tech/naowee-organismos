@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfil del organismo — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.6">
+<link rel="stylesheet" href="shared/shell.css?v=1.2.6">
+<link rel="stylesheet" href="shared/components.css?v=1.2.6">
+<link rel="stylesheet" href="shared/detalle.css?v=1.2.6">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.6">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner">
+        <div id="detalleRoot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getRoleFromQuery, ROLES, mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher } from './shared/sidebar.js';
+  import { seedDemoData } from './shared/organismos-data.js';
+  seedDemoData();
+  const roleCode = getRoleFromQuery();
+  const role = ROLES[roleCode];
+  /* El perfil se llega desde la jerarquía o la bandeja; no es un ítem del menú.
+     El activo del sidebar queda en Jerarquía SND (contexto de navegación). */
+  mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: 'jerarquia' });
+  mountHeader({ headerEl: document.getElementById('topHeader'), role });
+  mountBackdrop();
+  mountDemoSwitcher({ roleCode });
+  /* El módulo del perfil se auto-arranca al importar (lee ?id y ?role). */
+  import('./shared/detalle.js?v=1.2.6');
+</script>
+<script src="shared/naowee-footer.js?v=1.2.6"></script>
+<script src="shared/tour.js?v=1.2.6"></script>
+
+</body>
+</html>

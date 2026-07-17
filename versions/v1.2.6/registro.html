@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro de organismo — Naowee Organismos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/tokens.css?v=1.2.6">
+<link rel="stylesheet" href="shared/shell.css?v=1.2.6">
+<link rel="stylesheet" href="shared/components.css?v=1.2.6">
+<link rel="stylesheet" href="shared/forms.css?v=1.2.6">
+<link rel="stylesheet" href="shared/naowee-footer.css?v=1.2.6">
+</head>
+<body>
+
+<div class="shell">
+  <div id="sidebarRoot"></div>
+  <div class="main">
+    <header class="top-header" id="topHeader"></header>
+    <div class="page">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-head__title">Registro de organismo</h1>
+          <p class="page-head__sub">Alta de un organismo deportivo por tipo: federación, liga o club (registro público) y creación interna de comités por el Ministerio. El organismo queda Preinscrito y aparece en la jerarquía bajo su superior.</p>
+        </div>
+        <div id="regDraftBar" style="display:none;margin-bottom:16px"></div>
+        <div id="regRoot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { getRoleFromQuery, ROLES, mountSidebar, mountHeader, mountBackdrop, mountDemoSwitcher } from './shared/sidebar.js';
+  const roleCode = getRoleFromQuery();
+  const role = ROLES[roleCode];
+  mountSidebar({ rootEl: document.getElementById('sidebarRoot'), roleCode, activeId: 'registro' });
+  mountHeader({ headerEl: document.getElementById('topHeader'), role });
+  mountBackdrop();
+  mountDemoSwitcher({ roleCode });
+  /* El wizard se auto-arranca al importar el módulo (seedDemoData + offerDraft). */
+  import('./shared/registro.js?v=1.2.6');
+</script>
+<script src="shared/naowee-footer.js?v=1.2.6"></script>
+<script src="shared/tour.js?v=1.2.6"></script>
+
+</body>
+</html>
