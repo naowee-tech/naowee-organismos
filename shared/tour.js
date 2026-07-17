@@ -16,8 +16,6 @@
   if (qs('embed') === '1' || document.body.getAttribute('data-embed') === '1') return;
 
   var MODE_KEY = 'naowee-organismos-demo-mode';
-  var ROLE = qs('role') || 'MINDEPORTE';
-  var PAGE = (location.pathname.split('/').pop() || '').toLowerCase() || 'jerarquia.html';
 
   /* ── Catálogo de tours por HU (las 8 historias del visual mapping) ── */
   var TOURS = {
@@ -140,6 +138,7 @@
     var st = document.createElement('style'); st.id = 'orgTourCSS';
     st.textContent =
       '.tt-spot{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(20,22,38,.52);z-index:9000;pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s;border:2px solid var(--accent,#d74009);}' +
+      '.tt-backdrop{position:fixed;inset:0;background:rgba(20,22,38,.52);z-index:9000;pointer-events:none;}' +
       '.tt-coach{position:fixed;z-index:9002;width:346px;max-width:calc(100vw - 28px);background:#fff;border-radius:18px;box-shadow:0 24px 60px -16px rgba(20,22,38,.42);pointer-events:auto;overflow:hidden;font-family:"Inter",-apple-system,BlinkMacSystemFont,sans-serif;}' +
       '.tt-coach-h{display:flex;align-items:center;gap:8px;padding:14px 16px 0;}' +
       '.tt-chip{font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--accent,#d74009);background:var(--accent-bg,#fff3e6);padding:3px 9px;border-radius:999px;text-transform:uppercase;}' +
@@ -222,9 +221,15 @@
     var t = TOURS[hu]; if (!t) return;
     /* Los tours con datos corren en modo demo (siembra) para que los targets existan. */
     if (t.demo) { try { localStorage.setItem(MODE_KEY, 'demo'); } catch (e) {} }
-    var needNav = PAGE !== t.page || t.demo || ROLE !== t.role || (t.q && Object.keys(t.q).length);
-    if (needNav) { location.href = buildUrl(t, hu); return; }
-    runTour(hu);
+    /* SIEMPRE recargar a la página del tour en su estado INICIAL (patrón full-reload
+       Naowee): así el wizard / estado de la página se resetea (p.ej. registro-publico
+       vuelve al paso 0) y el PRIMER paso del tour encuentra su target. Antes, lanzar
+       un tour ya estando en la misma página lo corría en sitio: si el wizard estaba
+       avanzado, el target del paso 0 no existía → el coach salía flotando sin overlay
+       y en el paso equivocado. El auto-arranque por ?tour= lo corre tras la recarga. */
+    var url = buildUrl(t, hu);
+    var cur = (location.pathname.split('/').pop() || '') + location.search;
+    if (cur === url) location.reload(); else location.href = url;
   }
 
   /* ── Render de un paso (con reintento para targets dentro de modales) ── */
@@ -252,12 +257,16 @@
     var last = curStep === t.steps.length - 1;
     _curEl = el || null;
     if (el) {
+      hideBackdrop();
       placeSpot(spot, el);
       try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
       setTimeout(function () { if (curHu && _curEl === el && document.body.contains(el)) { placeSpot(spot, el); positionCoach(coach, el); } }, 280);
       if (step.click) { el.addEventListener('click', function onc() { _stepActed = true; }, { once: true }); }
     } else {
+      /* Sin target: oculta el spot y muestra un backdrop atenuado para que el coach
+         SIEMPRE lea como modal (nunca como caja flotante suelta sobre la página). */
       spot.style.display = 'none';
+      showBackdrop();
     }
     coach.innerHTML =
       '<div class="tt-coach-h"><span class="tt-chip">' + curHu + '</span><span class="tt-phase">' + t.ph + '</span><button class="tt-x" aria-label="Cerrar recorrido">&times;</button></div>'
@@ -308,9 +317,10 @@
     var coach = document.getElementById('ttCoach'), spot = document.getElementById('ttSpot');
     if (!coach) return;
     if (_curEl && document.body.contains(_curEl) && _curEl.offsetParent !== null) {
+      hideBackdrop();
       if (spot) placeSpot(spot, _curEl);
       positionCoach(coach, _curEl);
-    } else if (spot) { spot.style.display = 'none'; positionCoach(coach, null); }
+    } else { if (spot) spot.style.display = 'none'; showBackdrop(); positionCoach(coach, null); }
   }
   function positionCoach(coach, el) {
     coach.style.display = 'block';
@@ -328,9 +338,11 @@
     coach.style.top = top + 'px'; coach.style.left = left + 'px';
   }
   function mk(tag, cls, id) { var e = document.createElement(tag); e.className = cls; e.id = id; document.body.appendChild(e); return e; }
+  function showBackdrop() { var b = document.getElementById('ttBackdrop') || mk('div', 'tt-backdrop', 'ttBackdrop'); b.style.display = 'block'; }
+  function hideBackdrop() { var b = document.getElementById('ttBackdrop'); if (b) b.style.display = 'none'; }
   function endTour() {
     clearTimeout(_retry); curHu = null; _curEl = null; _spotFresh = false;
-    ['ttSpot', 'ttCoach'].forEach(function (id) { var e = document.getElementById(id); if (e) e.remove(); });
+    ['ttSpot', 'ttCoach', 'ttBackdrop'].forEach(function (id) { var e = document.getElementById(id); if (e) e.remove(); });
     if (qs('tour')) { var u = new URL(location.href); u.searchParams.delete('tour'); history.replaceState(null, '', u); }
   }
   window.addEventListener('resize', reposition);

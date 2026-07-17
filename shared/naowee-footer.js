@@ -331,7 +331,17 @@ const MODULE_NAME = 'Organismos';
             registro (HTML imprimible con QR). La pestaña Medallería suma un
             TALLERO por tipo (Oro/Plata/Bronce + total) y un desglose por
             deporte, sobre el listado de detalle. Cache-busters ?v=1.2.8. */
-const MODULE_VERSION = 'v1.2.8';
+/* v1.2.9 — Fix del recorrido guiado (feedback Doug): lanzar un tour estando ya
+            en su misma página con el wizard AVANZADO (p.ej. HURU-01 en
+            registro-publico.html en el paso 2) corría el tour "en sitio" y el
+            target del paso 0 no existía → el coach salía flotando SIN overlay y
+            en el paso equivocado. Ahora `start()` SIEMPRE recarga a la URL limpia
+            del tour (patrón full-reload): la página/wizard se resetea a su estado
+            inicial y el ?tour= re-arranca el recorrido con su target presente.
+            Fallback defensivo: si un paso no encuentra target, se muestra un
+            backdrop atenuado para que el coach siempre lea como modal, nunca como
+            caja flotante suelta. Cache-busters ?v=1.2.9. */
+const MODULE_VERSION = 'v1.2.9';
 
 (function () {
   function mount() {
