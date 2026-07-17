@@ -587,18 +587,23 @@
 /* ── Segmented control (.naowee-segment) — PORT del DS §Segment (pill estática, tokens locales).
    Reemplaza al doble tab de sub-vista; centrado vía .bj-vista-wrap. ── */
 .bj-vista-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
-.naowee-segment { display: inline-flex; background: var(--bg-soft); border: 1px solid var(--border-dark); border-radius: var(--radius-lg); padding: 4px; gap: 4px; }
+.naowee-segment { position: relative; display: inline-flex; background: var(--bg-soft); border: 1px solid var(--border-dark); border-radius: var(--radius-lg); padding: 4px; gap: 4px; overflow: clip; }
+/* Pill deslizante (fondo del ítem activo) — posicionada por JS (transform + width). */
+.naowee-segment__pill { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius-md); box-shadow: 0 1px 3px rgba(20,22,38,.14); pointer-events: none; z-index: 0; transform: translate3d(0,0,0); transition: transform 380ms cubic-bezier(.4,0,.2,1), width 380ms cubic-bezier(.4,0,.2,1); will-change: transform, width; }
+.naowee-segment__pill--no-anim { transition: none; }
 .naowee-segment__item {
+  position: relative; z-index: 1;
   display: flex; align-items: center; justify-content: center; gap: 7px;
   padding: 0 18px; height: 34px; border-radius: var(--radius-md);
   border: 2px solid transparent; background: transparent;
   font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text-secondary);
-  cursor: pointer; white-space: nowrap; transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
+  cursor: pointer; white-space: nowrap; transition: color 220ms cubic-bezier(.22,1,.36,1);
 }
 .naowee-segment__item:hover { color: var(--text-primary); }
-.naowee-segment__item svg { width: 17px; height: 17px; flex-shrink: 0; opacity: .8; }
-.naowee-segment__item--active { color: var(--accent); background: var(--surface); border-color: var(--accent); box-shadow: 0 1px 3px rgba(20,22,38,.12); }
+.naowee-segment__item svg { width: 17px; height: 17px; flex-shrink: 0; opacity: .75; transition: opacity 220ms; }
+.naowee-segment__item--active { color: var(--accent); }
 .naowee-segment__item--active svg { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .naowee-segment__pill { transition: none; } }
 
 /* ── Iconos en los tabs de estado de la bandeja ── */
 .bj-tabs .naowee-tab { gap: 6px; }

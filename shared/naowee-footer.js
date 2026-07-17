@@ -380,7 +380,16 @@ const MODULE_NAME = 'Organismos';
              ve Olímpico/Paralímpico/Sordolímpico; oculto en Comité=COC, todo
              Olímpico) — sin filtros innecesarios; la búsqueda por nombre/NIT
              sigue siendo el buscador principal. Cache-busters ?v=1.2.13. */
-const MODULE_VERSION = 'v1.2.13';
+/* v1.2.14 — Segmented control con PILL DESLIZANTE (feedback Doug: usar el UI real
+             del `.naowee-segment` del DS, con el `<span data-pill>` que se mueve).
+             El switch de sub-vista pasa de la pill estática a la **pill deslizante
+             canónica**: `.naowee-segment__pill` (absolute, transform+width por JS)
+             que anima entre ítems (`layoutPill()`: coloca bajo el activo; si cambió
+             la vista, desliza desde la posición previa — síncrono con reflow, sin
+             rAF que un re-render clobbereaba). Verificado por SCREENSHOT (la pill
+             calza bajo el ítem activo en ambas vistas; el eval de getBoundingRect
+             era poco fiable). Cache-busters ?v=1.2.14. */
+const MODULE_VERSION = 'v1.2.14';
 
 (function () {
   function mount() {

@@ -142,6 +142,7 @@ let preFiltro = 'Accionables';   // filtro de la cola de registro público
 let sectorFiltro = 'Todos';      // filtro por sector (solo se muestra si hay >1 sector visible)
 let page = 1;                    // página actual de la tabla de organismos
 const PAGE_SIZE = 10;
+let _segPrev = null;             // vista previa (para animar la pill del segment)
 
 /* ── Datos demo: federaciones En revisión con doble validación a medias ── */
 function seedBandejaDemo() {
@@ -194,11 +195,33 @@ function vistaSwitch() {
   if (!tieneColaPublica) return '';
   const pend = preinscritosDeRol().filter((p) => p.estado === 'En revisión').length;
   return `<div class="bj-vista-wrap">
-    <div class="naowee-segment naowee-segment--small" id="bjVista" role="tablist" aria-label="Sub-vista de la bandeja">
-      <button type="button" class="naowee-segment__item ${vista === 'federaciones' ? 'naowee-segment__item--active' : ''}" data-vista="federaciones" role="tab" aria-selected="${vista === 'federaciones'}">${I.bldg}${esc(capFirst(target.plural))}</button>
-      <button type="button" class="naowee-segment__item ${vista === 'publico' ? 'naowee-segment__item--active' : ''}" data-vista="publico" role="tab" aria-selected="${vista === 'publico'}">${I.inbox}Registro público${pend ? ` · ${pend}` : ''}</button>
+    <div class="naowee-segment" id="bjVista" data-segmented role="tablist" aria-label="Sub-vista de la bandeja">
+      <span class="naowee-segment__pill naowee-segment__pill--no-anim" data-pill></span>
+      <button type="button" class="naowee-segment__item ${vista === 'federaciones' ? 'naowee-segment__item--active' : ''}" data-vista="federaciones" data-idx="0" role="tab" aria-selected="${vista === 'federaciones'}">${I.bldg}${esc(capFirst(target.plural))}</button>
+      <button type="button" class="naowee-segment__item ${vista === 'publico' ? 'naowee-segment__item--active' : ''}" data-vista="publico" data-idx="1" role="tab" aria-selected="${vista === 'publico'}">${I.inbox}Registro público${pend ? ` · ${pend}` : ''}</button>
     </div>
   </div>`;
+}
+/* Posiciona la pill deslizante bajo el ítem activo. Si cambió la vista, anima
+   desde la posición anterior; en el primer render (o re-render sin cambio de
+   vista) la coloca sin animación. */
+function layoutPill() {
+  const seg = document.getElementById('bjVista'); if (!seg) return;
+  const pill = seg.querySelector('[data-pill]');
+  const active = seg.querySelector('.naowee-segment__item--active');
+  if (!pill || !active) return;
+  const put = (el) => { pill.style.transform = `translate3d(${el.offsetLeft}px,0,0)`; pill.style.width = el.offsetWidth + 'px'; };
+  // Síncrono (sin rAF, que un re-render podía clobberear): fija el punto de partida
+  // con --no-anim + reflow, luego mueve al activo con la transición activa → desliza.
+  if (_segPrev !== null && _segPrev !== vista) {
+    const prev = seg.querySelector(`[data-vista="${_segPrev}"]`) || active;
+    pill.classList.add('naowee-segment__pill--no-anim'); put(prev); void pill.offsetWidth;
+    pill.classList.remove('naowee-segment__pill--no-anim'); put(active);
+  } else {
+    pill.classList.add('naowee-segment__pill--no-anim'); put(active); void pill.offsetWidth;
+    pill.classList.remove('naowee-segment__pill--no-anim');
+  }
+  _segPrev = vista;
 }
 
 function renderOrgBandeja() {
@@ -906,7 +929,10 @@ function wire() {
   root.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openDetail(b.dataset.open)));
   root.querySelectorAll('[data-openafil]').forEach((b) => b.addEventListener('click', () => openAfilDetail(b.dataset.openafil)));
   root.querySelectorAll('[data-openpre]').forEach((b) => b.addEventListener('click', () => openPreDetail(b.dataset.openpre)));
+  layoutPill();
 }
+let _segResizeWired = false;
+if (!_segResizeWired) { _segResizeWired = true; window.addEventListener('resize', () => layoutPill()); }
 function toast(text, variant) { window.naoweeToast && window.naoweeToast(text, variant === 'negative' ? 'error' : 'success'); }
 
 seedBandejaDemo();
