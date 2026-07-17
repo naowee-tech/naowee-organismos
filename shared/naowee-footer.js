@@ -409,7 +409,13 @@ const MODULE_NAME = 'Organismos';
              (3) Contacto de emergencia rediseñado estilo CRUZ ROJA: chip con cruz
              (emblema cruz roja sobre blanco, `I.cross`) + label + valor, en flex.
              Cache-busters ?v=1.2.17. */
-const MODULE_VERSION = 'v1.2.17';
+/* v1.2.18 — Lanzador del recorrido guiado ("Recorrido por HU", .tt-launch)
+             restilizado (feedback Doug, ref. pill de Territorio): pasa de pill
+             blanco con texto accent naranja a PILL RELLENO institucional
+             (fondo `--azul` #002B5B) con ícono + texto BLANCOS, borde blanco
+             sutil, sombra navy e inner-highlight superior. Cambio en el shared
+             `tour.js` → consistente en todas las páginas. Cache-busters ?v=1.2.18. */
+const MODULE_VERSION = 'v1.2.18';
 
 (function () {
   function mount() {
