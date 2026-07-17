@@ -395,7 +395,13 @@ const MODULE_NAME = 'Organismos';
              `padding: 0 18px` → los botones se insentan (alineados con el header
              del card) mientras el divisor (border-bottom del wrap) queda
              edge-to-edge. Aplica también a los tabs del Historial. ?v=1.2.15. */
-const MODULE_VERSION = 'v1.2.15';
+/* v1.2.16 — "Editar datos" del perfil = botón MUTE canónico (feedback Doug: no era
+             canon). El `.pf-edit` (text-link custom accent + subrayado en hover)
+             pasa a `.naowee-btn .naowee-btn--mute .naowee-btn--small` (fondo
+             transparente idle + hover accent-bg, sin subrayado); se ELIMINA el CSS
+             custom de `.pf-edit` (le ganaba por orden de cascada), queda solo como
+             hook de JS. Cache-busters ?v=1.2.16. */
+const MODULE_VERSION = 'v1.2.16';
 
 (function () {
   function mount() {

@@ -106,9 +106,9 @@
 .pf-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 20px 24px 0; }
 .pf-panel__title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0; }
 .pf-panel__sub { font-size: 12.5px; color: var(--text-secondary); margin: 3px 0 0; font-weight: 500; }
-.pf-edit { display: inline-flex; align-items: center; gap: 6px; border: none; background: none; color: var(--accent); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.pf-edit svg { width: 14px; height: 14px; }
-.pf-edit:hover { text-decoration: underline; }
+/* .pf-edit = solo hook de JS; el estilo lo da el botón canónico
+   .naowee-btn--mute --small (texto accent + fill transparente idle + hover
+   accent-bg, sin subrayado). No re-estilar aquí (le ganaría al canónico). */
 .pf-tabs-wrap { padding: 14px 0 0; border-bottom: 1px solid var(--border-dark); }
 /* Los botones de tab se insentan a los lados (alineados con el header del card);
    el divisor (border-bottom del wrap) queda edge-to-edge. */

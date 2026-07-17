@@ -289,7 +289,7 @@ function resumenHTML() {
   else body = `
     ${fld('Correo electrónico', ATLETA.contacto.correo)} ${fld('Teléfono', ATLETA.contacto.telefono)}
     ${fld('Contacto de emergencia', ATLETA.contacto.emergenciaNombre)} ${fld('Tel. de emergencia', ATLETA.contacto.emergenciaTel)}`;
-  const editBtn = `<button class="pf-edit">${I.pencil} Editar datos</button>`;
+  const editBtn = `<button class="naowee-btn naowee-btn--mute naowee-btn--small pf-edit">${I.pencil} Editar datos</button>`;
   return `${head('Datos personales', '', editBtn)}${tabsBar}<div class="pf-body"><div class="pf-fields">${body}</div></div>`;
 }
 
